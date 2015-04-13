@@ -14,8 +14,22 @@ import java.util.List;
  */
 public interface ConfigurationCallbackHandler {
     
+    /**
+     *
+     * @param callback
+     */
     public void addConfigurationCallback(ConfigurationCallback callback);
+
+    /**
+     *
+     * @param callback
+     */
     public void removeConfigurationCallback(ConfigurationCallback callback);
+
+    /**
+     *
+     * @return
+     */
     public List<ConfigurationCallback> getConfigurationCallbacks();
     
 }

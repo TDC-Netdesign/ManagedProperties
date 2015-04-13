@@ -46,7 +46,11 @@ import org.osgi.service.metatype.ObjectClassDefinition;
 
 
 /**
- *
+ * The ManagedProperties class is used as a simple setup mechanism for the Configuration Admin and MetaType OSGi services.
+ * Using the register method, the ManagedProperties register itself as both a Configuration Admin ManagedService and as a MetaType service MetaTypeProvider.
+ * This class can be used directly, but is best used as a superclass. For the best utliziation, it is advised to extends this class, and add get methods for each
+ * configuration item. Then annotate the get methods with the @Property annotation, and use the get(String, Class) method to cast the object to the expected type.
+ * Reflection will take care of creating the MetaTypeProvider items and ensure that the type returned to the service matches the @Property.
  * @author mnn
  */
 public class ManagedProperties implements Map<String, Object>, ManagedService, MetaTypeProvider, ConfigurationCallbackHandler {
@@ -69,14 +73,35 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 
     private ObjectClassDefinition ocd;
 
+    /**
+     * Create a ManagedProperties object
+     * @param name The name of the properties. This is used to create the name for the MetaData service.
+     * @param id This is the PID used to specify the path for the configuration file in the Configuration Admin service.
+     * @param description This is used to specify the Description for the bundle for the MetaData service.
+     */
     public ManagedProperties(String name, String id, String description) {
 	this(null, name, id, description, null);
     }
 
+    /**
+     * Create a ManagedProperties object
+     * @param name The name of the properties. This is used to create the name for the MetaData service.
+     * @param id This is the PID used to specify the path for the configuration file in the Configuration Admin service.
+     * @param description This is used to specify the Description for the bundle for the MetaData service.
+     * @param iconFile This is used to define the file which is used to generate an Icon for use in the MetaData service.
+     */
     public ManagedProperties(String name, String id, String description, File iconFile) {
 	this(null, name, id, description, iconFile);
     }
 
+    /**
+     * Create a ManagedProperties object
+     * @param defaults This map is used to specify a default set of properties, which can be used if no data is returned from the Configuration Admin.
+     * @param name The name of the properties. This is used to create the name for the MetaData service.
+     * @param id This is the PID used to specify the path for the configuration file in the Configuration Admin service.
+     * @param description This is used to specify the Description for the bundle for the MetaData service.
+     * @param iconFile This is used to define the file which is used to generate an Icon for use in the MetaData service.
+     */
     public ManagedProperties(Map<String, Object> defaults, String name, String id, String description, File iconFile) {
 	this.defaults = defaults;
 	this.name = name;
@@ -93,26 +118,60 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	logger.info("Created new ManagedProperties for "+id+" with name: '"+name+"' and ObjectClassDefinition: "+ocd);
     }
     
+    /**
+     * Create a ManagedProperties object
+     * @param name The name of the properties. This is used to create the name for the MetaData service.
+     * @param description This is used to specify the Description for the bundle for the MetaData service.
+     * @param configuredClass This is used to generate the PID used to specify the path for the configuration file in the Configuration Admin service.
+     */
     public ManagedProperties(String name, String description, Class configuredClass) {
 	this(name, configuredClass.getName(), description);
     }
 
+    /**
+     * Create a ManagedProperties object
+     * @param name The name of the properties. This is used to create the name for the MetaData service.
+     * @param description This is used to specify the Description for the bundle for the MetaData service.
+     * @param iconFile This is used to define the file which is used to generate an Icon for use in the MetaData service.
+     * @param configuredClass This is used to generate the PID used to specify the path for the configuration file in the Configuration Admin service.
+     */
     public ManagedProperties(String name, String description, File iconFile, Class configuredClass) {
 	this(name, configuredClass.getName(), description, iconFile);
     }
 
+    /**
+     * Create a ManagedProperties object
+     * @param defaults This map is used to specify a default set of properties, which can be used if no data is returned from the Configuration Admin.
+     * @param name The name of the properties. This is used to create the name for the MetaData service.
+     * @param description This is used to specify the Description for the bundle for the MetaData service.
+     * @param iconFile This is used to define the file which is used to generate an Icon for use in the MetaData service.
+     * @param configuredClass This is used to generate the PID used to specify the path for the configuration file in the Configuration Admin service.
+     */
     public ManagedProperties(Map<String, Object> defaults, String name, String description, File iconFile, Class configuredClass) {
 	this(defaults, name, configuredClass.getName(), description, iconFile);
     }
 
+    /**
+     *
+     * @return
+     */
     public Map<String, Object> getDefaults() {
 	return defaults;
     }
 
+    /**
+     *
+     * @param defaults
+     */
     public void setDefaults(Map<String, Object> defaults) {
 	this.defaults = defaults;
     }
     
+    /**
+     * Registers this ManagedProperties object with the bundle context. This should be done in the bundle activator right just after this object is added to its
+     * intended service.
+     * @param context The context in which to register this ManagedProperties object.
+     */
     public void register(BundleContext context){
 	Hashtable<String, Object> managedServiceProps = new Hashtable<String, Object>();
 	managedServiceProps.put(Constants.SERVICE_PID, id);
@@ -125,34 +184,65 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	metatypeServiceReg = context.registerService(MetaTypeProvider.class.getName(), this, metaTypeProps);
     }
     
+    /**
+     * Unregisters this ManagedProperties object in this bundle context.
+     * @param context The context in which to unregister this ManagedProperties object.
+     */
     public void unregister(BundleContext context){
 	managedServiceReg.unregister();
 	metatypeServiceReg.unregister();
     }
 
+    /**
+     * In case that some components in the service needs to be notified of a change in configuration, it can register an instance of ConfigurationCallback.
+     * Whenever the configuration in this ManagedProperties object is updated, the configurationUpdated method of the ConfigurationCallback is called.
+     * @param callback The callback instance to register
+     */
     @Override
     public void addConfigurationCallback(ConfigurationCallback callback) {
 	callbacks.add(callback);
     }
 
+    /**
+     * Unregisters the callback
+     * @param callback The callback instance to unregister
+     */
     @Override
     public void removeConfigurationCallback(ConfigurationCallback callback) {
 	callbacks.remove(callback);
     }
 
+    /**
+     * Gets a list of all registered ConfigurationCallbacks
+     * @return All registered callbacks
+     */
     @Override
     public List<ConfigurationCallback> getConfigurationCallbacks() {
 	return new ArrayList<>(callbacks);
     }
     
-
+    /**
+     * This method is called by the ConfigurationAdmin whenever the configuration is updated. This updates the configuration and updates all registered callbacks.
+     * The method checks if the objects returned match the expected class of any configurations denoted by a @Property annotation.
+     * @param dctnr The new configuration
+     * @throws ConfigurationException A ConfigurationException is thrown if a configuration element is found not to match the expected class defined by the 
+     * @Property
+     */
     @Override
     public void updated(Dictionary<String, ?> dctnr) throws ConfigurationException {
 	logger.info("Configuration updated for "+id);
+	Map<String, Class> objectMappings = getObjectMappings();
+	
 	HashMap<String, Object> newprops = new HashMap<>();
 	if (dctnr != null) {
 	    for (Enumeration<String> keys = dctnr.keys(); keys.hasMoreElements();) {
 		String key = keys.nextElement();
+		Class configObjectClass = dctnr.get(key).getClass();
+		Class expectedClass = objectMappings.get(key);
+		
+		if(expectedClass != null && !expectedClass.equals(configObjectClass)){
+		    throw new ConfigurationException(key, "Could not match this object to the expected object. Expected "+expectedClass+" found "+configObjectClass);
+		}
 		newprops.put(key, dctnr.get(key));
 	    }
 	} else {
@@ -166,6 +256,19 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	} finally {
 	    w.unlock();
 	}
+	for(ConfigurationCallback callback : callbacks){
+	    callback.configurationUpdated(dctnr);
+	}
+    }
+    
+    private Map<String,Class> getObjectMappings(){
+	HashMap<String,Class> mappings = new HashMap<>();
+	for (Method classMethod : this.getClass().getMethods()) {
+	    if (classMethod.isAnnotationPresent(Property.class)) {
+		mappings.put(getAttributeName(classMethod), getMethodReturnType(classMethod));
+	    }
+	}
+	return mappings;
     }
 
     @Override
@@ -218,7 +321,15 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	}
     }
     
-    public <T> T get(String key, Class<T> type) {
+    /**
+     * Gets the value denoted by the key, and casts it to the defined type
+     * @param <T> The object type to return
+     * @param key The key to get the configuration for
+     * @param type The type to cast the configuration object to
+     * @throws ClassCastException As this class casts the object, a ClassCastException can occur if the cast to the defined type is not possible.
+     * @return
+     */
+    public <T> T get(String key, Class<T> type){
 	try {
 	    r.lock();
 	    return type.cast(get(key));
@@ -297,30 +408,40 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	}
     }
 
+    /**
+     * Returns the ObjectClassDefinition used by the MetaType service
+     * @param id OCD id to return
+     * @param locale The OCD locale to return
+     * @return
+     */
     @Override
     public ObjectClassDefinition getObjectClassDefinition(String id, String locale) {
 	return ocd;
     }
 
+    /**
+     * Returns supported locales
+     * @return Supported locale names
+     */
     @Override
     public String[] getLocales() {
 	return null;
     }
     
     private ObjectClassDefinition buildOCD() {
+	logger.debug("Building ObjectClassDefinition");
 	List<AttributeDefinition> attributes = new ArrayList<>();
 	for (Method classMethod : this.getClass().getMethods()) {
 	    if (classMethod.isAnnotationPresent(Property.class)) {
 		Property methodProperty = classMethod.getAnnotation(Property.class);
-		String attributeName = classMethod.getName().replaceAll("^get", "");
+		String attributeName = getAttributeName(classMethod);
 		String attributeID = attributeName;
 		Integer attributeType = null;
 		Integer cardinality = -1;
+		Class methodReturnType = getMethodReturnType(classMethod);
+		logger.trace("Found @Property on "+classMethod.getName()+"["+methodReturnType+"]");
 
-		Class methodReturnType = classMethod.getReturnType();
-		if (methodProperty.type() != void.class) {
-		    methodReturnType = methodProperty.type();
-		}
+		
 		if (methodReturnType.equals(String.class)) {
 		    attributeType = AttributeDefinition.STRING;
 		} else if (methodReturnType.equals(Long.class)) {
@@ -343,14 +464,11 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 		    attributeType = AttributeDefinition.BIGDECIMAL;
 		} else if (methodReturnType.equals(Boolean.class)) {
 		    attributeType = AttributeDefinition.BOOLEAN;
-		} else if (methodReturnType.equals(byte[].class)) {
+		} else if (methodReturnType.equals(Character[].class)) {
 		    attributeType = AttributeDefinition.PASSWORD;
 		}
 
-		if (!methodProperty.name().isEmpty()) {
-		    attributeName = methodProperty.name();
-		    attributeID = attributeName;
-		}
+		
 		
 		if (methodProperty.cardinality() != -1) {
 		    cardinality = methodProperty.cardinality();
@@ -358,6 +476,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 		if (!methodProperty.id().isEmpty()) {
 		    attributeID = methodProperty.id();
 		}
+		logger.trace("Building AttributeDefinition with attributeID '"+attributeID+"' attributeType '"+attributeType+"' cardinality '"+cardinality+"'");
 		AD ad = new AD(attributeID, attributeType, cardinality);
 		ad.setDefaultValue(methodProperty.defaultValue());
 		ad.setDescription(methodProperty.description());
@@ -373,6 +492,28 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	newocd.setDescription(description);
 	newocd.setIconFile(iconFile);
 	return newocd;
+    }
+    
+    private String getAttributeName(Method classMethod){
+	String attributeName = classMethod.getName().replaceAll("^get", "");
+	 if (classMethod.isAnnotationPresent(Property.class)) {
+	    Property methodProperty = classMethod.getAnnotation(Property.class);
+	    if (!methodProperty.name().isEmpty()) {
+		attributeName = methodProperty.name();
+	    }
+	}
+	return attributeName;
+    }
+    
+    private Class getMethodReturnType(Method classMethod){
+	Class methodReturnType = classMethod.getReturnType();
+	if (classMethod.isAnnotationPresent(Property.class)) {
+	    Property methodProperty = classMethod.getAnnotation(Property.class);
+	    if (methodProperty.type() != void.class) {
+		methodReturnType = methodProperty.type();
+	    }
+	}
+	return methodReturnType;
     }
 
     private class OCD implements ObjectClassDefinition {
