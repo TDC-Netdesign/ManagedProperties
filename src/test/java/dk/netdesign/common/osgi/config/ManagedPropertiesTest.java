@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -67,14 +68,14 @@ public class ManagedPropertiesTest {
     @Test
     public void testUpdate() throws ConfigurationException{
 	Dictionary<String, Object> newConfig = new Hashtable<>();
-	newConfig.put("String", "Stringval");
-	newConfig.put("Integer", 1);
-	newConfig.put("Double", 2.2d);
-	newConfig.put("Password", new Character[]{'t','e','s','t'});
-	newConfig.put("otherString", "otherStringVal");
-	newConfig.put("otherInteger", 14);
-	newConfig.put("otherDouble", 2.6d);
-	newConfig.put("IntegerToString", 16);
+	newConfig.put("String", Collections.singletonList("Stringval"));
+	newConfig.put("Integer", Collections.singletonList(1));
+	newConfig.put("Double", Collections.singletonList(2.2d));
+	newConfig.put("Password", Collections.singletonList(new Character[]{'t','e','s','t'}));
+	newConfig.put("otherString", Collections.singletonList("otherStringVal"));
+	newConfig.put("otherInteger", Collections.singletonList(14));
+	newConfig.put("otherDouble", Collections.singletonList(2.6d));
+	newConfig.put("IntegerToString", Collections.singletonList(16));
 	
 	props.updated(newConfig);
 	

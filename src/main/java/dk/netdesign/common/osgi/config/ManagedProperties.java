@@ -232,18 +232,46 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     public void updated(Dictionary<String, ?> dctnr) throws ConfigurationException {
 	logger.info("Configuration updated for "+id);
 	Map<String, Class> objectMappings = getObjectMappings();
+	Map<String, Property.Cardinality> cardinalityMappings = getCardinalityMappings();
 	
 	HashMap<String, Object> newprops = new HashMap<>();
 	if (dctnr != null) {
 	    for (Enumeration<String> keys = dctnr.keys(); keys.hasMoreElements();) {
 		String key = keys.nextElement();
-		Class configObjectClass = dctnr.get(key).getClass();
+		Object value = dctnr.get(key);
+		Class configObjectClass = value.getClass();
 		Class expectedClass = objectMappings.get(key);
+		Property.Cardinality cardinality = cardinalityMappings.get(key);
 		
-		if(expectedClass != null && !expectedClass.equals(configObjectClass)){
-		    throw new ConfigurationException(key, "Could not match this object to the expected object. Expected "+expectedClass+" found "+configObjectClass);
+		if(key.equals("service.pid")){
+		    continue;
 		}
-		newprops.put(key, dctnr.get(key));
+		
+		if(logger.isDebugEnabled()){
+		    logger.debug("Attempting to assign "+dctnr.get(key)+" to "+key+" with cardinality "+cardinality.toString());
+		}
+		
+		if(cardinality.equals(Property.Cardinality.Required)){
+		    if(expectedClass != null && !expectedClass.isAssignableFrom(configObjectClass)){
+			throw new ConfigurationException(key, "Could not match this object to the expected object. Expected "+expectedClass+" found "+configObjectClass);
+		    }
+		    newprops.put(key, value);
+		}else if(cardinality.equals(Property.Cardinality.Optional)){
+		    newprops.put(key, retrieveOptionalObject(key, value));   
+		}else if(cardinality.equals(Property.Cardinality.List)){
+		    if(!List.class.isAssignableFrom(configObjectClass)){
+			throw new ConfigurationException(key, "This value should be a List: "+value); 
+		    }
+		    List configItemList = (List)value;
+		    for(Object listMember : configItemList){
+			if(listMember != null && !expectedClass.isAssignableFrom(listMember.getClass())){
+			    throw new ConfigurationException(key, "Could not match this object to the expected object. Expected a list of "+expectedClass+" but list contained a "+listMember.getClass()+": "+listMember);
+			}
+		    }
+		    newprops.put(key, dctnr.get(key));
+		}
+		
+		
 	    }
 	} else {
 	    if (defaults != null) {
@@ -261,11 +289,37 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	}
     }
     
+    private Object retrieveOptionalObject(String key, Object configItemObject) throws ConfigurationException{
+	if(!List.class.isAssignableFrom(configItemObject.getClass())){
+	    throw new ConfigurationException(key, "This value should be optional, and be represented by a list: "+configItemObject); 
+	}
+	List configItemList = (List)configItemObject;
+	if(configItemList.isEmpty()){
+	    return null;
+	}else if(configItemList.size() == 1){
+	    return configItemList.get(0);
+	}else{
+	    throw new ConfigurationException(key, "The optional value "+key+ " had more than one item assigned to it: "+configItemList);
+	}
+    }
+   
+      
     private Map<String,Class> getObjectMappings(){
 	HashMap<String,Class> mappings = new HashMap<>();
 	for (Method classMethod : this.getClass().getMethods()) {
 	    if (classMethod.isAnnotationPresent(Property.class)) {
 		mappings.put(getAttributeName(classMethod), getMethodReturnType(classMethod));
+	    }
+	}
+	return mappings;
+    }
+    
+    private Map<String,Property.Cardinality> getCardinalityMappings(){
+	HashMap<String,Property.Cardinality> mappings = new HashMap<>();
+	for (Method classMethod : this.getClass().getMethods()) {
+	    if (classMethod.isAnnotationPresent(Property.class)) {
+		Property annotation = classMethod.getAnnotation(Property.class);
+		mappings.put(getAttributeName(classMethod), annotation.cardinality());
 	    }
 	}
 	return mappings;
@@ -437,7 +491,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 		String attributeName = getAttributeName(classMethod);
 		String attributeID = attributeName;
 		Integer attributeType = null;
-		Integer cardinality = -1;
+		Property.Cardinality cardinality = methodProperty.cardinality();
 		Class methodReturnType = getMethodReturnType(classMethod);
 		logger.trace("Found @Property on "+classMethod.getName()+"["+methodReturnType+"]");
 
@@ -468,16 +522,22 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 		    attributeType = AttributeDefinition.PASSWORD;
 		}
 
-		
-		
-		if (methodProperty.cardinality() != -1) {
-		    cardinality = methodProperty.cardinality();
-		}
 		if (!methodProperty.id().isEmpty()) {
 		    attributeID = methodProperty.id();
 		}
+		
+		int adCardinality = 0;
+		switch (cardinality){
+		    case Required:    adCardinality=0;
+				      break;
+		    case Optional:    adCardinality=-1;
+				      break;
+		    case List:	      adCardinality=Integer.MIN_VALUE;
+				      break;
+		}
+		
 		logger.trace("Building AttributeDefinition with attributeID '"+attributeID+"' attributeType '"+attributeType+"' cardinality '"+cardinality+"'");
-		AD ad = new AD(attributeID, attributeType, cardinality);
+		AD ad = new AD(attributeID, attributeType, adCardinality);
 		ad.setDefaultValue(methodProperty.defaultValue());
 		ad.setDescription(methodProperty.description());
 		ad.setName(attributeName);
@@ -616,7 +676,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 
 	private String id;
 	private int type = 0;
-	private int cardinality = -1;
+	private int cardinality = 0;
 	private String name;
 	private String description;
 	private String[] defValue;

@@ -41,7 +41,7 @@ public @interface Property {
      * The cardinality to represent to property.
      * @return
      */
-    public int cardinality() default -1;
+    public Cardinality cardinality() default Cardinality.Optional;
 
     /**
      * The type of the configuration property. If not defined, will default to the type of the method. Should only be set to primitive wrappers(Integer, Long...)
@@ -67,5 +67,9 @@ public @interface Property {
      * @return
      */
     public String[] defaultValue() default {};
+ 
     
+    public enum Cardinality{
+	Optional, Required, List;
+    }
 }
