@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -32,8 +31,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggerFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
@@ -42,6 +39,8 @@ import org.osgi.service.cm.ManagedService;
 import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.MetaTypeProvider;
 import org.osgi.service.metatype.ObjectClassDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 
@@ -54,7 +53,7 @@ import org.osgi.service.metatype.ObjectClassDefinition;
  * @author mnn
  */
 public class ManagedProperties implements Map<String, Object>, ManagedService, MetaTypeProvider, ConfigurationCallbackHandler {
-    private static Logger logger = Logger.getLogger(ManagedProperties.class);
+    private static Logger logger = LoggerFactory.getLogger(ManagedProperties.class);
     //private ServiceRegistration<ManagedService> managedServiceReg;
     //private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
     private ServiceRegistration managedServiceReg;
