@@ -6,11 +6,13 @@
 
 package dk.netdesign.common.osgi.config;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
