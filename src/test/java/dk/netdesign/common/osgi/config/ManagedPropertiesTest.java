@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -90,12 +91,42 @@ public class ManagedPropertiesTest {
 	
 	
     }
+    
+    @Test
+    public void testOffline() throws ConfigurationException{
+	Map<String, Object> defaults = new HashMap<>();
+	defaults.put("String", "testString");
+	defaults.put("Integer", 1);
+	defaults.put("Double", 1d);
+	defaults.put("Password", new Character[]{'t','e','s','t'});
+	defaults.put("otherString", "othertestString");
+	defaults.put("otherInteger", 11);
+	defaults.put("otherDouble", 1.2d);
+	defaults.put("IntegerToString", 22);
+	props = new TestManagedProperties(defaults, "TestManagedProps", "TestManagedPropsID", "TestManagedPropsDesc", null);
+	
+	assertEquals(props.getString(), "testString");
+	assertEquals(props.getInteger(), new Integer(1));
+	assertEquals(props.getDouble(), new Double(1d));
+	assertArrayEquals(props.getPassword(), new Character[]{'t','e','s','t'});
+	assertEquals(props.getRenamedString(), "othertestString");
+	assertEquals(props.getRenamedInteger(), new Integer(11));
+	assertEquals(props.getRenamedDouble(), new Double(1.2d));
+	assertEquals(props.getIntegerToString(), "22");
+
+    }
 
     class TestManagedProperties extends ManagedProperties{
 
 	public TestManagedProperties(String name, String id, String description) {
 	    super(name, id, description);
 	}
+
+	public TestManagedProperties(Map<String, Object> defaults, String name, String id, String description, File iconFile) {
+	    super(defaults, name, id, description, iconFile);
+	}
+	
+	
 	
 	@Property
 	public String getString(){

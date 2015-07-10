@@ -375,6 +375,15 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 	}
     }
     
+    public Object getOrDefault(String key, Object defaultVal){
+	try {
+	    r.lock();
+	    return props.getOrDefault(key, defaultVal);
+	} finally {
+	    r.unlock();
+	}
+    }
+    
     /**
      * Gets the value denoted by the key, and casts it to the defined type
      * @param <T> The object type to return
@@ -386,7 +395,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     public <T> T get(String key, Class<T> type){
 	try {
 	    r.lock();
-	    return type.cast(get(key));
+	    return type.cast(getOrDefault(key, (defaults != null ? defaults.get(key) : null)));
 	} finally {
 	    r.unlock();
 	}
