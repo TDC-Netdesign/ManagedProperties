@@ -72,4 +72,10 @@ public @interface Property {
     public enum Cardinality{
 	Optional, Required, List;
     }
+    
+    /**
+     *
+     * @return
+     */
+    public String flgUpdate() default "true" ;
 }
