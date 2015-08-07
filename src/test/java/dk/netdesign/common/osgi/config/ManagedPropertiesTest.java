@@ -6,15 +6,22 @@
 package dk.netdesign.common.osgi.config;
 
 import java.io.File;
+import static java.lang.Math.random;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Timer;
 import java.util.concurrent.locks.Lock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static jdk.nashorn.internal.objects.NativeRegExp.test;
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -25,6 +32,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.metatype.ObjectClassDefinition;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -33,6 +41,7 @@ import org.osgi.service.metatype.ObjectClassDefinition;
 public class ManagedPropertiesTest {
 
     public TestManagedProperties props;
+    
 
     public ManagedPropertiesTest() {
     }
@@ -128,6 +137,195 @@ public class ManagedPropertiesTest {
 
     }
 
+    @Test
+    public void testforThreads() throws InterruptedException, ConfigurationException {
+        
+       
+        final Dictionary<String, Object> propsMain = new Hashtable<>();
+        propsMain.put("name", Collections.singletonList("main"));
+        propsMain.put("pass", Collections.singletonList("mainPass"));
+        propsMain.put("url", Collections.singletonList("mainUrl"));
+       
+        final org.slf4j.Logger logger = LoggerFactory.getLogger(ManagedPropertiesTest.class);
+
+        final long maxDurationInMilliseconds = 10 * 1000;
+       final Boolean eq= new Boolean(true);
+        
+        
+        
+        props.updated(propsMain);
+
+        Runnable t1 = new Runnable() {
+            public void run() {
+                Boolean conf = true;
+                try {
+
+//                    while ((conf) && (!Thread.currentThread().isInterrupted())) {
+//                        while (conf) {
+
+                        long startTime = System.currentTimeMillis();
+                        while ((conf) && (!Thread.currentThread().isInterrupted()) &&(System.currentTimeMillis() < startTime + 100)) {
+
+                            List<Dictionary<String, Object>> docList = new ArrayList<Dictionary<String, Object>>();
+                            Dictionary<String, Object> temp = new Hashtable<>();
+                            Random random = new Random();
+                            char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+                            StringBuilder sb = new StringBuilder();
+                            for (int i = 0; i < 10; i++) {
+                                for (int j = 0; j < 6; j++) {
+                                    char c = chars[random.nextInt(chars.length)];
+                                    sb.append(c);
+                                }
+                                String output = sb.toString();
+                                temp.put("name", Collections.singletonList("name" + sb));
+                                temp.put("pass", Collections.singletonList("pass" + sb));
+                                temp.put("url", Collections.singletonList("url" + sb));
+                                sb.delete(0, 6);
+                                docList.add(temp);
+                                props.updated(temp);
+                                System.out.println("T1 add new props  " + temp.get("name") + " - - - " + temp.get("pass") + " - - - " + temp.get("url"));
+                                Thread.sleep(5000);
+                            }
+
+                        }
+                        synchronized (this) {
+                            notifyAll();
+                        }
+//                    }
+                } catch (ConfigurationException ex) {
+                    conf = false;
+                    logger.error("ConfigurationException in Thread 1", ex);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    logger.error("failed during sleep in Thread 1", ex);
+                }
+            }
+        };
+
+        Runnable t5 = new Runnable() {
+            public void run() {
+                Dictionary<String, Object> propsT5 = new Hashtable<>();
+                propsT5.put("name", Collections.singletonList("t5name"));
+                propsT5.put("pass", Collections.singletonList("t5pass"));
+                propsT5.put("url", Collections.singletonList("t5url"));
+                try {
+                    props.updated(propsT5);
+                } catch (ConfigurationException ex) {
+                    Logger.getLogger(ManagedPropertiesTest.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                System.out.println("T5 add new props  " + propsT5.get("name") + " - - - " + propsT5.get("pass") + " - - - " + propsT5.get("url"));
+
+                synchronized (this) {
+                    notifyAll();
+                }
+            }
+
+        };
+        Runnable t2 = new Runnable() {
+            public void run() {
+                long startTime = System.currentTimeMillis();
+                while (System.currentTimeMillis() < startTime + 100) {
+                    props.getname();
+                    System.out.println("T2 name for t2 : " + props.getname());
+                    try {
+                        Thread.sleep(5000);
+
+                    } catch (InterruptedException ex) {
+
+                        Logger.getLogger(ManagedPropertiesTest.class
+                                .getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                synchronized (this) {
+                    notifyAll();
+                }
+            }
+
+        };
+        Runnable t3 = new Runnable() {
+            public void run() {
+                long startTime = System.currentTimeMillis();
+                while (System.currentTimeMillis() < startTime + 100) {
+                    Lock r = props.getReadLock();
+                    String name= props.getname();
+                    String pass= props.getpass();
+                    System.out.println("T3 name and pass for t3 : " + props.getname() + " - - - " + props.getpass());
+                    
+                    if(!name.substring(4, 10).equals(pass.substring(4, 10))){
+                       
+                    }
+                    r.unlock();
+                    try {
+                        Thread.sleep(5000);
+
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(ManagedPropertiesTest.class
+                                .getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+                synchronized (this) {
+                    notifyAll();
+                }
+
+            }
+        };
+        Runnable t4 = new Runnable() {
+            public void run() {
+                long startTime = System.currentTimeMillis();
+                while (System.currentTimeMillis() < startTime + 100) {
+                    Lock r = props.getReadLock();
+                    props.getname();
+                    props.getpass();
+                    System.out.println("T4 name and pass for t4 : " + props.getname() + " - - - " + props.getpass());
+                    r.unlock();
+                    try {
+                        Thread.sleep(5000);
+
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(ManagedPropertiesTest.class
+                                .getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+                synchronized (this) {
+                    notifyAll();
+                }
+
+            }
+        };
+
+        Lock r = props.getReadLock();
+        String name = props.getname(); /// main name
+        System.out.println("Main Thread props name " + props.getname());
+        String pass = props.getpass();// main pass
+        System.out.println("Main Thread props pass " + props.getpass());
+
+        Thread thread1 = new Thread(t1);
+        thread1.start();
+        Thread thread2 = new Thread(t2);
+        thread2.start();
+        Thread thread3 = new Thread(t3);
+        thread3.start();
+        Thread thread4 = new Thread(t4);
+        thread4.start();
+        Thread thread5 = new Thread(t5);
+        thread5.start();
+
+        synchronized (this) {
+            thread4.join();
+            thread2.join();
+            thread1.join();
+            thread3.join();
+            thread5.join();
+        }
+        
+
+        String url = props.geturl();
+        System.out.println("Main Thread props url : " + props.geturl());
+        r.unlock();
+
+    }
 
     @Test
     public void testforLock() throws InterruptedException, ConfigurationException {
@@ -140,14 +338,17 @@ public class ManagedPropertiesTest {
         propsT2.put("name", Collections.singletonList("Azade"));
         propsT2.put("pass", Collections.singletonList("Jafari"));
         propsT2.put("url", Collections.singletonList("T2Url"));
+
         props.updated(propsT1);
 
         Runnable t2 = new Runnable() {
             public void run() {
                 try {
                     props.updated(propsT2);
+
                 } catch (ConfigurationException ex) {
-                    Logger.getLogger(ManagedPropertiesTest.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ManagedPropertiesTest.class
+                            .getName()).log(Level.SEVERE, null, ex);
                 }
             }
         };
@@ -155,6 +356,7 @@ public class ManagedPropertiesTest {
         String name = props.getname();
         String pass = props.getpass();
         new Thread(t2).start();
+        t2.run();
         Thread.sleep(5000);
         String url = props.geturl();
         System.out.println(" ur1 1  : " + url);
@@ -221,17 +423,18 @@ public class ManagedPropertiesTest {
         public String getname() {
             return get("name", String.class, "false");
         }
-        
+
         @Property(name = "pass")
         public String getpass() {
             return get("pass", String.class, "false");
         }
+
         @Property(name = "url")
         public String geturl() {
             return get("url", String.class, "false");
         }
-
         
+       
 
     }
 

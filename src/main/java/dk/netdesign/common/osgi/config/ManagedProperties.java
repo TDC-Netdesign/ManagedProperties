@@ -151,8 +151,9 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         callbacks = new ArrayList<>();
 
         Thread o = new takeQueue();
-        o.start();
         o.setDaemon(true);
+        o.start();
+        
         logger.info("Created new ManagedProperties for " + id + " with name: '" + name + "' and ObjectClassDefinition: " + ocd);
     }
 
