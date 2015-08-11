@@ -306,7 +306,7 @@ public class ManagedPropertiesTest {
 
     /**
      * The CheckReadingFromSameSet class is used to check if Threads params are
-     * coming the same Configuration set or not, it used of a flg to show result
+     * coming the same Configuration set or not, using of a flg to show result
      *
      * @author AZEM
      */
@@ -333,7 +333,7 @@ public class ManagedPropertiesTest {
                     System.out.println(Thread.currentThread().getName() + " name and pass for thread3 : " + props.getname() + " - - - " + props.getpass());
                     if (!name.substring(4, 9).equals(pass.substring(4, 9))) {
                         resultReadingFromSameSet = false;
-                        System.out.println(Thread.currentThread().getName() + "  name and pass come from the different props set");
+                        logger.error(Thread.currentThread().getName() + "  name and pass come from the different props set");
                     }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -357,14 +357,14 @@ public class ManagedPropertiesTest {
     class checkReadingCorrectValue extends Thread {
 
         /**
-         * @param resultOfReading : flg to show getName is not null and is the
-         * name param of configuration set
+         * @param resultOfReading : flg to show getName value is not null and is
+         * correct value for name in configuration set
          */
         boolean resultOfReading = true;
 
         /**
          * sets resultOfReading flag with checking if name is not null and
-         * getName is the name param of Configuration set
+         * getName is the name value in Configuration set
          */
         public void run() {
 
