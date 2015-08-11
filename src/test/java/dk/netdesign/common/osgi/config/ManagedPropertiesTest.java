@@ -42,7 +42,6 @@ public class ManagedPropertiesTest {
 
     final org.slf4j.Logger logger = LoggerFactory.getLogger(ManagedPropertiesTest.class);
     public TestManagedProperties props;
-    public CreateThread testThread;
     Lock r = null;
 
     public ManagedPropertiesTest() {
@@ -68,7 +67,6 @@ public class ManagedPropertiesTest {
     /**
      * Test of getDefaults method, of class ManagedProperties.
      */
-    @Ignore
     @Test
     public void testOCD() {
         ObjectClassDefinition def = props.getObjectClassDefinition("TestManagedPropsID", null);
@@ -77,7 +75,6 @@ public class ManagedPropertiesTest {
         assertEquals("TestManagedPropsDesc", def.getDescription());
     }
 
-    @Ignore
     @Test
     public void testUpdate() throws ConfigurationException {
         Dictionary<String, Object> newConfig = new Hashtable<>();
@@ -89,9 +86,20 @@ public class ManagedPropertiesTest {
         newConfig.put("otherInteger", Collections.singletonList(14));
         newConfig.put("otherDouble", Collections.singletonList(2.6d));
         newConfig.put("IntegerToString", Collections.singletonList(16));
-
         props.updated(newConfig);
-
+        // get configuration from Queue
+        Runnable t1 = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    r = props.getReadLock();
+                } finally {
+                    r.unlock();
+                }
+            }
+        };
+        Thread thread1 = new Thread(t1);
+        thread1.start();
         assertTrue("Did not match", props.getString().equals("Stringval"));
         assertTrue("Did not match", props.getInteger().equals(1));
         assertTrue("Did not match", props.getDouble().equals(2.2d));
@@ -103,7 +111,6 @@ public class ManagedPropertiesTest {
 
     }
 
-    @Ignore
     @Test
     public void testOffline() throws ConfigurationException {
         Map<String, Object> defaults = new HashMap<>();
@@ -127,83 +134,51 @@ public class ManagedPropertiesTest {
 
     }
 
-    @Ignore
     @Test
-    public void testforSynUpdate() throws ConfigurationException {
-        props.get("PathToRedGateSQLDataCompare", String.class, "true");
-        props.get("PathToRedGateSQLDataCompare", String.class, "true");
-        props.get("PathToBCPCMD", String.class, "true");
-        props.updated(null);
-        props.get("HostForOriginalData", String.class, "false");
-        props.updated(null);
+    public void testLock() throws InterruptedException, ConfigurationException {
 
-    }
-
-  
-    
-    @Test
-    public void testforLock() throws InterruptedException, ConfigurationException {
-
-        final Dictionary<String, Object> propsT1 = new Hashtable<>();
+        String url;
         final Dictionary<String, Object> propsT2 = new Hashtable<>();
-        propsT1.put("name", Collections.singletonList("Azin"));
-        propsT1.put("pass", Collections.singletonList("Emami"));
-        propsT1.put("url", Collections.singletonList("T1Url"));
-        propsT2.put("name", Collections.singletonList("Azade"));
-        propsT2.put("pass", Collections.singletonList("Jafari"));
-        propsT2.put("url", Collections.singletonList("T2Url"));
+        final Dictionary<String, Object> propsMain = new Hashtable<>();
+        propsMain.put("name", Collections.singletonList("nameMain"));
+        propsMain.put("pass", Collections.singletonList("passMain"));
+        propsMain.put("url", Collections.singletonList("urlMain"));
+        propsT2.put("name", Collections.singletonList("nameSecondThread"));
+        propsT2.put("pass", Collections.singletonList("passSecondTread"));
+        propsT2.put("url", Collections.singletonList("urlSecondThread"));
 
-        props.updated(propsT1);
-
-        Runnable t2 = new Runnable() {
-            Boolean conf = true;
-
+        props.updated(propsMain);
+        Runnable thread = new Runnable() {
             public void run() {
                 try {
-                    if (conf) {
-                        props.updated(propsT2);
-                    }
-
+                    props.updated(propsT2);
                 } catch (ConfigurationException ex) {
-                    conf = false;
-//                    logger.error("ConfigurationException in " + ManagedPropertiesTest.class.getName(), ex);
-                    Logger.getLogger(ManagedPropertiesTest.class
-                            .getName()).log(Level.SEVERE, null, ex);
+                    logger.error("ConfigurationException in " + ManagedPropertiesTest.class.getName(), ex);
                 }
             }
         };
-        
-        String url;
         try {
+            new Thread(thread).start();
             r = props.getReadLock();
-            String name = props.getname();
-            String pass = props.getpass();
-            new Thread(t2).start();
-//            Thread.sleep(5000);
+            Thread.sleep(5000);
             url = props.geturl();
-            System.out.println(" ur1 1  : " + url);
         } finally {
             r.unlock();
         }
-        assertEquals("T1Url", url);
-        Thread.sleep(5000);
-        url = props.geturl();
-        System.out.println(" ur1 2  : " + url);
-        assertEquals("T2Url", props.geturl());
+        assertEquals("urlMain", url);
+        assertEquals("urlSecondThread", props.geturl());
 
     }
-    
-      @Test
-    public void testforThreads() throws InterruptedException, ConfigurationException {
 
-        Boolean flgAccuracyThread3 = true;
-        String url;
+    @Test
+    public void threadsSynchronization() throws InterruptedException, ConfigurationException {
+
         final Dictionary<String, Object> propsMain = new Hashtable<>();
-        propsMain.put("name", Collections.singletonList("main"));
-        propsMain.put("pass", Collections.singletonList("mainPass"));
-        propsMain.put("url", Collections.singletonList("mainUrl"));
-        props.updated(propsMain);
+        propsMain.put("name", Collections.singletonList("nameMain"));
+        propsMain.put("pass", Collections.singletonList("passMain"));
+        propsMain.put("url", Collections.singletonList("urlMain"));
 
+        props.updated(propsMain);
         Runnable t1 = new Runnable() {
             public void run() {
                 Boolean conf = true;
@@ -227,8 +202,8 @@ public class ManagedPropertiesTest {
                             sb.delete(0, 6);
                             docList.add(temp);
                             props.updated(temp);
-                            System.out.println("T1 add new props  " + temp.get("name") + " - - - " + temp.get("pass") + " - - - " + temp.get("url"));
-                            Thread.sleep(5000);
+                            System.out.println(Thread.currentThread().getName() + " add new props  " + temp.get("name") + " - - - " + temp.get("pass") + " - - - " + temp.get("url"));
+                            Thread.sleep(1000);
                         }
                     }
                     synchronized (this) {
@@ -243,52 +218,22 @@ public class ManagedPropertiesTest {
                 }
             }
         };
-        Runnable t2 = new Runnable() {
-            public void run() {
-                long startTime = System.currentTimeMillis();
-                while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 100) {
-                    props.getname();
-                    System.out.println("T2 name for t2 : " + props.getname());
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt();
-                        logger.error("failed during sleep in " + Thread.currentThread().getName(), ex);
-                    }
-                }
-                synchronized (this) {
-                    notifyAll();
-                }
-            }
-        };
-        
-        try {
-            r = props.getReadLock();
-            String name = props.getname(); /// main name
-            String pass = props.getpass();// main pass
-            Thread thread1 = new Thread(t1);
-            thread1.start();
-            Thread thread2 = new Thread(t2);
-            thread2.start();
-            CreateThread thread3 = new CreateThread();
-            thread3.start();
-            thread3.run();
-            flgAccuracyThread3 = thread3.flgAccuracy;
-            synchronized (this) {
-                thread1.join();
-                thread2.join();
-                thread3.join();
-            }
-            url = props.geturl(); /// main url
-            Thread.sleep(5000);
-        } finally {
-            r.unlock();
-        }
-        // check for thread 3 
-        assertEquals(flgAccuracyThread3, true);
-        assertEquals(url, "mainUrl");
-    }
 
+        Thread thread1 = new Thread(t1);
+        thread1.start();
+        checkReadingCorrectValue thread2 = new checkReadingCorrectValue();
+        thread2.start();
+        thread2.run();
+        CheckReadingFromSameSet thread3 = new CheckReadingFromSameSet();
+        thread3.start();
+        synchronized (this) {
+            thread1.join();
+            thread2.join();
+            thread3.join();
+        }
+        assertEquals(true, thread2.resultOfReading);
+        assertEquals(true, thread3.resultReadingFromSameSet);
+    }
 
     class TestManagedProperties extends ManagedProperties {
 
@@ -356,60 +301,85 @@ public class ManagedPropertiesTest {
         }
 
     }
-// for chech T3
 
-    class CreateThread extends Thread {
+    /**
+     * The CheckReadingFromSameSet class is used to check if Threads params are
+     * coming the same Configuration set or not, it used of a flg to show result
+     *
+     * @author AZEM
+     */
+    class CheckReadingFromSameSet extends Thread {
 
-        public CreateThread() {
-        }
+        /**
+         * @param resultReadingFromSameSet : flg to show if Thread name and Pass
+         * are coming from the same Configuration set
+         */
+        boolean resultReadingFromSameSet = true;
 
-        boolean flgAccuracy = true;
-
-        public boolean isFlgAccuracy() {
-            return flgAccuracy;
-        }
-
-        public void setFlgAccuracy(boolean flgAccuracy) {
-            this.flgAccuracy = flgAccuracy;
-        }
-
+        /**
+         * sets resultReadingFromSameSet flag with checking if name and pass are
+         * coming the same Configuration set
+         */
         public void run() {
-
             long startTime = System.currentTimeMillis();
-            while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 100) {
-                
+            while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 10000) {
                 try {
                     r = props.getReadLock();
                     String name = props.getname();
+                    Thread.sleep(2000);
                     String pass = props.getpass();
-                    System.out.println("T3 name and pass for thread3 : " + props.getname() + " - - - " + props.getpass());
-                    if (name.equals("main")) {
-                        if (!pass.equals("mainPass")) {
-                            flgAccuracy = false;
-                            System.out.println("T3 - name and pass for main is diffrenet!!!");
-                        }
-                    } else {
-                        if (!name.substring(4, 9).equals(pass.substring(4, 9))) {
-                            flgAccuracy = false;
-                            System.out.println("T3 - name and pass for ELSE  main is diffrenet!!!");
-                        }
+                    System.out.println(Thread.currentThread().getName() + " name and pass for thread3 : " + props.getname() + " - - - " + props.getpass());
+                    if (!name.substring(4, 9).equals(pass.substring(4, 9))) {
+                        resultReadingFromSameSet = false;
+                        System.out.println("T3 - name and pass come from the different props set");
                     }
-                } finally {
-                    r.unlock();
-                }
-                try {
-                    Thread.sleep(5000);
-
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
-                    logger.error("failed during sleep in  " + Thread.currentThread().getName(), ex);
+                    logger.error("Error in sleeping time " + Thread.currentThread().getName(), ex);
+                } finally {
+                    r.unlock();
                 }
             }
             synchronized (this) {
                 notifyAll();
             }
-
         }
+    }
 
+    /**
+     * The checkReadingCorrectValue class is used to check the param value
+     * (getName) for Thread not be wrong or null
+     *
+     * @author AZEM
+     */
+    class checkReadingCorrectValue extends Thread {
+        /**
+         * @param resultOfReading : flg to show getName is not null and is the
+         * name param of configuration set
+         */
+        boolean resultOfReading = true;
+
+        /**
+         * sets resultOfReading flag with checking if name is not null and
+         * getName is the name param of Configuration set
+         */
+        public void run() {
+
+            long startTime = System.currentTimeMillis();
+            while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 100) {
+
+                if (props.getname().isEmpty()) {
+                    resultOfReading = false;
+                } else {
+                    if (!props.getname().substring(0, 4).equals("name")) {
+                        resultOfReading = false;
+                    }
+                }
+                System.out.println(Thread.currentThread().getName() + "  name   : " + props.getname());
+            }
+            synchronized (this) {
+                notifyAll();
+            }
+        }
     }
 }

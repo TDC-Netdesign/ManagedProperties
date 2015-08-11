@@ -77,20 +77,8 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     private String description;
     private File iconFile;
     private List<ConfigurationCallback> callbacks;
-
-    LinkedBlockingQueue myQueue1 = new LinkedBlockingQueue();
-
-    public LinkedBlockingQueue getMyQueue1() {
-
-        return myQueue1;
-    }
-
-    public void setMyQueue1(LinkedBlockingQueue myQueue1) {
-        this.myQueue1 = myQueue1;
-    }
-
+    private LinkedBlockingQueue propsQueue = new LinkedBlockingQueue();
     private ObjectClassDefinition ocd;
-
 
     /**
      * Create a ManagedProperties object
@@ -135,6 +123,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      * for the MetaData service.
      * @param iconFile This is used to define the file which is used to generate
      * an Icon for use in the MetaData service.
+     * @param o This is used to get new props from propsQueue
      */
     public ManagedProperties(Map<String, Object> defaults, String name, String id, String description, File iconFile) {
         this.defaults = defaults;
@@ -150,10 +139,10 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         ocd = this.buildOCD();
         callbacks = new ArrayList<>();
 
-        Thread o = new takeQueue();
+        Thread o = new TakePropsQueue();
         o.setDaemon(true);
         o.start();
-        
+
         logger.info("Created new ManagedProperties for " + id + " with name: '" + name + "' and ObjectClassDefinition: " + ocd);
     }
 
@@ -222,6 +211,14 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     }
 
     /**
+     *
+     * @return
+     */
+    public LinkedBlockingQueue getPropsQueue() {
+        return propsQueue;
+    }
+
+    /**
      * Registers this ManagedProperties object with the bundle context. This
      * should be done in the bundle activator right just after this object is
      * added to its intended service.
@@ -286,8 +283,6 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         return new ArrayList<>(callbacks);
     }
 
-
-
     /**
      * This method is called by the ConfigurationAdmin whenever the
      * configuration is updated. This updates the configuration and updates all
@@ -295,6 +290,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      * expected class of any configurations denoted by a @Property annotation.
      *
      * @param dctnr The new configuration
+     * @param propsQueue A queue for keep all configuration updated
      * @throws ConfigurationException A ConfigurationException is thrown if a
      * configuration element is found not to match the expected class defined by
      * the
@@ -351,10 +347,10 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
             }
         }
         try {
-            myQueue1.put(newprops);
-
+            propsQueue.put(newprops);
         } catch (InterruptedException ex) {
-            java.util.logging.Logger.getLogger(ManagedProperties.class.getName()).log(Level.SEVERE, null, ex);
+            Thread.currentThread().interrupt();
+            logger.error("Interupt in putting newProps in Queue" + Thread.currentThread().getName(), ex);
         }
 
     }
@@ -839,36 +835,37 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         }
     }
 
-
-
     public Lock getReadLock() {
         r.lock();
         return r;
     }
 
-    private class takeQueue extends Thread {
+    /**
+     * The TakePropsQueue class is used to take new configuration from the queue
+     *
+     * @author AZEM
+     */
+    private class TakePropsQueue extends Thread {
+
         Object o;
         boolean running = true;
 
         @Override
         public void run() {
             while (running) {
-
                 try {
-                    this.o = getMyQueue1().take();
+                    this.o = getPropsQueue().take();
                 } catch (InterruptedException ex) {
-                    running= false;
-                    logger.error("take Threat interupting",ex);
+                    running = false;
+                    logger.error("take Threat interupting", ex);
                 }
-
                 w.lock();
-                logger.debug("Acuired Write lock");
+                logger.debug("Acquired Write lock");
                 try {
                     props = (Map<String, Object>) o;
                 } finally {
                     w.unlock();
                 }
-
             }
         }
 
