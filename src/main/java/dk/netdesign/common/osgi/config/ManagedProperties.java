@@ -842,6 +842,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 
     /**
      * The TakePropsQueue class is used to take new configuration from the queue
+     * and assign it to props
      *
      * @author AZEM
      */

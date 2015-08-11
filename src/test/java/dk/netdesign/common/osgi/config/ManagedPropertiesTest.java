@@ -87,7 +87,7 @@ public class ManagedPropertiesTest {
         newConfig.put("otherDouble", Collections.singletonList(2.6d));
         newConfig.put("IntegerToString", Collections.singletonList(16));
         props.updated(newConfig);
-        // get configuration from Queue
+        // get a configuration from Queue
         Runnable t1 = new Runnable() {
             @Override
             public void run() {
@@ -138,20 +138,20 @@ public class ManagedPropertiesTest {
     public void testLock() throws InterruptedException, ConfigurationException {
 
         String url;
-        final Dictionary<String, Object> propsT2 = new Hashtable<>();
-        final Dictionary<String, Object> propsMain = new Hashtable<>();
-        propsMain.put("name", Collections.singletonList("nameMain"));
-        propsMain.put("pass", Collections.singletonList("passMain"));
-        propsMain.put("url", Collections.singletonList("urlMain"));
-        propsT2.put("name", Collections.singletonList("nameSecondThread"));
-        propsT2.put("pass", Collections.singletonList("passSecondTread"));
-        propsT2.put("url", Collections.singletonList("urlSecondThread"));
+        final Dictionary<String, Object> newProps = new Hashtable<>();
+        final Dictionary<String, Object> mainProps = new Hashtable<>();
+        mainProps.put("name", Collections.singletonList("nameMain"));
+        mainProps.put("pass", Collections.singletonList("passMain"));
+        mainProps.put("url", Collections.singletonList("urlMain"));
+        newProps.put("name", Collections.singletonList("nameSecondThread"));
+        newProps.put("pass", Collections.singletonList("passSecondTread"));
+        newProps.put("url", Collections.singletonList("urlSecondThread"));
 
-        props.updated(propsMain);
+        props.updated(mainProps);
         Runnable thread = new Runnable() {
             public void run() {
                 try {
-                    props.updated(propsT2);
+                    props.updated(newProps);
                 } catch (ConfigurationException ex) {
                     logger.error("ConfigurationException in " + ManagedPropertiesTest.class.getName(), ex);
                 }
@@ -173,36 +173,39 @@ public class ManagedPropertiesTest {
     @Test
     public void threadsSynchronization() throws InterruptedException, ConfigurationException {
 
-        final Dictionary<String, Object> propsMain = new Hashtable<>();
-        propsMain.put("name", Collections.singletonList("nameMain"));
-        propsMain.put("pass", Collections.singletonList("passMain"));
-        propsMain.put("url", Collections.singletonList("urlMain"));
+        final Dictionary<String, Object> mainProps = new Hashtable<>();
+        mainProps.put("name", Collections.singletonList("nameMain"));
+        mainProps.put("pass", Collections.singletonList("passMain"));
+        mainProps.put("url", Collections.singletonList("urlMain"));
 
-        props.updated(propsMain);
+        props.updated(mainProps);
         Runnable t1 = new Runnable() {
             public void run() {
                 Boolean conf = true;
                 try {
                     long startTime = System.currentTimeMillis();
+                    List<Dictionary<String, Object>> docList = new ArrayList<Dictionary<String, Object>>();
+                    Dictionary<String, Object> tempProps = new Hashtable<>();
+                    Random random = new Random();
+                    char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+                    StringBuilder sb = new StringBuilder();
+
                     while ((conf) && (!Thread.currentThread().isInterrupted()) && (System.currentTimeMillis() < startTime + 50)) {
-                        List<Dictionary<String, Object>> docList = new ArrayList<Dictionary<String, Object>>();
-                        Dictionary<String, Object> temp = new Hashtable<>();
-                        Random random = new Random();
-                        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-                        StringBuilder sb = new StringBuilder();
+
                         for (int i = 0; i < 10; i++) {
                             for (int j = 0; j < 6; j++) {
                                 char c = chars[random.nextInt(chars.length)];
                                 sb.append(c);
                             }
-                            String output = sb.toString();
-                            temp.put("name", Collections.singletonList("name" + sb));
-                            temp.put("pass", Collections.singletonList("pass" + sb));
-                            temp.put("url", Collections.singletonList("url" + sb));
+
+                            tempProps.put("name", Collections.singletonList("name" + sb));
+                            tempProps.put("pass", Collections.singletonList("pass" + sb));
+                            tempProps.put("url", Collections.singletonList("url" + sb));
+
+                            docList.add(tempProps);
+                            props.updated(tempProps);
+                            System.out.println(Thread.currentThread().getName() + " add new props  ");
                             sb.delete(0, 6);
-                            docList.add(temp);
-                            props.updated(temp);
-                            System.out.println(Thread.currentThread().getName() + " add new props  " + temp.get("name") + " - - - " + temp.get("pass") + " - - - " + temp.get("url"));
                             Thread.sleep(1000);
                         }
                     }
@@ -223,7 +226,6 @@ public class ManagedPropertiesTest {
         thread1.start();
         checkReadingCorrectValue thread2 = new checkReadingCorrectValue();
         thread2.start();
-        thread2.run();
         CheckReadingFromSameSet thread3 = new CheckReadingFromSameSet();
         thread3.start();
         synchronized (this) {
@@ -331,7 +333,7 @@ public class ManagedPropertiesTest {
                     System.out.println(Thread.currentThread().getName() + " name and pass for thread3 : " + props.getname() + " - - - " + props.getpass());
                     if (!name.substring(4, 9).equals(pass.substring(4, 9))) {
                         resultReadingFromSameSet = false;
-                        System.out.println("T3 - name and pass come from the different props set");
+                        System.out.println(Thread.currentThread().getName() + "  name and pass come from the different props set");
                     }
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -353,6 +355,7 @@ public class ManagedPropertiesTest {
      * @author AZEM
      */
     class checkReadingCorrectValue extends Thread {
+
         /**
          * @param resultOfReading : flg to show getName is not null and is the
          * name param of configuration set
