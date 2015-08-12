@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  * @author mnn
+ * @author azem
  */
 public class ManagedPropertiesTest {
 
@@ -88,7 +89,8 @@ public class ManagedPropertiesTest {
         newConfig.put("otherDouble", Collections.singletonList(2.6d));
         newConfig.put("IntegerToString", Collections.singletonList(16));
         props.updated(newConfig);
-        assertTrue("Did not match", props.getString().equals("Stringval"));
+        assertTrue("Did not match", props.getString() == null || props.getString().equals("Stringval"));
+        Thread.sleep(20);
         assertTrue("Did not match", props.getInteger().equals(1));
         assertTrue("Did not match", props.getDouble().equals(2.2d));
         assertTrue("Did not match", Arrays.deepEquals(props.getPassword(), new Character[]{'t', 'e', 's', 't'}));
@@ -125,15 +127,13 @@ public class ManagedPropertiesTest {
     @Test
     public void testLock() throws InterruptedException, ConfigurationException {
 
-        String url;
+        String pass;
         final Dictionary<String, Object> newProps = new Hashtable<>();
         final Dictionary<String, Object> mainProps = new Hashtable<>();
         mainProps.put("name", Collections.singletonList("nameMain"));
         mainProps.put("pass", Collections.singletonList("passMain"));
-        mainProps.put("url", Collections.singletonList("urlMain"));
         newProps.put("name", Collections.singletonList("nameSecondThread"));
         newProps.put("pass", Collections.singletonList("passSecondTread"));
-        newProps.put("url", Collections.singletonList("urlSecondThread"));
 
         props.updated(mainProps);
         Runnable thread = new Runnable() {
@@ -146,15 +146,15 @@ public class ManagedPropertiesTest {
             }
         };
         try {
-            new Thread(thread).start();
             r = props.getReadLock();
-            Thread.sleep(5000);
-            url = props.geturl();
+            new Thread(thread).start();         
+            Thread.sleep(20);
+            pass = props.getpass();
         } finally {
             r.unlock();
         }
-        assertEquals("urlMain", url);
-        assertEquals("urlSecondThread", props.geturl());
+        assertEquals("passMain", pass);
+        assertEquals("passSecondTread", props.getpass());
 
     }
 
@@ -164,15 +164,15 @@ public class ManagedPropertiesTest {
         final Dictionary<String, Object> mainProps = new Hashtable<>();
         mainProps.put("name", Collections.singletonList("nameMain"));
         mainProps.put("pass", Collections.singletonList("passMain"));
-        mainProps.put("url", Collections.singletonList("urlMain"));
 
         props.updated(mainProps);
         Runnable t1 = new Runnable() {
             public void run() {
                 Boolean conf = true;
                 try {
+                    
                     long startTime = System.currentTimeMillis();
-                    List<Dictionary<String, Object>> docList = new ArrayList<Dictionary<String, Object>>();
+                    List<Dictionary<String, Object>> propsList = new ArrayList<Dictionary<String, Object>>();
                     Dictionary<String, Object> tempProps = new Hashtable<>();
                     Random random = new Random();
                     char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
@@ -188,13 +188,11 @@ public class ManagedPropertiesTest {
 
                             tempProps.put("name", Collections.singletonList("name" + sb));
                             tempProps.put("pass", Collections.singletonList("pass" + sb));
-                            tempProps.put("url", Collections.singletonList("url" + sb));
 
-                            docList.add(tempProps);
+                            propsList.add(tempProps);
                             props.updated(tempProps);
-                            System.out.println(Thread.currentThread().getName() + " add new props  ");
                             sb.delete(0, 6);
-                            Thread.sleep(1000);
+                            Thread.sleep(50);
                         }
                     }
                     synchronized (this) {
@@ -285,31 +283,16 @@ public class ManagedPropertiesTest {
             return get("pass", String.class, "false");
         }
 
-        @Property(name = "url")
-        public String geturl() {
-            return get("url", String.class, "false");
-        }
-
     }
 
     /**
-     * The CheckReadingFromSameSet class is used to check if Threads params are
-     * coming the same Configuration set or not, using of a flg to show result
+     * The CheckReadingFromSameSet class is used to check if Threads parameters are
+     * coming the same Configuration set or not, using a flag to show result
      *
-     * @author AZEM
      */
     class CheckReadingFromSameSet extends Thread {
 
-        /**
-         * @param resultReadingFromSameSet : flg to show if Thread name and Pass
-         * are coming from the same Configuration set
-         */
         boolean resultReadingFromSameSet = true;
-
-        /**
-         * sets resultReadingFromSameSet flag with checking if name and pass are
-         * coming the same Configuration set
-         */
         public void run() {
             long startTime = System.currentTimeMillis();
             while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 10000) {
@@ -318,7 +301,6 @@ public class ManagedPropertiesTest {
                     String name = props.getname();
                     Thread.sleep(2000);
                     String pass = props.getpass();
-                    System.out.println(Thread.currentThread().getName() + " name and pass for thread3 : " + props.getname() + " - - - " + props.getpass());
                     if (!name.substring(4, 9).equals(pass.substring(4, 9))) {
                         resultReadingFromSameSet = false;
                         logger.error(Thread.currentThread().getName() + "  name and pass come from the different props set");
@@ -335,30 +317,19 @@ public class ManagedPropertiesTest {
             }
         }
     }
-
+    
     /**
-     * The checkReadingCorrectValue class is used to check the param value
+     * The checkReadingCorrectValue class is used to check the parameter value
      * (getName) for Thread not be wrong or null
      *
-     * @author AZEM
      */
     class CheckReadingCorrectValue extends Thread {
 
-        /**
-         * @param resultOfReading : flg to show getName value is not null and is
-         * correct value for name in configuration set
-         */
         boolean resultOfReading = true;
-
-        /**
-         * sets resultOfReading flag with checking if name is not null and
-         * getName is the name value in Configuration set
-         */
         public void run() {
 
             long startTime = System.currentTimeMillis();
             while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 100) {
-
                 if (props.getname().isEmpty()) {
                     resultOfReading = false;
                 } else {
@@ -366,7 +337,6 @@ public class ManagedPropertiesTest {
                         resultOfReading = false;
                     }
                 }
-                System.out.println(Thread.currentThread().getName() + "  name   : " + props.getname());
             }
             synchronized (this) {
                 notifyAll();

@@ -56,9 +56,12 @@ import org.slf4j.LoggerFactory;
  * item. Then annotate the get methods with the @Property annotation, and use
  * the get(String, Class) method to cast the object to the expected type.
  * Reflection will take care of creating the MetaTypeProvider items and ensure
- * that the type returned to the service matches the @Property.
+ * that the type returned to the service matches the @Property.Updated
+ * configuration is done asynchronized with using of Queue for putting and
+ * taking all new configuration set.
  *
  * @author mnn
+ * @author azem
  */
 public class ManagedProperties implements Map<String, Object>, ManagedService, MetaTypeProvider, ConfigurationCallbackHandler {
 
@@ -78,6 +81,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     private File iconFile;
     private List<ConfigurationCallback> callbacks;
     private LinkedBlockingQueue propsQueue = new LinkedBlockingQueue();
+    private Thread takeNewPropsFromQueue;
     private ObjectClassDefinition ocd;
 
     /**
@@ -139,7 +143,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         ocd = this.buildOCD();
         callbacks = new ArrayList<>();
 
-        Thread takeNewPropsFromQueue = new TakePropsQueue();
+        takeNewPropsFromQueue = new TakePropsQueue();
         takeNewPropsFromQueue.setDaemon(true);
         takeNewPropsFromQueue.start();
 
@@ -285,12 +289,12 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
 
     /**
      * This method is called by the ConfigurationAdmin whenever the
-     * configuration is updated. This updates the configuration and updates all
-     * registered callbacks. The method checks if the objects returned match the
-     * expected class of any configurations denoted by a @Property annotation.
+     * configuration is updated. updated is done asynchronized with using a
+     * queue.This updates the configuration and updates all registered
+     * callbacks. The method checks if the objects returned match the expected
+     * class of any configurations denoted by a @Property annotation.
      *
      * @param dctnr The new configuration
-     * @param propsQueue A queue for keep all configuration updated
      * @throws ConfigurationException A ConfigurationException is thrown if a
      * configuration element is found not to match the expected class defined by
      * the
@@ -465,13 +469,13 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         try {
             Object result = null;
             r.lock();
-//            Object value=getOrDefault(key, (defaults != null ? defaults.get(key) : null));
-//            if(value==null){
-//                // do something to get correct value
-//            }else{
-//                result=type.cast(getOrDefault(key, (defaults != null ? defaults.get(key) : null)));
-//            }
-            return type.cast(getOrDefault(key, (defaults != null ? defaults.get(key) : null)));
+            Object value = getOrDefault(key, (defaults != null ? defaults.get(key) : null));
+            if (value == null) {
+                return null;
+            } else {
+                return type.cast(value);
+            }
+
         } finally {
             r.unlock();
         }
@@ -850,51 +854,26 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      * The TakePropsQueue class is used to take new configuration from the queue
      * and assign it to props
      *
-     * @author AZEM
      */
-//    private class TakePropsQueue extends Thread {
-//
-//        Object o;
-//        boolean running = true;
-//
-//        @Override
-//        public void run() {
-//            while (running) {
-//                try {
-//                    this.o = getPropsQueue().take();
-//                } catch (InterruptedException ex) {
-//                    running = false;
-//                    logger.error("take Threat interupting", ex);
-//                }
-//                w.lock();
-//                logger.debug("Acquired Write lock");
-//                
-//                try {
-//                    props = (Map<String, Object>) o;
-//                    System.out.println(Thread.currentThread().getName() + " take props from queue RUN!!");
-//                } finally {
-//                    w.unlock();
-//                }
-//            }
-//        }
-//
-//    }
-    
-     private class TakePropsQueue extends Thread {
+    private class TakePropsQueue extends Thread {
 
-        Object o;
+        private Object o;
         boolean running = true;
 
         @Override
         public void run() {
             while (running) {
                 try {
-                    w.lock();
-                    props = (Map<String, Object>) getPropsQueue().take();
-//                    System.out.println(Thread.currentThread().getName() + " take props from queue RUN!!");
+                    this.o = getPropsQueue().take();
                 } catch (InterruptedException ex) {
-                     running = false;
+                    running = false;
                     logger.error("take Threat interupting", ex);
+                }
+                w.lock();
+                logger.debug("Acquired Write lock");
+
+                try {
+                    props = (Map<String, Object>) o;
                 } finally {
                     w.unlock();
                 }
