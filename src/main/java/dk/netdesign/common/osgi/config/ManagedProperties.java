@@ -122,8 +122,8 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      * @param description This is used to specify the Description for the bundle
      * for the MetaData service.
      * @param iconFile This is used to define the file which is used to generate
-     * an Icon for use in the MetaData service.
-     * @param obj This is used to get new Configuration from propsQueue
+     * an Icon for use in the MetaData service. takeNewPropsFromQueue : This is
+     * used to get new Configuration from propsQueue
      */
     public ManagedProperties(Map<String, Object> defaults, String name, String id, String description, File iconFile) {
         this.defaults = defaults;
@@ -139,9 +139,9 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         ocd = this.buildOCD();
         callbacks = new ArrayList<>();
 
-        Thread obj = new TakePropsQueue();
-        obj.setDaemon(true);
-        obj.start();
+        Thread takeNewPropsFromQueue = new TakePropsQueue();
+        takeNewPropsFromQueue.setDaemon(true);
+        takeNewPropsFromQueue.start();
 
         logger.info("Created new ManagedProperties for " + id + " with name: '" + name + "' and ObjectClassDefinition: " + ocd);
     }
@@ -443,7 +443,6 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     public Object getOrDefault(String key, Object defaultVal) {
         try {
             r.lock();
-
             return props.getOrDefault(key, defaultVal);
         } finally {
             r.unlock();
@@ -464,7 +463,14 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      */
     public <T> T get(String key, Class<T> type, String lockUpdateFormExtract) {
         try {
+            Object result = null;
             r.lock();
+//            Object value=getOrDefault(key, (defaults != null ? defaults.get(key) : null));
+//            if(value==null){
+//                // do something to get correct value
+//            }else{
+//                result=type.cast(getOrDefault(key, (defaults != null ? defaults.get(key) : null)));
+//            }
             return type.cast(getOrDefault(key, (defaults != null ? defaults.get(key) : null)));
         } finally {
             r.unlock();
@@ -846,7 +852,35 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      *
      * @author AZEM
      */
-    private class TakePropsQueue extends Thread {
+//    private class TakePropsQueue extends Thread {
+//
+//        Object o;
+//        boolean running = true;
+//
+//        @Override
+//        public void run() {
+//            while (running) {
+//                try {
+//                    this.o = getPropsQueue().take();
+//                } catch (InterruptedException ex) {
+//                    running = false;
+//                    logger.error("take Threat interupting", ex);
+//                }
+//                w.lock();
+//                logger.debug("Acquired Write lock");
+//                
+//                try {
+//                    props = (Map<String, Object>) o;
+//                    System.out.println(Thread.currentThread().getName() + " take props from queue RUN!!");
+//                } finally {
+//                    w.unlock();
+//                }
+//            }
+//        }
+//
+//    }
+    
+     private class TakePropsQueue extends Thread {
 
         Object o;
         boolean running = true;
@@ -855,15 +889,12 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         public void run() {
             while (running) {
                 try {
-                    this.o = getPropsQueue().take();
+                    w.lock();
+                    props = (Map<String, Object>) getPropsQueue().take();
+//                    System.out.println(Thread.currentThread().getName() + " take props from queue RUN!!");
                 } catch (InterruptedException ex) {
-                    running = false;
+                     running = false;
                     logger.error("take Threat interupting", ex);
-                }
-                w.lock();
-                logger.debug("Acquired Write lock");
-                try {
-                    props = (Map<String, Object>) o;
                 } finally {
                     w.unlock();
                 }

@@ -65,6 +65,7 @@ public class ManagedPropertiesTest {
     }
 
     /**
+     * 
      * Test of getDefaults method, of class ManagedProperties.
      */
     @Test
@@ -76,7 +77,7 @@ public class ManagedPropertiesTest {
     }
 
     @Test
-    public void testUpdate() throws ConfigurationException{
+    public void testUpdate() throws ConfigurationException,Exception{
         Dictionary<String, Object> newConfig = new Hashtable<>();
         newConfig.put("String", Collections.singletonList("Stringval"));
         newConfig.put("Integer", Collections.singletonList(1));
@@ -211,7 +212,7 @@ public class ManagedPropertiesTest {
 
         Thread thread1 = new Thread(t1);
         thread1.start();
-        checkReadingCorrectValue thread2 = new checkReadingCorrectValue();
+        CheckReadingCorrectValue thread2 = new CheckReadingCorrectValue();
         thread2.start();
         CheckReadingFromSameSet thread3 = new CheckReadingFromSameSet();
         thread3.start();
@@ -341,7 +342,7 @@ public class ManagedPropertiesTest {
      *
      * @author AZEM
      */
-    class checkReadingCorrectValue extends Thread {
+    class CheckReadingCorrectValue extends Thread {
 
         /**
          * @param resultOfReading : flg to show getName value is not null and is
