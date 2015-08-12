@@ -76,7 +76,7 @@ public class ManagedPropertiesTest {
     }
 
     @Test
-    public void testUpdate() throws ConfigurationException, Exception{
+    public void testUpdate() throws ConfigurationException{
         Dictionary<String, Object> newConfig = new Hashtable<>();
         newConfig.put("String", Collections.singletonList("Stringval"));
         newConfig.put("Integer", Collections.singletonList(1));
