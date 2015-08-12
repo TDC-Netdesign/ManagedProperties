@@ -66,7 +66,7 @@ public class ManagedPropertiesTest {
     }
 
     /**
-     * 
+     *
      * Test of getDefaults method, of class ManagedProperties.
      */
     @Test
@@ -78,7 +78,7 @@ public class ManagedPropertiesTest {
     }
 
     @Test
-    public void testUpdate() throws ConfigurationException,Exception{
+    public void testUpdate() throws ConfigurationException, Exception {
         Dictionary<String, Object> newConfig = new Hashtable<>();
         newConfig.put("String", Collections.singletonList("Stringval"));
         newConfig.put("Integer", Collections.singletonList(1));
@@ -147,7 +147,7 @@ public class ManagedPropertiesTest {
         };
         try {
             r = props.getReadLock();
-            new Thread(thread).start();         
+            new Thread(thread).start();
             Thread.sleep(20);
             pass = props.getpass();
         } finally {
@@ -170,7 +170,7 @@ public class ManagedPropertiesTest {
             public void run() {
                 Boolean conf = true;
                 try {
-                    
+
                     long startTime = System.currentTimeMillis();
                     List<Dictionary<String, Object>> propsList = new ArrayList<Dictionary<String, Object>>();
                     Dictionary<String, Object> tempProps = new Hashtable<>();
@@ -178,7 +178,7 @@ public class ManagedPropertiesTest {
                     char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
                     StringBuilder sb = new StringBuilder();
 
-                    while ((conf) && (!Thread.currentThread().isInterrupted()) && (System.currentTimeMillis() < startTime + 50)) {
+                    while ((conf) && (!Thread.currentThread().isInterrupted()) && (System.currentTimeMillis() < startTime + 100)) {
 
                         for (int i = 0; i < 10; i++) {
                             for (int j = 0; j < 6; j++) {
@@ -286,20 +286,21 @@ public class ManagedPropertiesTest {
     }
 
     /**
-     * The CheckReadingFromSameSet class is used to check if Threads parameters are
-     * coming the same Configuration set or not, using a flag to show result
+     * The CheckReadingFromSameSet class is used to check if Threads parameters
+     * are coming the same Configuration set or not, using a flag to show result
      *
      */
     class CheckReadingFromSameSet extends Thread {
 
         boolean resultReadingFromSameSet = true;
+
         public void run() {
             long startTime = System.currentTimeMillis();
-            while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 10000) {
+            while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 1000) {
                 try {
                     r = props.getReadLock();
                     String name = props.getname();
-                    Thread.sleep(2000);
+                    Thread.sleep(100);
                     String pass = props.getpass();
                     if (!name.substring(4, 9).equals(pass.substring(4, 9))) {
                         resultReadingFromSameSet = false;
@@ -317,7 +318,7 @@ public class ManagedPropertiesTest {
             }
         }
     }
-    
+
     /**
      * The checkReadingCorrectValue class is used to check the parameter value
      * (getName) for Thread not be wrong or null
@@ -326,10 +327,10 @@ public class ManagedPropertiesTest {
     class CheckReadingCorrectValue extends Thread {
 
         boolean resultOfReading = true;
-        public void run() {
 
+        public void run() {
             long startTime = System.currentTimeMillis();
-            while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 100) {
+            while ((!Thread.currentThread().isInterrupted()) && System.currentTimeMillis() < startTime + 1000) {
                 if (props.getname().isEmpty()) {
                     resultOfReading = false;
                 } else {

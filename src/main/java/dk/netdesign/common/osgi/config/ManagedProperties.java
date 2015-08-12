@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * Configuration Admin and MetaType OSGi services. Using the register method,
  * the ManagedProperties register itself as both a Configuration Admin
  * ManagedService and as a MetaType service MetaTypeProvider. This class can be
- * used directly, but is best used as a superclass. For the best utliziation, it
+ * used directly, but is best used as a superclass. For the best utilization, it
  * is advised to extends this class, and add get methods for each configuration
  * item. Then annotate the get methods with the @Property annotation, and use
  * the get(String, Class) method to cast the object to the expected type.
