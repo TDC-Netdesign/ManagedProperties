@@ -123,7 +123,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      * for the MetaData service.
      * @param iconFile This is used to define the file which is used to generate
      * an Icon for use in the MetaData service.
-     * @param o This is used to get new props from propsQueue
+     * @param obj This is used to get new props from propsQueue
      */
     public ManagedProperties(Map<String, Object> defaults, String name, String id, String description, File iconFile) {
         this.defaults = defaults;
@@ -139,9 +139,9 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         ocd = this.buildOCD();
         callbacks = new ArrayList<>();
 
-        Thread o = new TakePropsQueue();
-        o.setDaemon(true);
-        o.start();
+        Thread obj = new TakePropsQueue();
+        obj.setDaemon(true);
+        obj.start();
 
         logger.info("Created new ManagedProperties for " + id + " with name: '" + name + "' and ObjectClassDefinition: " + ocd);
     }
