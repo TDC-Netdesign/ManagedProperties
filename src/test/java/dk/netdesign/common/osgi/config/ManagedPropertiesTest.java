@@ -76,7 +76,7 @@ public class ManagedPropertiesTest {
     }
 
     @Test
-    public void testUpdate() throws ConfigurationException {
+    public void testUpdate() throws ConfigurationException, Exception{
         Dictionary<String, Object> newConfig = new Hashtable<>();
         newConfig.put("String", Collections.singletonList("Stringval"));
         newConfig.put("Integer", Collections.singletonList(1));
@@ -87,19 +87,6 @@ public class ManagedPropertiesTest {
         newConfig.put("otherDouble", Collections.singletonList(2.6d));
         newConfig.put("IntegerToString", Collections.singletonList(16));
         props.updated(newConfig);
-        // get a configuration from Queue
-        Runnable t1 = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    r = props.getReadLock();
-                } finally {
-                    r.unlock();
-                }
-            }
-        };
-        Thread thread1 = new Thread(t1);
-        thread1.start();
         assertTrue("Did not match", props.getString().equals("Stringval"));
         assertTrue("Did not match", props.getInteger().equals(1));
         assertTrue("Did not match", props.getDouble().equals(2.2d));
