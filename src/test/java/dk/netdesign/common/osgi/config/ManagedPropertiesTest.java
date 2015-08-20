@@ -6,8 +6,6 @@
 package dk.netdesign.common.osgi.config;
 
 import java.io.File;
-import static java.lang.Math.random;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,18 +15,12 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Timer;
 import java.util.concurrent.locks.Lock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import static jdk.nashorn.internal.objects.NativeRegExp.test;
-import junit.framework.Assert;
 import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.metatype.ObjectClassDefinition;
@@ -192,7 +184,7 @@ public class ManagedPropertiesTest {
                             propsList.add(tempProps);
                             props.updated(tempProps);
                             sb.delete(0, 6);
-                            Thread.sleep(50);
+                            Thread.sleep(100);
                         }
                     }
                     synchronized (this) {
