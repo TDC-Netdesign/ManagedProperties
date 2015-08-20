@@ -15,9 +15,16 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -148,6 +155,53 @@ public class ManagedPropertiesTest {
         assertEquals("passMain", pass);
         assertEquals("passSecondTread", props.getpass());
 
+    }
+    
+    @Test
+    public void testCallback() throws Exception {
+	ScheduledExecutorService service = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+	TestCallback callback1 = new TestCallback();
+	TestCallback callback2 = new TestCallback();
+	TestCallback callback3 = new TestCallback();
+	TestReadThread reader1 = new TestReadThread();
+	TestReadThread reader2 = new TestReadThread();
+	TestReadThread reader3 = new TestReadThread();
+	
+	callback1.monitor(callback2, callback3).monitor(reader1, reader2 ,reader3);
+	callback2.monitor(callback1, callback3).monitor(reader1, reader2 ,reader3);
+	callback3.monitor(callback1, callback2).monitor(reader1, reader2 ,reader3);
+	
+	reader1.monitor(callback1, callback2, callback3);
+	reader2.monitor(callback1, callback2, callback3);
+	reader3.monitor(callback1, callback2, callback3);
+	
+	props.addConfigurationCallback(callback1);
+	props.addConfigurationCallback(callback2);
+	props.addConfigurationCallback(callback3);
+	
+	service.scheduleWithFixedDelay(reader1, 0, 2, TimeUnit.MILLISECONDS);
+	service.scheduleWithFixedDelay(reader2, 0, 2, TimeUnit.MILLISECONDS);
+	service.scheduleWithFixedDelay(reader3, 0, 2, TimeUnit.MILLISECONDS);
+	
+	long startTime = System.currentTimeMillis();
+	while(System.currentTimeMillis() < startTime + 10000){
+	    Dictionary dict = new Hashtable<>();
+	    dict.put("Integer", Collections.singletonList(2));
+	    props.updated(dict);
+	}
+	service.shutdown();
+	service.awaitTermination(10, TimeUnit.SECONDS);
+	callback1.check();
+	callback2.check();
+	callback3.check();
+	
+	reader1.check();
+	reader2.check();
+	reader3.check();
+	
+	assertNotEquals(Collections.emptyList(), callback1.updates);
+	assertNotEquals(Collections.emptyList(), callback2.updates);
+	assertNotEquals(Collections.emptyList(), callback3.updates);
     }
 
     @Test
@@ -336,4 +390,103 @@ public class ManagedPropertiesTest {
             }
         }
     }
+    
+    class TestCallback implements ConfigurationCallback{
+	final List<Map<String, ?>> updates = new ArrayList<>();
+	boolean working = false;
+	final List<TestCallback> monitoredCallbacks = new ArrayList<>();
+	final List<TestReadThread> monitoredReaders = new ArrayList<>();
+	final List<Exception> exceptions = new ArrayList<>();
+
+	@Override
+	public void configurationUpdated(Map<String, ?> newProperties) {
+	    try{
+	    working = true;
+	    updates.add(newProperties);
+	    try {
+		for(TestCallback callback : monitoredCallbacks){
+		    if(callback.working){
+			exceptions.add(new Exception("Callback "+callback+" was working while "+this+" was running"));
+		    }
+		}
+		for(TestReadThread reader : monitoredReaders){
+		    if(reader.working){
+			exceptions.add(new Exception("Reader "+reader+" was working while "+this+" was running"));
+		    }
+		}
+		Thread.sleep(40);
+	    } catch (InterruptedException ex) {
+		updates.clear();
+		exceptions.add(ex);
+	    }
+
+	    }catch(Exception ex){
+		exceptions.add(ex);
+	    }finally{
+		working = false;
+	    }
+	}
+	
+	public TestCallback monitor(TestCallback... monitoredObjects){
+	    monitoredCallbacks.clear();
+	    monitoredCallbacks.addAll(Arrays.asList(monitoredObjects));
+	    return this;
+	}
+	
+	public TestCallback monitor(TestReadThread... monitoredObjects){
+	    monitoredCallbacks.clear();
+	    monitoredReaders.addAll(Arrays.asList(monitoredObjects));
+	    return this;
+	}
+	
+	public void check() throws Exception{
+	    if(!exceptions.isEmpty()){
+		throw exceptions.get(0);
+	    }
+	}
+    }
+    
+    class TestReadThread extends Thread{
+	boolean working = false;
+	final List<TestCallback> monitoredCallbacks = new ArrayList<>();
+	final List<Exception> exceptions = new ArrayList<>();
+	
+	
+	public TestReadThread() {
+	}
+
+	@Override
+	public void run() {
+	    Lock lock = props.getReadLock();
+	    try{
+		working = true;
+		for(TestCallback callback : monitoredCallbacks){
+		    if(callback.working){
+			exceptions.add(new Exception("Callback "+callback+" was working while "+this+" was running"));
+		    }
+		}
+		props.getInteger();
+		Thread.sleep(15);
+		working = false;
+	    }catch(Exception ex){
+		exceptions.add(ex);
+	    }finally{
+		working = false;
+		lock.unlock();
+	    }
+	}
+	
+	public TestReadThread monitor(TestCallback... monitoredObjects){
+	    monitoredCallbacks.clear();
+	    monitoredCallbacks.addAll(Arrays.asList(monitoredObjects));
+	    return this;
+	}
+	
+	public void check() throws Exception{
+	    if(!exceptions.isEmpty()){
+		throw exceptions.get(0);
+	    }
+	}
+    }
+    
 }

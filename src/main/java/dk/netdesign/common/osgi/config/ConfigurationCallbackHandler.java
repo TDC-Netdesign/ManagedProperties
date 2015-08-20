@@ -9,7 +9,7 @@ package dk.netdesign.common.osgi.config;
 import java.util.List;
 
 /**
- *
+ * Implementations of this interface can register Callbacks that will be executed when new configurations are loaded.
  * @author mnn
  */
 public interface ConfigurationCallbackHandler {

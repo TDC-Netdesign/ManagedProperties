@@ -79,8 +79,8 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     private String id;
     private String description;
     private File iconFile;
-    private List<ConfigurationCallback> callbacks;
-    private LinkedBlockingQueue propsQueue = new LinkedBlockingQueue();
+    private final List<ConfigurationCallback> callbacks;
+    private LinkedBlockingQueue<Map<String, Object>> propsQueue = new LinkedBlockingQueue<>();
     private Thread takeNewPropsFromQueue;
     private ObjectClassDefinition ocd;
 
@@ -214,13 +214,6 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
         this.defaults = defaults;
     }
 
-    /**
-     *
-     * @return
-     */
-    public LinkedBlockingQueue getPropsQueue() {
-        return propsQueue;
-    }
 
     /**
      * Registers this ManagedProperties object with the bundle context. This
@@ -264,7 +257,9 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      */
     @Override
     public void addConfigurationCallback(ConfigurationCallback callback) {
-        callbacks.add(callback);
+        synchronized(callbacks){
+	    callbacks.add(callback);
+	}
     }
 
     /**
@@ -274,7 +269,9 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      */
     @Override
     public void removeConfigurationCallback(ConfigurationCallback callback) {
-        callbacks.remove(callback);
+        synchronized(callbacks){
+	    callbacks.remove(callback);
+	}
     }
 
     /**
@@ -284,7 +281,9 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      */
     @Override
     public List<ConfigurationCallback> getConfigurationCallbacks() {
-        return new ArrayList<>(callbacks);
+        synchronized(callbacks){
+	    return new ArrayList<>(callbacks);
+	}
     }
 
     /**
@@ -857,14 +856,14 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      */
     private class TakePropsQueue extends Thread {
 
-        private Object o;
+        private Map<String, Object> o;
         boolean running = true;
 
         @Override
         public void run() {
             while (running) {
                 try {
-                    this.o = getPropsQueue().take();
+                    this.o = propsQueue.take();
                 } catch (InterruptedException ex) {
                     running = false;
                     logger.error("take Threat interupting", ex);
@@ -873,8 +872,13 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
                 logger.debug("Acquired Write lock");
 
                 try {
-                    props = (Map<String, Object>) o;
-                } finally {
+                    props = o;
+		    synchronized(callbacks){
+			for(ConfigurationCallback configItem : callbacks){
+			    configItem.configurationUpdated(new HashMap<>(o));
+			}
+		    }
+		} finally {
                     w.unlock();
                 }
             }
