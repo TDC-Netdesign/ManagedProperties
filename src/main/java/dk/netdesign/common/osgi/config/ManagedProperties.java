@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -27,12 +26,10 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.osgi.framework.BundleContext;
@@ -199,16 +196,16 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
     }
 
     /**
-     *
-     * @return
+     * Returns the map of default objects to use. Changes to the map are reflected by future calls.
+     * @return The current defaults
      */
     public Map<String, Object> getDefaults() {
         return defaults;
     }
 
     /**
-     *
-     * @param defaults
+     * Sets the default values to this map
+     * @param defaults Defaults to set
      */
     public void setDefaults(Map<String, Object> defaults) {
         this.defaults = defaults;
@@ -297,7 +294,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      * @throws ConfigurationException A ConfigurationException is thrown if a
      * configuration element is found not to match the expected class defined by
      * the
-     * @Property
+     * 
      */
     @Override
     public void updated(Dictionary<String, ?> dctnr) throws ConfigurationException {
@@ -458,15 +455,13 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      * @param <T> The object type to return
      * @param key The key to get the configuration for
      * @param type The type to cast the configuration object to
-     * @param lockUpdateFormExtract
      * @throws ClassCastException As this class casts the object, a
      * ClassCastException can occur if the cast to the defined type is not
      * possible.
-     * @return
+     * @return The value matching the key, cast to the defined type
      */
-    public <T> T get(String key, Class<T> type, String lockUpdateFormExtract) {
+    public <T> T get(String key, Class<T> type) {
         try {
-            Object result = null;
             r.lock();
             Object value = getOrDefault(key, (defaults != null ? defaults.get(key) : null));
             if (value == null) {
@@ -555,7 +550,7 @@ public class ManagedProperties implements Map<String, Object>, ManagedService, M
      *
      * @param id OCD id to return
      * @param locale The OCD locale to return
-     * @return
+     * @return the ObjectClassDefinition
      */
     @Override
     public ObjectClassDefinition getObjectClassDefinition(String id, String locale) {

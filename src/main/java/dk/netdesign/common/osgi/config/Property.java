@@ -21,13 +21,13 @@ public @interface Property {
     
     /**
      * The name which will represent to configuration property. If not defined, the name of the method or property will be used.
-     * @return
+     * @return The name to use for the property
      */
     public String name() default "";
 
     /**
      * The ID to represent the configuration property. If not defined, the name of the property will be used.
-     * @return
+     * @return The ID that uniquely identifies the property
      */
     public String id() default "";
 

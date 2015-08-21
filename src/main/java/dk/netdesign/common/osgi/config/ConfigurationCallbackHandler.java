@@ -15,20 +15,21 @@ import java.util.List;
 public interface ConfigurationCallbackHandler {
     
     /**
-     *
-     * @param callback
+     * Adds a @see ConfigurationCallback
+     * @param callback The callback to add
      */
     public void addConfigurationCallback(ConfigurationCallback callback);
 
     /**
-     *
-     * @param callback
+     * Removes a @see ConfigurationCallback that equals (==) the provided @see ConfigurationCallback. 
+     * @param callback The callback to remove
      */
     public void removeConfigurationCallback(ConfigurationCallback callback);
 
     /**
-     *
-     * @return
+     * Returns a list of @see ConfigurationCallback registered to this handler. The list is a clone of the internal list, but
+     * contains the original elements.
+     * @return A cloned list of @see ConfigurationCallback
      */
     public List<ConfigurationCallback> getConfigurationCallbacks();
     
