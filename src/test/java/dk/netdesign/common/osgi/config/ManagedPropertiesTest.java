@@ -281,52 +281,52 @@ public class ManagedPropertiesTest {
 
         @Property
         public String getString() {
-            return get("String", String.class, "false");
+            return get("String", String.class);
         }
 
         @Property
         public Integer getInteger() {
-            return get("Integer", Integer.class, "false");
+            return get("Integer", Integer.class);
         }
 
         @Property
         public Double getDouble() {
-            return get("Double", Double.class, "false");
+            return get("Double", Double.class);
         }
 
         @Property
         public Character[] getPassword() {
-            return get("Password", Character[].class, "false");
+            return get("Password", Character[].class);
         }
 
         @Property(name = "otherString")
         public String getRenamedString() {
-            return get("otherString", String.class, "false");
+            return get("otherString", String.class);
         }
 
         @Property(name = "otherInteger")
         public Integer getRenamedInteger() {
-            return get("otherInteger", Integer.class, "false");
+            return get("otherInteger", Integer.class);
         }
 
         @Property(name = "otherDouble")
         public Double getRenamedDouble() {
-            return get("otherDouble", Double.class, "false");
+            return get("otherDouble", Double.class);
         }
 
         @Property(type = Integer.class)
         public String getIntegerToString() {
-            return get("IntegerToString", Integer.class, "false").toString();
+            return get("IntegerToString", Integer.class).toString();
         }
 
         @Property(name = "name")
         public String getname() {
-            return get("name", String.class, "false");
+            return get("name", String.class);
         }
 
         @Property(name = "pass")
         public String getpass() {
-            return get("pass", String.class, "false");
+            return get("pass", String.class);
         }
 
     }
