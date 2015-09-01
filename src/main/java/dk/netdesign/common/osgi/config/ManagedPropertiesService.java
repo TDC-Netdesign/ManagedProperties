@@ -68,8 +68,6 @@ public class ManagedPropertiesService implements BundleActivator {
     private static final Logger logger = LoggerFactory.getLogger(ManagedPropertiesService.class);
     private BundleContext context;
     private Map<String, ManagedPropertiesRegistration> propertyInstances = new HashMap<>();
-    
-    
 
     public synchronized <T extends Object> T register(Class<T> type) throws InvalidTypeException, TypeFilterException, DoubleIDException {
 	ManagedProperties handler;
@@ -77,20 +75,19 @@ public class ManagedPropertiesService implements BundleActivator {
 	    throw new InvalidTypeException("Could  not register the type " + type.getName() + " as a Managed Property. The type must be an interface");
 	}
 	PropertyDefinition propertyDefinition = getDefinitionAnnotation(type);
-	
-	if(propertyInstances.containsKey(propertyDefinition.id())){
+
+	if (propertyInstances.containsKey(propertyDefinition.id())) {
 	    ManagedPropertiesRegistration currentRegistration = propertyInstances.get(propertyDefinition.id());
-	    if(!currentRegistration.registeredInterface.isAssignableFrom(type)){
-		throw new DoubleIDException("Could not register the interface"+type+". This id is already in use by "+currentRegistration.registeredInterface);
+	    if (!currentRegistration.registeredInterface.isAssignableFrom(type)) {
+		throw new DoubleIDException("Could not register the interface" + type + ". This id is already in use by " + currentRegistration.registeredInterface);
 	    }
 	    handler = currentRegistration.properties;
-	}else{
+	} else {
 	    handler = getInvocationHandler(type);
 	    handler.register(context);
 	    propertyInstances.put(propertyDefinition.id(), new ManagedPropertiesRegistration(type, handler));
 	}
-	
-	
+
 	return type.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{type, EnhancedProperty.class, ConfigurationCallbackHandler.class}, handler));
     }
 
@@ -101,7 +98,7 @@ public class ManagedPropertiesService implements BundleActivator {
     @Override
     public void start(BundleContext context) throws Exception {
 	this.context = context;
-	for(ManagedPropertiesRegistration registration : propertyInstances.values()){
+	for (ManagedPropertiesRegistration registration : propertyInstances.values()) {
 	    registration.properties.register(context);
 	}
     }
@@ -110,31 +107,30 @@ public class ManagedPropertiesService implements BundleActivator {
     public void stop(BundleContext context) throws Exception {
 	this.context = null;
     }
-    
+
     public static PropertyDefinition getDefinitionAnnotation(Class<?> type) throws InvalidTypeException {
-	    if (type == null) {
-		throw new InvalidTypeException("Could not build OCD. Type was null");
-	    }
-	    if (!type.isAnnotationPresent(PropertyDefinition.class)) {
-		throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Type did not contain the annotation " + PropertyDefinition.class.getName());
-	    }
-
-	    PropertyDefinition typeDefinition = type.getAnnotation(PropertyDefinition.class);
-
-	    if (typeDefinition.id().isEmpty()) {
-		throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". ID was not set on " + PropertyDefinition.class.getSimpleName());
-	    }
-
-	    if (typeDefinition.name().isEmpty()) {
-	       throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Name was not set on " + PropertyDefinition.class.getSimpleName());
-	    }
-
-	    return typeDefinition;
+	if (type == null) {
+	    throw new InvalidTypeException("Could not build OCD. Type was null");
 	}
-    
-    
-    
-    private class ManagedPropertiesRegistration{
+	if (!type.isAnnotationPresent(PropertyDefinition.class)) {
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Type did not contain the annotation " + PropertyDefinition.class.getName());
+	}
+
+	PropertyDefinition typeDefinition = type.getAnnotation(PropertyDefinition.class);
+
+	if (typeDefinition.id().isEmpty()) {
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". ID was not set on " + PropertyDefinition.class.getSimpleName());
+	}
+
+	if (typeDefinition.name().isEmpty()) {
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Name was not set on " + PropertyDefinition.class.getSimpleName());
+	}
+
+	return typeDefinition;
+    }
+
+    private class ManagedPropertiesRegistration {
+
 	Class registeredInterface;
 	ManagedProperties properties;
 
@@ -146,7 +142,6 @@ public class ManagedPropertiesService implements BundleActivator {
 	public ManagedPropertiesRegistration() {
 	}
 
-	
 	public Class getRegisteredInterface() {
 	    return registeredInterface;
 	}
@@ -162,8 +157,7 @@ public class ManagedPropertiesService implements BundleActivator {
 	public void setProperties(ManagedProperties properties) {
 	    this.properties = properties;
 	}
-	
-	
+
     }
 
 }

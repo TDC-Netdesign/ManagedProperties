@@ -3,14 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package dk.netdesign.common.osgi.config.exception;
 
 /**
  *
  * @author mnn
  */
-public class TypeFilterException extends Exception{
+public class TypeFilterException extends Exception {
 
     public TypeFilterException(String message) {
 	super(message);
@@ -28,8 +27,4 @@ public class TypeFilterException extends Exception{
 	super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    
-        
-    
-    
 }

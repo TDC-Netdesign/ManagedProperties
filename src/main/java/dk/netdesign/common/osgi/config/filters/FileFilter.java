@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package dk.netdesign.common.osgi.config.filters;
 
 import dk.netdesign.common.osgi.config.TypeFilter;
@@ -17,7 +16,7 @@ import java.util.logging.Logger;
  *
  * @author mnn
  */
-public class FileFilter extends TypeFilter<String>{
+public class FileFilter extends TypeFilter<String> {
 
     @Override
     public File parse(String input) throws TypeFilterException {
@@ -25,10 +24,9 @@ public class FileFilter extends TypeFilter<String>{
 	try {
 	    f.getCanonicalPath();
 	} catch (IOException ex) {
-	    throw new TypeFilterException("Could not read the file '"+input+"'. Could not resolve path: "+ex.getMessage(), ex);
+	    throw new TypeFilterException("Could not read the file '" + input + "'. Could not resolve path: " + ex.getMessage(), ex);
 	}
 	return f;
     }
-    
-    
+
 }

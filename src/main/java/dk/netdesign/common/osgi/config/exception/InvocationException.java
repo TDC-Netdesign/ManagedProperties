@@ -3,14 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package dk.netdesign.common.osgi.config.exception;
 
 /**
  *
  * @author mnn
  */
-public class InvocationException extends Exception{
+public class InvocationException extends Exception {
 
     public InvocationException(String message) {
 	super(message);
@@ -27,7 +26,5 @@ public class InvocationException extends Exception{
     public InvocationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 	super(message, cause, enableSuppression, writableStackTrace);
     }
-    
-    
-    
+
 }
