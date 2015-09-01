@@ -16,6 +16,8 @@ import dk.netdesign.common.osgi.config.filters.FileFilter;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.InvocationHandler;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
@@ -46,7 +48,7 @@ public class ManagedPropertiesServiceTest {
     ContextStub stub;
     ManagedPropertiesService service;
     TestInterface testi;
-    ManagedPropertiesService.ManagedProperties props;
+    ManagedProperties props;
     File testfile;
     
     public ManagedPropertiesServiceTest() {
@@ -66,7 +68,7 @@ public class ManagedPropertiesServiceTest {
 	service = new ManagedPropertiesService();
 	service.start(stub);
 	testi = service.register(TestInterface.class);
-	props = (ManagedPropertiesService.ManagedProperties)stub.lastRegistered;
+	props = (ManagedProperties)stub.lastRegistered;
 	testfile = new File("testFile.test");
 	testfile.createNewFile();
 	
@@ -75,6 +77,49 @@ public class ManagedPropertiesServiceTest {
     @After
     public void tearDown() {
 	testfile.delete();
+    }
+    
+    @Test
+    public void testValidTypes() throws Exception{
+	Dictionary<String, Object> newConfig = new Hashtable<>();
+	String testString = "test";
+	Integer testInteger = 123;
+	Long testLong = 112l;
+	Short testShort = 15;
+	Character testCharacter = 'b';
+	Byte testByte = 0x34;
+	Double testDouble = 123d;
+	Float testFloat = 12f;
+	BigInteger testBigInteger = BigInteger.valueOf(222);
+	BigDecimal testBigDecimal = BigDecimal.valueOf(22.2);
+	Boolean testBoolean = true;
+	Character[] testPassword = new Character[]{'t', 'e', 's', 't'};
+        newConfig.put("String", Collections.singletonList(testString));
+	newConfig.put("Integer", Collections.singletonList(testInteger));
+	newConfig.put("Long", Collections.singletonList(testLong));
+	newConfig.put("Short", Collections.singletonList(testShort));
+	newConfig.put("Character", Collections.singletonList(testCharacter));
+	newConfig.put("Byte", Collections.singletonList(testByte));
+	newConfig.put("Double", Collections.singletonList(testDouble));
+	newConfig.put("Float", Collections.singletonList(testFloat));
+	newConfig.put("BigInteger", Collections.singletonList(testBigInteger));
+	newConfig.put("BigDecimal", Collections.singletonList(testBigDecimal));
+	newConfig.put("Boolean", Collections.singletonList(testBoolean));
+	newConfig.put("Password", Collections.singletonList(testPassword));
+	props.updated(newConfig);
+	
+	assertEquals(testString, testi.getString());
+	assertEquals(testInteger, testi.getInteger());
+	assertEquals(testLong, testi.getLong());
+	assertEquals(testShort, testi.getShort());
+	assertEquals(testCharacter, testi.getCharacter());
+	assertEquals(testByte, testi.getByte());
+	assertEquals(testDouble, testi.getDouble());
+	assertEquals(testFloat, testi.getFloat());
+	assertEquals(testBigInteger, testi.getBigInteger());
+	assertEquals(testBigDecimal, testi.getBigDecimal());
+	assertEquals(testBoolean, testi.getBoolean());
+	assertArrayEquals(testPassword, testi.getPassword());
     }
 
     @Test
@@ -131,7 +176,7 @@ public class ManagedPropertiesServiceTest {
     @Test
     public void testTestNarrowing() throws Exception{
 	TestNarrowing narrowing = service.register(TestNarrowing.class);
-	ManagedPropertiesService.ManagedProperties mprops = (ManagedPropertiesService.ManagedProperties)stub.lastRegistered;
+	ManagedProperties mprops = (ManagedProperties)stub.lastRegistered;
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
         newConfig.put("Number", Collections.singletonList(12));
@@ -196,7 +241,7 @@ public class ManagedPropertiesServiceTest {
     @Test
     public void testRepeatedInterface() throws Exception{
 	TestDoubleInterfaceID1 i1 = service.register(TestDoubleInterfaceID1.class);
-	ManagedPropertiesService.ManagedProperties i1i2Props = (ManagedPropertiesService.ManagedProperties)stub.lastRegistered;
+	ManagedProperties i1i2Props = (ManagedProperties)stub.lastRegistered;
 	TestDoubleInterfaceID1 i2 = service.register(TestDoubleInterfaceID1.class);
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
@@ -213,6 +258,39 @@ public class ManagedPropertiesServiceTest {
     private static interface TestInterface extends EnhancedProperty, ConfigurationCallback{
 	@Property
 	public String getString() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Integer getInteger() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Long getLong() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Short getShort() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Character getCharacter() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Byte getByte() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Double getDouble() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Float getFloat() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public BigInteger getBigInteger() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public BigDecimal getBigDecimal() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Boolean getBoolean() throws InvalidTypeException, TypeFilterException;
+	
+	@Property
+	public Character[] getPassword() throws InvalidTypeException, TypeFilterException;
 	
 	@Property(type = Integer.class, typeMapper = StringFilter.class)
 	public String getStringInteger() throws InvalidTypeException, TypeFilterException;
