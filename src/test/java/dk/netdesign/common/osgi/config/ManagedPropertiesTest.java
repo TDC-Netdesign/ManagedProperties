@@ -5,6 +5,7 @@
  */
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.annotation.Property;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;

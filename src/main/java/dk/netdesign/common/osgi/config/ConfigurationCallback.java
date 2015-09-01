@@ -17,7 +17,7 @@ public interface ConfigurationCallback {
     
     /**
      * This method is called whenever a ManagedProperties object that this callback is registered with is called. The method is singlethreaded as long
-     * as thecallback is only registered in one ManagedProperties object.
+     * as the callback is only registered in one ManagedProperties object.
      * @param newProperties The new properties object that has been sent to the ManagedProperties object. This <b>can</b> be used to set the properties
      * for the service, but it is recommended to contact the ManagedProperties and get the configuration from there, as the Dictionary is not type safe.
      */

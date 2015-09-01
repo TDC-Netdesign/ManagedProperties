@@ -5,6 +5,8 @@
  */
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
+import dk.netdesign.common.osgi.config.annotation.Property;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;

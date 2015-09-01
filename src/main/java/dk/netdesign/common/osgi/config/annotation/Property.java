@@ -4,8 +4,9 @@
  * and open the template in the editor.
  */
 
-package dk.netdesign.common.osgi.config;
+package dk.netdesign.common.osgi.config.annotation;
 
+import dk.netdesign.common.osgi.config.TypeFilter;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -44,11 +45,13 @@ public @interface Property {
     public Cardinality cardinality() default Cardinality.Optional;
 
     /**
-     * The type of the configuration property. If not defined, will default to the type of the method. Should only be set to primitive wrappers(Integer, Long...)
+     * The type of the configuration property when saved by the configuration manager. If not defined, will default to the type of the method. Should only be set to primitive wrappers(Integer, Long...)
      * or String.
      * @return
      */
     public Class type() default void.class;
+    
+    public Class<? extends TypeFilter> typeMapper() default TypeFilter.class;
 
     /**
      * The optional values for the property. Labels and values must match.
