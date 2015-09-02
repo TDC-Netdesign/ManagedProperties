@@ -6,12 +6,14 @@
 package dk.netdesign.common.osgi.config;
 
 import dk.netdesign.common.osgi.config.annotation.Property;
+import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.osgi.service.metatype.AttributeDefinition;
 import org.slf4j.Logger;
@@ -37,7 +39,7 @@ public class AD implements AttributeDefinition {
     private Class<? extends TypeFilter> filter;
     Property.Cardinality cardinalityDef;
 
-    protected AD(Method method) throws TypeFilterException, InvalidTypeException {
+    protected AD(Method method) throws TypeFilterException, InvalidTypeException, InvalidMethodException {
 	Property methodProperty = method.getAnnotation(Property.class);
 	name = getAttributeName(method);
 	id = name;
@@ -54,11 +56,22 @@ public class AD implements AttributeDefinition {
 	}
 
 	cardinality = getCardinality(cardinalityDef);
-
+	
 	Class<? extends TypeFilter> filterFromAnnotation = methodProperty.typeMapper();
+
+	if(cardinalityDef.equals(cardinalityDef.List)){
+	    if(!List.class.isAssignableFrom(method.getReturnType())){
+		throw new InvalidMethodException("Could not create handler for method "+method.getName()+". Methods with list cardinality must return a list");
+	    }
+	    if(filterFromAnnotation != TypeFilter.class){
+		throw new InvalidMethodException("Could not create handler for method "+method+". Cannot use filters with lists");
+	    }
+	}
+	
+	
 	if (filterFromAnnotation == TypeFilter.class) {
 	    filter = null;
-	    if (!method.getReturnType().isAssignableFrom(inputType)) {
+	    if (!List.class.isAssignableFrom(method.getReturnType()) && !method.getReturnType().isAssignableFrom(inputType)) {
 		throw new InvalidTypeException("Could not create method definition. The returntype of the method '" + method.getReturnType() + "' is not compatible with the returntype of the Property '" + inputType + "'.");
 	    }
 	} else {
@@ -77,8 +90,9 @@ public class AD implements AttributeDefinition {
 		throw new TypeFilterException("Could not instantiate filter for " + method + ". Filter does not return an instantiable value.");
 	    }
 	}
-
-	logger.trace("Building AttributeDefinition with attributeID '" + id + "' attributeType '" + type + "' cardinality '" + cardinality + "'");
+	if (logger.isTraceEnabled()) {
+	    logger.trace("Building AttributeDefinition with attributeID '" + id + "' attributeType '" + type + "' cardinality '" + cardinality + "'");
+	}
 	defValue = methodProperty.defaultValue();
 	description = methodProperty.description();
 	optionalLabels = methodProperty.optionLabels();
@@ -102,12 +116,14 @@ public class AD implements AttributeDefinition {
 	return attributeName;
     }
 
-    private static Class getMethodReturnType(Method classMethod) {
+    private static Class getMethodReturnType(Method classMethod) throws InvalidMethodException {
 	Class methodReturnType = classMethod.getReturnType();
 	if (classMethod.isAnnotationPresent(Property.class)) {
 	    Property methodProperty = classMethod.getAnnotation(Property.class);
 	    if (methodProperty.type() != void.class) {
 		methodReturnType = methodProperty.type();
+	    }else if(List.class.isAssignableFrom(methodReturnType)){
+		throw new InvalidMethodException("Could not create handler for method "+classMethod.getName()+". Lists must be accompanied by a returnType");
 	    }
 	}
 	return methodReturnType;

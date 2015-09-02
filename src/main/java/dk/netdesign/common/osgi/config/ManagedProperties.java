@@ -5,14 +5,16 @@
  */
 package dk.netdesign.common.osgi.config;
 
-import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
 import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
+import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -43,6 +45,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.osgi.framework.BundleContext;
@@ -81,17 +84,29 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     private final PropertyDefinition typeDefinition;
     private final Map<String, AD> attributeToMethodMapping;
     private final List<Method> allowedMethods;
-
-    public ManagedProperties(Class<?> type) throws InvalidTypeException, TypeFilterException, DoubleIDException {
+    private final Class type;
+    private final Object defaults;
+    private final List<String> requiredIds;
+    
+    public <E> ManagedProperties(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException{
 	callbacks = new ArrayList<>();
 	lock = new ReentrantReadWriteLock();
 	r = lock.readLock();
 	w = lock.writeLock();
 	attributeToMethodMapping = new HashMap<>();
 	typeDefinition = ManagedPropertiesService.getDefinitionAnnotation(type);
+	requiredIds = new ArrayList<>();
 	for (Method classMethod : type.getMethods()) {
 	    if (classMethod.isAnnotationPresent(Property.class)) {
-		attributeToMethodMapping.put(classMethod.getName(), new AD(classMethod));
+		if(classMethod.getParameterCount() > 0){
+		    throw new InvalidMethodException("Could not create handler for this method. Methods annotated with "+Property.class.getName()+
+			    " must not take parameters");
+		}
+		AD methodDefinition = new AD(classMethod);
+		if(methodDefinition.getCardinalityDef().equals(Property.Cardinality.Required)){
+		    requiredIds.add(methodDefinition.getID());
+		}
+		attributeToMethodMapping.put(classMethod.getName(), methodDefinition);
 	    }
 	}
 
@@ -103,15 +118,24 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
 	allowedMethods.addAll(Arrays.asList(EnhancedProperty.class.getMethods()));
 	allowedMethods.addAll(Arrays.asList(ConfigurationCallbackHandler.class.getMethods()));
+	this.type = type;
+	this.defaults = defaults;
+    }
+
+    public ManagedProperties(Class type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+	this(type, null);
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException {
+    public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 	if (method.isAnnotationPresent(Property.class)) {
 	    AD propertyDefinition = attributeToMethodMapping.get(method.getName());
 	    Object returnValue = getConfigItem(propertyDefinition.getID());
 	    if (returnValue == null) {
-		throw new InvalidTypeException("Could not return the value for method " + method.getName() + " the value did not exist in the config set.");
+		returnValue = getDefaultItem(method);
+		if(returnValue == null){
+		    throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set.");
+		}
 	    }
 	    if (!method.getReturnType().isAssignableFrom(returnValue.getClass())) {
 		throw new InvalidTypeException("Could not return the value for method " + method.getName() + " the value " + returnValue + " had Type " + returnValue.getClass() + " expected " + method.getReturnType());
@@ -136,6 +160,28 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    r.unlock();
 	}
     }
+    
+    private Object getDefaultItem(Method method) throws InvocationException, InvalidTypeException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	if(defaults == null){
+	    throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set "
+		    + "and no defaults were found");
+	}
+	if(!type.isAssignableFrom(defaults.getClass())){
+	    //This SHOULD not be possible, given the generic constructor. But still. Better safe than sorry.
+	    throw new InvocationException("Could not get defaults. The defaults "+defaults+" are not of the expected type "+type);
+	}
+	Method defaultValueProvider;
+	try {
+	    defaultValueProvider = defaults.getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
+	} catch (NoSuchMethodException ex) {
+	    throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set "
+		    + "and no matching method existed in the defaults", ex);
+	}
+	return defaultValueProvider.invoke(defaults, new Object[0]);
+
+	
+	
+    }
 
     @Override
     public ObjectClassDefinition getObjectClassDefinition(String id, String locale) {
@@ -150,6 +196,8 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
 	w.lock();
+	TreeSet<String> required = new TreeSet<String>();
+	required.addAll(requiredIds);
 	Map<String, Object> newprops = new HashMap<>();
 	try {
 	    Enumeration<String> keys = properties.keys();
@@ -174,18 +222,24 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 		switch (definition.cardinalityDef) {
 		    case Optional:
 			configValue = retrieveOptionalObject(key, properties.get(key));
+			ensureCorrectType(key, configValue, definition.getInputType());
 			if (definition.getFilter() != null) {
 			    configValue = filterObject(key, configValue, definition.getFilter(), definition.getInputType());
 			}
 			break;
 		    case Required:
+			required.remove(definition.getID());
 			configValue = properties.get(key);
+			ensureCorrectType(key, configValue, definition.getInputType());
 			if (definition.getFilter() != null) {
 			    configValue = filterObject(key, configValue, definition.getFilter(), definition.getInputType());
 			}
 			break;
 		    case List:
 			List<Object> valueAsList = retrieveList(key, properties.get(key), definition.getInputType());
+			for(Object configObject : valueAsList){
+			    ensureCorrectType(key, configObject, definition.getInputType());
+			}
 			if (definition.getFilter() != null) {
 			    List filteredList = new ArrayList();
 			    for (Object value : valueAsList) {
@@ -217,9 +271,18 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 		 }*/
 
 	    }
+	    if(!required.isEmpty()){
+		throw new ConfigurationException(required.pollFirst(), "Could not update configuration. Missing required fields: "+new ArrayList<>(required));
+	    }
 	    config = newprops;
 	} finally {
 	    w.unlock();
+	}
+    }
+    
+    private void ensureCorrectType(String key, Object configurationValue, Class expectedType) throws ConfigurationException{
+	if(!expectedType.isAssignableFrom(configurationValue.getClass())){
+	    throw new ConfigurationException(key, "Could not assign "+configurationValue+" to "+key+". It did not match the expected type: "+expectedType);
 	}
     }
 

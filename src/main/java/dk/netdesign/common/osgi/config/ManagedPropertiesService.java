@@ -10,6 +10,7 @@ import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
 import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
+import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
@@ -69,7 +70,11 @@ public class ManagedPropertiesService implements BundleActivator {
     private BundleContext context;
     private Map<String, ManagedPropertiesRegistration> propertyInstances = new HashMap<>();
 
-    public synchronized <T extends Object> T register(Class<T> type) throws InvalidTypeException, TypeFilterException, DoubleIDException {
+    public synchronized <T extends Object> T register(Class<T> type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+	return register(type, null);
+    }
+    
+    public <I, T extends I> I register(Class<I> type, T defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	ManagedProperties handler;
 	if (!type.isInterface()) {
 	    throw new InvalidTypeException("Could  not register the type " + type.getName() + " as a Managed Property. The type must be an interface");
@@ -83,16 +88,18 @@ public class ManagedPropertiesService implements BundleActivator {
 	    }
 	    handler = currentRegistration.properties;
 	} else {
-	    handler = getInvocationHandler(type);
+	    handler = getInvocationHandler(type, defaults);
 	    handler.register(context);
 	    propertyInstances.put(propertyDefinition.id(), new ManagedPropertiesRegistration(type, handler));
 	}
 
 	return type.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{type, EnhancedProperty.class, ConfigurationCallbackHandler.class}, handler));
     }
+    
+    
 
-    protected ManagedProperties getInvocationHandler(Class<?> type) throws InvalidTypeException, TypeFilterException, DoubleIDException {
-	return new ManagedProperties(type);
+    protected <E> ManagedProperties getInvocationHandler(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+	return new ManagedProperties(type, defaults);
     }
 
     @Override
