@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!--
+        Licensed to the Apache Software Foundation (ASF) under one or more
+        contributor license agreements.  See the NOTICE file distributed with
+        this work for additional information regarding copyright ownership.
+        The ASF licenses this file to You under the Apache License, Version 2.0
+        (the "License"); you may not use this file except in compliance with
+        the License.  You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+    -->
+
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+	<groupId>com.netdesign.common</groupId>
+	<artifactId>osgi-common</artifactId>
+	<version>0.2-SNAPSHOT</version>
+    </parent>
+    <groupId>com.netdesign.common</groupId>
+    <artifactId>managedproperties-feature</artifactId>
+    <version>0.2-SNAPSHOT</version>
+    <packaging>feature</packaging>
+
+    <name>managedproperties-feature</name>
+    <description>Managedproperties is a handler that uses ConfigurationAdmin and Metadata service to simplify centralized configuration in karaf</description>
+
+    <dependencies>
+	<dependency>
+            <groupId>com.netdesign.common</groupId>
+	    <artifactId>managedproperties</artifactId>
+        </dependency>
+	<dependency>
+	    <groupId>org.apache.felix</groupId>
+	    <artifactId>org.apache.felix.metatype</artifactId>
+	    <version>1.1.2</version>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.apache.karaf.features</groupId>
+	    <artifactId>standard</artifactId>
+	    <version>3.0.3</version>
+	    <classifier>features</classifier>
+	    <type>xml</type>
+	</dependency>
+    </dependencies>
+    
+    
+
+    <build>
+	<pluginManagement>
+	    <plugins>
+		<plugin>
+		    <groupId>org.apache.karaf.tooling</groupId>
+		    <artifactId>karaf-maven-plugin</artifactId>
+		    <version>3.0.3</version>
+		    <extensions>true</extensions>
+		</plugin>
+	    </plugins>
+	</pluginManagement>
+	<plugins>
+	    <plugin>
+		<groupId>org.apache.karaf.tooling</groupId>
+		<artifactId>karaf-maven-plugin</artifactId>
+		<configuration>
+		    <startLevel>80</startLevel>
+		    <includeTransitiveDependency>true</includeTransitiveDependency>
+		    <aggregateFeatures>false</aggregateFeatures>
+		</configuration>
+	    </plugin>
+	</plugins>
+    </build>
+
+</project>

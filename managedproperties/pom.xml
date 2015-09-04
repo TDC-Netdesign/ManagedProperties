@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.netdesign.common</groupId>
+        <artifactId>osgi-common</artifactId>
+        <version>0.2-SNAPSHOT</version>
+    </parent>
+    <groupId>com.netdesign.common</groupId>
+    <artifactId>managedproperties</artifactId>
+    <version>0.2-SNAPSHOT</version>
+    <packaging>bundle</packaging>
+    <name>ManagedProperties</name>
+	
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+		<version>2.5.3</version>
+		<extensions>true</extensions>
+		<configuration>
+		    <instructions>
+			<Bundle-SymbolicName>ManagedPropertiesService</Bundle-SymbolicName>
+			<Private-Package>dk.netdesign.common.osgi.config,dk.netdesign.common.osgi.config.*</Private-Package>
+			<Export-Package>dk.netdesign.common.osgi.config,dk.netdesign.common.osgi.config.service,dk.netdesign.common.osgi.config.annotation,dk.netdesign.common.osgi.config.enhancement</Export-Package>
+			<Bundle-Activator>dk.netdesign.common.osgi.config.ManagedPropertiesActivator</Bundle-Activator>
+		    </instructions>
+		</configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.15</version>
+            </plugin>
+        </plugins>
+        
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+	    <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.3</version>
+	    <scope>provided</scope>
+        </dependency>
+       
+        
+
+
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+	    <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
+	    <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+	    <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+	    <scope>test</scope>
+        </dependency>
+		
+    </dependencies>
+
+</project>
