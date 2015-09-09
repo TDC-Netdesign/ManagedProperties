@@ -115,5 +115,12 @@
 	    <organizationUrl>http://www.netdesign.dk</organizationUrl>
 	</developer>
     </developers>
+    
+    <scm>
+        <connection>scm:git:ssh://git.development.netdesign.dk/data/netdesign_git/common/managedproperties.git</connection>
+        <developerConnection>scm:git:ssh://git.development.netdesign.dk/data/netdesign_git/common/managedproperties.git</developerConnection>
+        <url>http://git.development.netdesign.dk/gitweb/?p=common/managedproperties.git</url>
+	<tag>HEAD</tag>
+    </scm>
 
 </project>
