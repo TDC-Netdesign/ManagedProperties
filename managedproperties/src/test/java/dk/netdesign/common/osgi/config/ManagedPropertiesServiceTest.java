@@ -5,6 +5,7 @@
  */
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesBroker;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
@@ -150,7 +151,10 @@ public class ManagedPropertiesServiceTest {
 	
     }
     
-    
+    @Test
+    public void testToString() throws Exception {
+	assertEquals(props.toString(), testi.toString());
+    }
 
     @Test
     public void testTestDirectType() throws Exception {

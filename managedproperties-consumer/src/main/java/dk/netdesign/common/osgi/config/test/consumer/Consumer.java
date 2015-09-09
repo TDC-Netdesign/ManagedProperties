@@ -8,6 +8,7 @@ package dk.netdesign.common.osgi.config.test.consumer;
 
 import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
+import java.util.logging.Level;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -22,33 +23,62 @@ import org.slf4j.LoggerFactory;
 public class Consumer implements BundleActivator{
     private static final Logger logger = LoggerFactory.getLogger(Consumer.class);
     private static ServiceTracker<ManagedPropertiesService, ManagedPropertiesService> tracker;
-    PropertiesWithStandardTypes props;
+    private PropertiesWithStandardTypes props;
+    private Thread printer;
+    private boolean run = true;
 
     @Override
     public void start(BundleContext context) throws Exception {
-	ServiceReference<ManagedPropertiesService> ref = context.getServiceReference(ManagedPropertiesService.class);
-	logger.info(ref != null ? ref.toString() : "ref was null");
-	
 	logger.info("Getting tracker");
 	tracker = new ServiceTracker(context, ManagedPropertiesService.class, null);
         tracker.open();
 	logger.info("Tracker open");
 	ManagedPropertiesService service = tracker.getService();
-	
-	props = service.register(PropertiesWithStandardTypes.class);
+	logger.info("Service: "+service);
+	props = service.register(PropertiesWithStandardTypes.class, new DefaultProperties());
 	logger.info("Getting properties");
-	System.out.println(props.getCharacterProperty());
-	System.out.println(props.getDoubleProperty());
-	System.out.println(props.getStringInteger());
-	System.out.println(props.getStringProperty());
-	System.out.println(props.getStringListProperty());
-	System.out.println(props);	
+	logger.info(props.getCharacterProperty()+"");
+	logger.info(props.getDoubleProperty()+"");
+	logger.info(props.getStringInteger()+"");
+	logger.info(props.getStringProperty()+"");
+	logger.info(props.getStringListProperty()+"");
+	logger.info(props+"");	
+	printer = new PrinterThread();
+	printer.start();
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
 	tracker.close();
 	((EnhancedProperty)props).unregisterProperties();
+	run = false;
+	
+    }
+    
+    private class PrinterThread extends Thread{
+
+	public PrinterThread() {
+	    setName("TestConsumer PrinterThread");
+	}
+
+	@Override
+	public void run() {
+	    while(run){
+		logger.info(props.toString());
+		try {
+		    Thread.sleep(10000);
+		} catch (InterruptedException ex) {
+		    logger.warn("Consumer interrupted", ex);
+		    run = false;
+		}
+	    }
+	    
+	    
+	}
+	
+	
+	
+	
 	
     }
     

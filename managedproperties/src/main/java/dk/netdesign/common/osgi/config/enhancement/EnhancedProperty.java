@@ -17,7 +17,4 @@ public interface EnhancedProperty {
 
     public void unregisterProperties();
     
-    @Override
-    public String toString();
-
 }

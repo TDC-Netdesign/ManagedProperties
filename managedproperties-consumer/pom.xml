@@ -21,8 +21,8 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-					    <Export-Package>dk.netdesign.common.osgi.config.test.consumer</Export-Package>
 					<Bundle-SymbolicName>ManagedPropertiesTestConsumer</Bundle-SymbolicName>
+					<Export-Package>dk.netdesign.common.osgi.config.test.consumer</Export-Package>
 					<Private-Package>dk.netdesign.common.osgi.config.test.consumer,dk.netdesign.common.osgi.config.test.consumer.*</Private-Package>
 					<Bundle-Activator>dk.netdesign.common.osgi.config.test.consumer.Consumer</Bundle-Activator>
 					</instructions>

@@ -5,6 +5,7 @@
  */
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesBroker;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
@@ -104,8 +105,9 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
 	allowedMethods = new ArrayList<>();
 
-	allowedMethods.addAll(Arrays.asList(EnhancedProperty.class.getMethods()));
-	allowedMethods.addAll(Arrays.asList(ConfigurationCallbackHandler.class.getMethods()));
+	allowedMethods.addAll(Arrays.asList(EnhancedProperty.class.getDeclaredMethods()));
+	allowedMethods.addAll(Arrays.asList(ConfigurationCallbackHandler.class.getDeclaredMethods()));
+	allowedMethods.addAll(Arrays.asList(Object.class.getDeclaredMethods()));
 	this.type = type;
 	this.defaults = defaults;
     }
@@ -137,7 +139,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    }
 	}
 
-	throw new UnsupportedOperationException("The method " + method + " was not recognized and was not annotated with the annotation " + Property.class.getName());
+	throw new UnsupportedOperationException("The method " + method + " was not recognized and was not annotated with the annotation " + Property.class.getName()+" allowed methods: "+allowedMethods);
     }
 
     private Object getConfigItem(String id) {
@@ -173,6 +175,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     @Override
     public ObjectClassDefinition getObjectClassDefinition(String id, String locale) {
+	logger.info("Getting OCD for "+id+" "+locale);
 	return ocd;
     }
 
@@ -183,6 +186,10 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+	logger.info("Attempting to update properties on "+typeDefinition.name()+"["+typeDefinition.id()+"] with "+properties);
+	if(properties == null){
+	    return;
+	}
 	w.lock();
 	TreeSet<String> required = new TreeSet<String>();
 	required.addAll(requiredIds);
@@ -192,7 +199,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    while (keys.hasMoreElements()) {
 		String key = keys.nextElement();
 
-		if (key.equals("service.pid")) {
+		if (key.equals("service.pid") ||key.equals("felix.fileinstall.filename")) {
 		    continue;
 		}
 
@@ -379,13 +386,13 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     public void register(BundleContext context) {
 	Hashtable<String, Object> managedServiceProps = new Hashtable<>();
 	managedServiceProps.put(Constants.SERVICE_PID, typeDefinition.id());
-	managedServiceReg = context.registerService(ManagedService.class, this, managedServiceProps);
+	managedServiceReg = context.registerService(ManagedService.class.getName(), this, managedServiceProps);
 
 	Hashtable<String, Object> metaTypeProps = new Hashtable<>();
 	metaTypeProps.put(Constants.SERVICE_PID, typeDefinition.id());
 	metaTypeProps.put("metadata.type", "Server");
 	metaTypeProps.put("metadata.version", "1.0.0");
-	metatypeServiceReg = context.registerService(MetaTypeProvider.class, this, metaTypeProps);
+	metatypeServiceReg = context.registerService(MetaTypeProvider.class.getName(), this, metaTypeProps);
     }
 
     private static ObjectClassDefinition buildOCD(String id, String name, String description, String file, Collection<AD> attributes) throws InvalidTypeException {

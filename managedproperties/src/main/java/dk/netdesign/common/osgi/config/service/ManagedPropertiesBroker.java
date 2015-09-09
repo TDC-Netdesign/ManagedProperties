@@ -3,8 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package dk.netdesign.common.osgi.config;
+package dk.netdesign.common.osgi.config.service;
 
+import dk.netdesign.common.osgi.config.ManagedProperties;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;

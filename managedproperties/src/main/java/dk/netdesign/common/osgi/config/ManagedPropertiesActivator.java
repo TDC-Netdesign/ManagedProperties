@@ -6,6 +6,7 @@
 
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesBroker;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;

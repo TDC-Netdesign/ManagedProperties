@@ -8,6 +8,8 @@ package dk.netdesign.common.osgi.config.test.consumer;
 
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
+import dk.netdesign.common.osgi.config.filters.URLFilter;
+import java.net.URL;
 import java.util.List;
 
 /**
@@ -31,6 +33,9 @@ public interface PropertiesWithStandardTypes {
     
     @Property(type = String.class, cardinality = Property.Cardinality.List)
     public List<String> getStringListProperty();
+    
+    @Property(type = String.class, typeMapper = URLFilter.class)
+    public URL getURLProperty();
     
     
     
