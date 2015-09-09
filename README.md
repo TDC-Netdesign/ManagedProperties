@@ -101,6 +101,7 @@ The callback will then have its configurationUpdated method called every time th
 
 ## Registration mechanics
 When an annotated Interface is registered with ManagedProperties, what happens behind the scenes is the following:
+
 1. An object is created in order to track the registrations.
 2. An ObjectClassDefinition is created. 
 3. The types of the methods and filters are checked to assure that
