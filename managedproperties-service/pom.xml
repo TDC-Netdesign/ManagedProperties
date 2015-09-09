@@ -7,26 +7,27 @@
         <version>0.2-SNAPSHOT</version>
     </parent>
     <groupId>com.netdesign.common</groupId>
-    <artifactId>managedproperties-consumer</artifactId>
+    <artifactId>managedproperties-service</artifactId>
     <version>0.2-SNAPSHOT</version>
     <packaging>bundle</packaging>
-    <name>ManagedProperties test consumer</name>
+    <name>ManagedProperties</name>
 	
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-				<version>2.5.3</version>
-				<extensions>true</extensions>
-				<configuration>
-					<instructions>
-					<Bundle-SymbolicName>ManagedPropertiesTestConsumer</Bundle-SymbolicName>
-					<Export-Package>dk.netdesign.common.osgi.config.test.consumer</Export-Package>
-					<Private-Package>dk.netdesign.common.osgi.config.test.consumer,dk.netdesign.common.osgi.config.test.consumer.*</Private-Package>
-					<Bundle-Activator>dk.netdesign.common.osgi.config.test.consumer.Consumer</Bundle-Activator>
-					</instructions>
-				</configuration>
+		<version>2.5.3</version>
+		<extensions>true</extensions>
+		<configuration>
+		    <instructions>
+			<Bundle-SymbolicName>ManagedPropertiesService</Bundle-SymbolicName>
+			<Private-Package>dk.netdesign.common.osgi.config,dk.netdesign.common.osgi.config.*</Private-Package>
+			<Export-Package>dk.netdesign.common.osgi.config.service,dk.netdesign.common.osgi.config.annotation,dk.netdesign.common.osgi.config.enhancement,dk.netdesign.common.osgi.config.filters</Export-Package>
+			<Bundle-Activator>dk.netdesign.common.osgi.config.ManagedPropertiesActivator</Bundle-Activator>
+			<DynamicImport-Package>*</DynamicImport-Package>
+		    </instructions>
+		</configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -37,11 +38,6 @@
         
     </build>
     <dependencies>
-	<dependency>
-	    <groupId>com.netdesign.common</groupId>
-	    <artifactId>managedproperties-service</artifactId>
-	    <scope>provided</scope>
-	</dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
