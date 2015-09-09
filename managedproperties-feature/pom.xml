@@ -20,23 +20,23 @@
 
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.netdesign.common</groupId>
-        <artifactId>managedproperties</artifactId>
-        <version>0.2-SNAPSHOT</version>
+	<groupId>dk.netdesign.common</groupId>
+	<artifactId>managedproperties</artifactId>
+	<version>0.2-SNAPSHOT</version>
     </parent>
-    <groupId>com.netdesign.common</groupId>
+    <groupId>dk.netdesign.common</groupId>
     <artifactId>managedproperties-feature</artifactId>
     <version>0.2-SNAPSHOT</version>
     <packaging>feature</packaging>
 
     <name>managedproperties feature</name>
-    <description>Managedproperties is a handler that uses ConfigurationAdmin and Metadata service to simplify centralized configuration in karaf</description>
+    <description>Managedproperties is a handler that uses ConfigurationAdmin and Metadata service to simplify centralized configuration</description>
 
     <dependencies>
 	<dependency>
-            <groupId>com.netdesign.common</groupId>
-			<artifactId>managedproperties-service</artifactId>
-        </dependency>
+	    <groupId>com.netdesign.common</groupId>
+	    <artifactId>managedproperties-service</artifactId>
+	</dependency>
 	<dependency>
 	    <groupId>org.apache.felix</groupId>
 	    <artifactId>org.apache.felix.metatype</artifactId>

@@ -3,113 +3,117 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.netdesign.common</groupId>
+    <groupId>dk.netdesign.common</groupId>
     <artifactId>managedproperties</artifactId>
     <packaging>pom</packaging>
     <version>0.2-SNAPSHOT</version>
     <name>Netdesign Managed Properties</name>
     <description>
-        This is the Netdesign helper component project. This project is used across many different projects. Changes to the commons bundle should be well planned and tested.
+	This project is meant to simplyfy the usage of the excelent Configuration Admin and MetaType services for Felix OSGi. The bundle will create a service
+	that allows other bundles to register an annotated interface. The ManagedProperties service will then create all the Metatype information, as well
+	as ensuring that objects are cast to their right types.
+	ManagedProperties also has a feature called Filters. A Filter is used to create an object, say a File, directly from a primitive Configuration Admin 
+	type. It can also contain logic, to allow the configuration to fail if, for example, a File doesn't exist.
     </description>
 	
-	<properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <resource.encoding>UTF-8</resource.encoding>
+    <properties>
+	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<resource.encoding>UTF-8</resource.encoding>
 
-        <cxf.version>3.0.2</cxf.version>
-        <slf4j.version>1.7.12</slf4j.version>
+	<cxf.version>3.0.2</cxf.version>
+	<slf4j.version>1.7.12</slf4j.version>
 		
-		<maven.compiler.source>1.7</maven.compiler.source>
-		<maven.compiler.target>1.7</maven.compiler.target>
+	<maven.compiler.source>1.7</maven.compiler.source>
+	<maven.compiler.target>1.7</maven.compiler.target>
     </properties>
 	
     <modules>
-        <module>managedproperties-service</module>
-		<module>managedproperties-feature</module>
-		<module>managedproperties-consumer</module>
+	<module>managedproperties-service</module>
+	<module>managedproperties-feature</module>
+	<module>managedproperties-consumer</module>
     </modules>
     
     <dependencyManagement>
-        <dependencies>
-            <!-- Internal dependency start -->
-            <dependency>
-                <groupId>com.netdesign.common</groupId>
-				<artifactId>managedproperties-service</artifactId>
-				<version>0.2-SNAPSHOT</version>
-				<scope>provided</scope>
-            </dependency>
-			<dependency>
-                <groupId>com.netdesign.common</groupId>
-				<artifactId>managedproperties-features</artifactId>
-				<version>0.2-SNAPSHOT</version>
-				<scope>provided</scope>
-            </dependency>
-			<dependency>
-                <groupId>com.netdesign.common</groupId>
-				<artifactId>managedproperties-consumer</artifactId>
-				<version>0.2-SNAPSHOT</version>
-				<scope>test</scope>
-            </dependency>
-			<dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.7.12</version>
-                <scope>provided</scope>                                
-            </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-core</artifactId>
-                <version>2.3</version>
-                <scope>provided</scope>                                
-            </dependency>
-			<dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-                <version>1.7.2</version>
-                <scope>provided</scope>                                
-            </dependency>
-			<dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.core</artifactId>
-                <version>5.0.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.osgi</groupId>
-                <artifactId>org.osgi.compendium</artifactId>
-                <version>5.0.0</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.3.2</version>
-                <scope>provided</scope>
-            </dependency>
-			<dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.12</version>
-                <scope>test</scope>
-            </dependency>
+	<dependencies>
+	    <!-- Internal dependency start -->
+	    <dependency>
+		<groupId>com.netdesign.common</groupId>
+		<artifactId>managedproperties-service</artifactId>
+		<version>0.2-SNAPSHOT</version>
+		<scope>provided</scope>
+	    </dependency>
+	    <dependency>
+		<groupId>com.netdesign.common</groupId>
+		<artifactId>managedproperties-features</artifactId>
+		<version>0.2-SNAPSHOT</version>
+		<scope>provided</scope>
+	    </dependency>
+	    <dependency>
+		<groupId>com.netdesign.common</groupId>
+		<artifactId>managedproperties-consumer</artifactId>
+		<version>0.2-SNAPSHOT</version>
+		<scope>test</scope>
+	    </dependency>
+	    <dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-api</artifactId>
+		<version>1.7.12</version>
+		<scope>provided</scope>                                
+	    </dependency>
+	    <dependency>
+		<groupId>org.apache.logging.log4j</groupId>
+		<artifactId>log4j-core</artifactId>
+		<version>2.3</version>
+		<scope>provided</scope>                                
+	    </dependency>
+	    <dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-log4j12</artifactId>
+		<version>1.7.2</version>
+		<scope>provided</scope>                                
+	    </dependency>
+	    <dependency>
+		<groupId>org.osgi</groupId>
+		<artifactId>org.osgi.core</artifactId>
+		<version>5.0.0</version>
+	    </dependency>
+	    <dependency>
+		<groupId>org.osgi</groupId>
+		<artifactId>org.osgi.compendium</artifactId>
+		<version>5.0.0</version>
+	    </dependency>
+	    <dependency>
+		<groupId>org.apache.commons</groupId>
+		<artifactId>commons-lang3</artifactId>
+		<version>3.3.2</version>
+		<scope>provided</scope>
+	    </dependency>
+	    <dependency>
+		<groupId>junit</groupId>
+		<artifactId>junit</artifactId>
+		<version>4.12</version>
+		<scope>test</scope>
+	    </dependency>
 	</dependencies>
     </dependencyManagement>
 
 
     <developers>
-        <!-- Please add your name here if you help maintain the netdesign parent 
-        or are involved with managing netdesign unified releases, etc. Otherwise, 
-        add your developer information to any subprojects that you are a part of. -->
+	<!-- Please add your name here if you help maintain the netdesign parent 
+	or are involved with managing netdesign unified releases, etc. Otherwise, 
+	add your developer information to any subprojects that you are a part of. -->
 
-        <developer>
-            <roles>
-                <role>Developer</role>
-            </roles>
-            <id>mnn</id>
-            <name>Martin Nybo Nielsen</name>
-            <email>mnn@netdesign.dk</email>
-            <timezone>+1</timezone>
-            <organization>netdesign.dk</organization>
-            <organizationUrl>http://www.netdesign.dk</organizationUrl>
-        </developer>
+	<developer>
+	    <roles>
+		<role>Developer</role>
+	    </roles>
+	    <id>mnn</id>
+	    <name>Martin Nybo Nielsen</name>
+	    <email>mnn@netdesign.dk</email>
+	    <timezone>+1</timezone>
+	    <organization>netdesign.dk</organization>
+	    <organizationUrl>http://www.netdesign.dk</organizationUrl>
+	</developer>
     </developers>
 
 </project>
