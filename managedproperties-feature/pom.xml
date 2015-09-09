@@ -34,7 +34,7 @@
 
     <dependencies>
 	<dependency>
-	    <groupId>com.netdesign.common</groupId>
+	    <groupId>dk.netdesign.common</groupId>
 	    <artifactId>managedproperties-service</artifactId>
 	</dependency>
 	<dependency>
