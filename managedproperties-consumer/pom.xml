@@ -2,11 +2,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-	<groupId>dk.netdesign.common</groupId>
+	<groupId>dk.netdesign</groupId>
 	<artifactId>managedproperties</artifactId>
 	<version>0.2-SNAPSHOT</version>
     </parent>
-    <groupId>dk.netdesign.common</groupId>
+    <groupId>dk.netdesign</groupId>
     <artifactId>managedproperties-consumer</artifactId>
     <version>0.2-SNAPSHOT</version>
     <packaging>bundle</packaging>
@@ -38,7 +38,7 @@
     </build>
     <dependencies>
 	<dependency>
-	    <groupId>dk.netdesign.common</groupId>
+	    <groupId>dk.netdesign</groupId>
 	    <artifactId>managedproperties-service</artifactId>
 	    <scope>provided</scope>
 	</dependency>

@@ -49,12 +49,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The ManagedProperties class is used as a simple setup mechanism for the Configuration Admin and MetaType OSGi services. Using the register method, the
- * ManagedProperties register itself as both a Configuration Admin ManagedService and as a MetaType service MetaTypeProvider. This class can be used directly,
- * but is best used as a superclass. For the best utilization, it is advised to extends this class, and add get methods for each configuration item. Then
- * annotate the get methods with the @Property annotation, and use the get(String, Class) method to cast the object to the expected type. Reflection will take
- * care of creating the MetaTypeProvider items and ensure that the type returned to the service matches the @Property.Updated configuration is done
- * asynchronized with using of Queue for putting and taking all new configuration set.
+ * The ManagedProperties class is used as a simple setup mechanism for the Felix Configuration Admin and MetaType OSGi services. Using the register method, the
+ * ManagedProperties register itself as both a Configuration Admin ManagedService and as a MetaType service MetaTypeProvider. This class acts as the service
+ * anchor for the configuration, as well as an InvocationHandler for java.util.Proxy. The class also takes care of creating both the ObjectClassDefinition and
+ * AttributeDefinition to reflect the methods in the registered interface.
  *
  * @author mnn
  * @author azem
@@ -76,6 +74,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     private final Class type;
     private final Object defaults;
     private final List<String> requiredIds;
+    
     
     public <E> ManagedProperties(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException{
 	callbacks = new ArrayList<>();

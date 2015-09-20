@@ -20,11 +20,11 @@
 
     <modelVersion>4.0.0</modelVersion>
     <parent>
-	<groupId>dk.netdesign.common</groupId>
+	<groupId>dk.netdesign</groupId>
 	<artifactId>managedproperties</artifactId>
 	<version>0.2-SNAPSHOT</version>
     </parent>
-    <groupId>dk.netdesign.common</groupId>
+    <groupId>dk.netdesign</groupId>
     <artifactId>managedproperties-feature</artifactId>
     <version>0.2-SNAPSHOT</version>
     <packaging>feature</packaging>
@@ -34,7 +34,7 @@
 
     <dependencies>
 	<dependency>
-	    <groupId>dk.netdesign.common</groupId>
+	    <groupId>dk.netdesign</groupId>
 	    <artifactId>managedproperties-service</artifactId>
 	</dependency>
 	<dependency>

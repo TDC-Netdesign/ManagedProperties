@@ -3,7 +3,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>dk.netdesign.common</groupId>
+    <groupId>dk.netdesign</groupId>
     <artifactId>managedproperties</artifactId>
     <packaging>pom</packaging>
     <version>0.2-SNAPSHOT</version>
@@ -37,19 +37,19 @@
 	<dependencies>
 	    <!-- Internal dependency start -->
 	    <dependency>
-		<groupId>dk.netdesign.common</groupId>
+		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-service</artifactId>
 		<version>0.2-SNAPSHOT</version>
 		<scope>provided</scope>
 	    </dependency>
 	    <dependency>
-		<groupId>dk.netdesign.common</groupId>
+		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-features</artifactId>
 		<version>0.2-SNAPSHOT</version>
 		<scope>provided</scope>
 	    </dependency>
 	    <dependency>
-		<groupId>dk.netdesign.common</groupId>
+		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-consumer</artifactId>
 		<version>0.2-SNAPSHOT</version>
 		<scope>test</scope>
