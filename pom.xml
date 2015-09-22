@@ -38,16 +38,16 @@
     <distributionManagement>  
 	<repository>
 	    <uniqueVersion>false</uniqueVersion>
-	    <id>NetDesign-releases</id>  
-	    <name>NetDesign release repository</name> 
-	    <url>http://dmz-ucdev1:8080/content/repositories/releases/</url>
+	    <id>ossrhStage</id>  
+	    <name>Release stage repository</name> 
+	    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
 	    <layout>default</layout>
 	</repository>
 	<snapshotRepository>
 	    <uniqueVersion>true</uniqueVersion>
-	    <id>NetDesign-snapshots</id>  
-	    <name>NetDesign snapshot repository</name> 
-	    <url>http://dmz-ucdev1:8080/content/repositories/snapshots/</url>
+	    <id>ossrhSnapshot</id>  
+	    <name>Snapshot repository</name> 
+	    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
 	    <layout>default</layout>
 	</snapshotRepository>
     </distributionManagement>
