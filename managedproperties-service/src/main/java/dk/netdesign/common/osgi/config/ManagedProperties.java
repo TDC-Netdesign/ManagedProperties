@@ -55,7 +55,6 @@ import org.slf4j.LoggerFactory;
  * AttributeDefinition to reflect the methods in the registered interface.
  *
  * @author mnn
- * @author azem
  */
 public class ManagedProperties implements InvocationHandler, MetaTypeProvider, ManagedService, ConfigurationCallbackHandler, EnhancedProperty {
 
@@ -75,7 +74,18 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     private final Object defaults;
     private final List<String> requiredIds;
     
-    
+    /**
+     * Returns a ManagedProperties object with the defined defaults.
+     * @param <E> The type of object to return.
+     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with 
+     * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
+     * @param defaults The default values to use if a configuration item is not currently in the configuration set. The defaults must be an object
+     * of a type that implements the type denoted by @see I.
+     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
+     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
+     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
+     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
+     */
     public <E> ManagedProperties(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException{
 	callbacks = new ArrayList<>();
 	lock = new ReentrantReadWriteLock();
@@ -111,6 +121,16 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	this.defaults = defaults;
     }
 
+    /**
+     * The same as the other constructor, but does not set defaults.
+     * @see #ManagedProperties(java.lang.Class, java.lang.Object) 
+     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with 
+     * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
+     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
+     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
+     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
+     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
+     */
     public ManagedProperties(Class type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	this(type, null);
     }
@@ -183,6 +203,15 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	return null;
     }
 
+    /**
+     * The updated method is called when the ConfigAdmin detects a change in the configuration bound to this class.
+     * When called, the method will parse the Dictionary of properties and parse the data for each Method/Configuration item.
+     * For each Configuration Item, the type of the object is checked against the return types, the filters are run, and the data parsed.
+     * The result is that it is the final, parsed and validated versions of the configuration that is actually returned. The original properties are never
+     * stored in this object.
+     * @param properties The properties that are sent from the Configuration Admin
+     * @throws ConfigurationException If the data is invalid, or a filter fails.
+     */
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
 	logger.info("Attempting to update properties on "+typeDefinition.name()+"["+typeDefinition.id()+"] with "+properties);
@@ -377,8 +406,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     }
 
     /**
-     * Registers this ManagedProperties object with the bundle context. This should be done in the bundle activator right just after this object is added to its
-     * intended service.
+     * Registers this ManagedProperties object with the bundle context. This is done when the proxy is first created.
      *
      * @param context The context in which to register this ManagedProperties object.
      */

@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * This is the broker component for the ManagedProperties service.
  * @author mnn
  */
 public class ManagedPropertiesBroker implements ManagedPropertiesService {
@@ -33,6 +33,10 @@ public class ManagedPropertiesBroker implements ManagedPropertiesService {
     private BundleContext context;
     private Map<String, ManagedPropertiesRegistration> propertyInstances = new HashMap<>();
 
+    /**
+     * This is the only constructor for the broker.
+     * @param context The context that the broker will use to register configurations
+     */
     public ManagedPropertiesBroker(BundleContext context) {
 	this.context = context;
     }
@@ -66,13 +70,23 @@ public class ManagedPropertiesBroker implements ManagedPropertiesService {
 	return type.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{type, EnhancedProperty.class, ConfigurationCallbackHandler.class}, handler));
     }
     
-    
-
+    /**
+     * Builds the ManagedProperties object for use as an invocation handler in the {@link Proxy proxy}.
+     * @param <E> The return type of the invocation handler.
+     * @param type The interface used to create the ManagedProperties object. This Interface must at least be annotated with the 
+     * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition} and have one method annotated with the 
+     * {@link dk.netdesign.common.osgi.config.annotation.Property Property}. The interface will be parsed in order to build the configuration metadata.
+     * @param defaults The defaults to use for the ManagedProperties object. Can be null. The defaults must implement the same interface as used in
+     * {@code type}.
+     * @return The finished ManagedProperties object
+     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
+     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
+     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
+     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
+     */
     protected <E> ManagedProperties getInvocationHandler(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	return new ManagedProperties(type, defaults);
     }
-
-    
 
     public static PropertyDefinition getDefinitionAnnotation(Class<?> type) throws InvalidTypeException {
 	if (type == null) {

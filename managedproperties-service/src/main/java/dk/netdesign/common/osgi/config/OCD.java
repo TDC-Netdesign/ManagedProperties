@@ -20,7 +20,7 @@ import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.ObjectClassDefinition;
 
 /**
- *
+ * The OCD is a subtype of ObjectClassDefinition and is responsible for storing both the information needed by ManagedProperties and MetaTypeProvider
  * @author mnn
  */
 public class OCD implements ObjectClassDefinition {
@@ -28,7 +28,7 @@ public class OCD implements ObjectClassDefinition {
     private String description;
     private String name;
     // Represents the attributes of this object class
-    private AttributeDefinition[] requiredADs = new AttributeDefinition[2];
+    private AttributeDefinition[] requiredADs;
     private String id;
     private File iconFile;
 

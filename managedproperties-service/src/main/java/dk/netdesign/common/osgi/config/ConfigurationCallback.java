@@ -18,7 +18,8 @@ public interface ConfigurationCallback {
      * callback is only registered to one configuration.
      *
      * @param newProperties The new properties object that has been sent to the ManagedProperties object. This <b>can</b> be used to set the properties for the
-     * service, but it is recommended to contact the ManagedProperties object itself and get the configuration from there, as the Dictionary is not type safe.
+     * service, but it is recommended to contact the ManagedProperties object itself and get the configuration from there, as the Dictionary will contain
+     * the raw, unchecked and unfiltered values.
      */
     public void configurationUpdated(Map<String, ?> newProperties);
 

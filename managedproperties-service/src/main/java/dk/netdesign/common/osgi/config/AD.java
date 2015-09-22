@@ -21,7 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * This is an implemnetation of AttributeDefinition that has the extra responsibility of tracking the settings for each of the annotated configuration methods.
+ * It is the applications one-stop-shop for all information about the parsed Methods, containing both what is sent as MetaDataProvider and what is registered
+ * by the ManagedProperties itself.
+ * This class is what binds a method to a configuration item.
  * @author mnn
  */
 public class AD implements AttributeDefinition {
@@ -40,6 +43,18 @@ public class AD implements AttributeDefinition {
     private Class<? extends TypeFilter> filter;
     Property.Cardinality cardinalityDef;
 
+    /**
+     * Default Constructor. This is the only non-deprecated constructor. It will create an AD from a method.
+     * The constructor is an all-in-one operation; the setter methods available should not need to be used. During the construction of the AD
+     * a fair amount of validation is going on. The constructor will fail if called on a method which is not annotated with @Property.
+     * In general, if there are any restrictions or missing data in the @Property annotation, or the method itself, it will be caught when
+     * creating the AD.
+     * @param method The @Property annotated method to create an AD for.
+     * @throws TypeFilterException Thrown if there is a problem with the filter defined for this method
+     * @throws InvalidTypeException Thrown if there is a problem with the type of the input or output of the method, combined with the @Property
+     * @throws InvalidMethodException Thrown if there is a problem with anything but the type, or filter. This could be missing information, invalid combinations,
+     * or a missing @Property annotation.
+     */
     protected AD(Method method) throws TypeFilterException, InvalidTypeException, InvalidMethodException {
 	Property methodProperty = method.getAnnotation(Property.class);
 	name = getAttributeName(method);
@@ -100,6 +115,7 @@ public class AD implements AttributeDefinition {
 	optionalValues = methodProperty.optionValues();
     }
 
+    @Deprecated
     protected AD(String id, int type, int cardinality) {
 	this.id = id;
 	this.type = type;
@@ -179,41 +195,73 @@ public class AD implements AttributeDefinition {
 	return adCardinality;
     }
 
+    /**
+     * The cardinality of this Method
+     * @return The cardinality of the configuration item defined by this method, returned as MetaType information
+     */
     @Override
     public int getCardinality() {
 	return cardinality;
     }
 
+    /**
+     * The default value of this method
+     * @return The possible default values for this configuration item defined by this method, returned as MetaType information
+     */
     @Override
     public String[] getDefaultValue() {
 	return defValue;
     }
 
+    /**
+     * The description of this method
+     * @return The description for the configuration item defined by this method
+     */
     @Override
     public String getDescription() {
 	return description;
     }
 
+    /**
+     * The configurationID for this method
+     * @return The ID for the configuration item.
+     */
     @Override
     public String getID() {
 	return id;
     }
 
+    /**
+     * The display name for this method
+     * @return The name for the configuration item
+     */
     @Override
     public String getName() {
 	return name;
     }
 
+    /**
+     * The option labels for this method
+     * @return The Option labels for the configuration item
+     */
     @Override
     public String[] getOptionLabels() {
 	return optionalLabels;
     }
 
+    /**
+     * The option values for this method
+     * @return The option values for this configuration item
+     */
     @Override
     public String[] getOptionValues() {
 	return optionalValues;
     }
 
+    /**
+     * The type for this method
+     * @return The type for this configuration item, defined as MetaType provider data.
+     */
     @Override
     public int getType() {
 	return type;
@@ -244,6 +292,10 @@ public class AD implements AttributeDefinition {
 	this.defValue = defValue;
     }
 
+    /**
+     * Return the inputType resulting from parsing the @Property and method return types.
+     * @return The return type of the method, or the override in the @Property annotation
+     */
     public Class getInputType() {
 	return inputType;
     }
@@ -252,6 +304,10 @@ public class AD implements AttributeDefinition {
 	this.inputType = inputType;
     }
 
+    /**
+     * The filter defined for this method, if any
+     * @return Returns the filter defined for this method, or null if no filter is defined.
+     */
     public Class<? extends TypeFilter> getFilter() {
 	return filter;
     }
@@ -260,6 +316,10 @@ public class AD implements AttributeDefinition {
 	this.filter = filter;
     }
 
+    /**
+     * Returns the @Property defined cardinality. This is parsed into the cardinality required by the MetaTypeProvider
+     * @return The cardinality of the method
+     */
     public Property.Cardinality getCardinalityDef() {
 	return cardinalityDef;
     }

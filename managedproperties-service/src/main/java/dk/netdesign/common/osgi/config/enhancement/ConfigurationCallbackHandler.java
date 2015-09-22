@@ -9,7 +9,10 @@ import dk.netdesign.common.osgi.config.ConfigurationCallback;
 import java.util.List;
 
 /**
- * Implementations of this interface can register Callbacks that will be executed when new configurations are loaded.
+ * This is a convenience interface, which defines a number of methods which can be called upon the proxy returned from 
+ * {@link dk.netdesign.common.osgi.config.service.ManagedPropertiesBroker#register(Class) register}. The proxy is created with this interface, and can be cast 
+ * if necessary.
+ * Implementations of this interface can register a number of {@link ConfigurationCallback} that will be executed when new configurations are loaded.
  *
  * @author mnn
  */

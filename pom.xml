@@ -15,7 +15,15 @@
 	ManagedProperties also has a feature called Filters. A Filter is used to create an object, say a File, directly from a primitive Configuration Admin 
 	type. It can also contain logic, to allow the configuration to fail if, for example, a File doesn't exist.
     </description>
-	
+    <url>https://github.com/TDC-Netdesign/ManagedProperties</url>
+    
+    <licenses>
+	<license>
+	    <name>The Apache License, Version 2.0</name>
+	    <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+	</license>
+    </licenses>
+		
     <properties>
 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	<resource.encoding>UTF-8</resource.encoding>
@@ -32,6 +40,37 @@
 	<module>managedproperties-feature</module>
 	<module>managedproperties-consumer</module>
     </modules>
+    
+    <build>
+	<plugins>
+	    <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-source-plugin</artifactId>
+		<version>2.4</version>
+		<executions>
+		    <execution>
+			<id>attach-sources</id>
+			<goals>
+			    <goal>jar</goal>
+			</goals>
+		    </execution>
+		</executions>
+	    </plugin>
+	    <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-javadoc-plugin</artifactId>
+		<version>2.10.3</version>
+		<executions>
+		    <execution>
+			<id>attach-javadocs</id>
+			<goals>
+			    <goal>jar</goal>
+			</goals>
+		    </execution>
+		</executions>
+	    </plugin>
+	</plugins>
+    </build>
     
     <dependencyManagement>
 	<dependencies>
@@ -99,12 +138,9 @@
 
 
     <developers>
-	<!-- Please add your name here if you help maintain the netdesign parent 
-	or are involved with managing netdesign unified releases, etc. Otherwise, 
-	add your developer information to any subprojects that you are a part of. -->
-
 	<developer>
 	    <roles>
+		<role>Architect</role>
 		<role>Developer</role>
 	    </roles>
 	    <id>mnn</id>
@@ -117,10 +153,9 @@
     </developers>
     
     <scm>
-        <connection>scm:git:ssh://git.development.netdesign.dk/data/netdesign_git/common/managedproperties.git</connection>
-        <developerConnection>scm:git:ssh://git.development.netdesign.dk/data/netdesign_git/common/managedproperties.git</developerConnection>
-        <url>http://git.development.netdesign.dk/gitweb/?p=common/managedproperties.git</url>
-	<tag>HEAD</tag>
+	<connection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</connection>
+	<developerConnection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</developerConnection>
+	<url>git@github.com:TDC-Netdesign/ManagedProperties.git</url>
     </scm>
 
 </project>

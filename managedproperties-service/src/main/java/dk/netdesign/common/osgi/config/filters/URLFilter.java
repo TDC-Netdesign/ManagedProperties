@@ -14,10 +14,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * The URL filter takes a URL as a String object. It then parses the String to a URL object, throwing an exception if the input String is not a valid URL.
  * @author mnn
  */
-public class URLFilter extends TypeFilter<String>{
+public class URLFilter extends TypeFilter<String, URL>{
 
     @Override
     public URL parse(String input) throws TypeFilterException {

@@ -706,7 +706,7 @@ public class ManagedPropertiesServiceTest {
 	public abstract void NotImplemented();
     }
 
-    private static class AbstractFilter extends TypeFilter<String> {
+    private static class AbstractFilter extends TypeFilter<String, UninitializableClass> {
 
 	@Override
 	public UninitializableClass parse(String input) throws TypeFilterException {
@@ -714,7 +714,7 @@ public class ManagedPropertiesServiceTest {
 	}
     }
 
-    private static class StringFilter extends TypeFilter<Integer> {
+    private static class StringFilter extends TypeFilter<Integer, String> {
 
 	public StringFilter() {
 	}

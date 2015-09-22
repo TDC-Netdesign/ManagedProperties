@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * The activator responsible for starting and stopping the ManagedProperties service
  * @author mnn
  */
 public class ManagedPropertiesActivator implements BundleActivator{

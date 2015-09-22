@@ -11,10 +11,12 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- *
+ * The file filter parses a String into a File. The filter takes a String as input, and produces a File. The input is a String denoting a path to the
+ * file in question. The Filter checks if the path has a valid format for the backing file system. It throws an exception if the path is not well formatted,
+ * or if the path is not valid for the file system.
  * @author mnn
  */
-public class FileFilter extends TypeFilter<String> {
+public class FileFilter extends TypeFilter<String, File> {
 
     @Override
     public File parse(String input) throws TypeFilterException {
