@@ -35,6 +35,23 @@
 	<maven.compiler.target>1.7</maven.compiler.target>
     </properties>
     
+    <distributionManagement>  
+	<repository>
+	    <uniqueVersion>false</uniqueVersion>
+	    <id>NetDesign-releases</id>  
+	    <name>NetDesign release repository</name> 
+	    <url>http://dmz-ucdev1:8080/content/repositories/releases/</url>
+	    <layout>default</layout>
+	</repository>
+	<snapshotRepository>
+	    <uniqueVersion>true</uniqueVersion>
+	    <id>NetDesign-snapshots</id>  
+	    <name>NetDesign snapshot repository</name> 
+	    <url>http://dmz-ucdev1:8080/content/repositories/snapshots/</url>
+	    <layout>default</layout>
+	</snapshotRepository>
+    </distributionManagement>
+    
     <profiles>
 	<profile>
 	    <id>release-sign-artifacts</id>
