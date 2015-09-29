@@ -4,6 +4,20 @@ This project aims to simplify the process of making an OSGi bundle interact with
  The ManagedProperties bundle hosts a Service called register. In order to use ManagedProperties to register your configuration, annotate an interface
  and register it with the service.
  
+## Requirements
+A quick rundown of what is needed to use the service.
+
+### Required Container
+The ManagedProperties service should work on any Felix container, but is currently only tested on Karaf.
+It requires that the Felix Configuration Admin and MetaType are active in order to function.
+
+### Required Bundles
+The only bundle required for the service to function is dk.netdesign:managedproperties-service:LATEST. The other bundles are there for examples and tests, and are likely
+not relevant or interesting. 
+
+### Getting the Bundles
+The bundles can be found on the Maven Central Repository
+ 
  
 ## Simple usage
  At its simplest, the service takes an annotated interface, for example:
@@ -44,6 +58,8 @@ as both a ManagedService and MetaTypeProvider.
 The `Property` annotation can take a number of options, but if none are given, as in the example above, ManagedProperties will use the method
 name (removing the "get" if present) as the name and ID, and the returnType as the configuration object type.
 The interface definition and register calls is all you need to register a configuration with accompanying MetaType information.
+Note that you do not strictly **need** to add the exceptions in the ```throws``` clause of the interface. Omitting this will cause the the exceptions
+to be thrown wrapped in a ```java.lang.reflect.UndeclaredThrowableException```, which is a RuntimeException.
 
 ## Defaults
 In case of a project where some (or all) of the configuration items are not available, the ManagedProperties service can take an object with
