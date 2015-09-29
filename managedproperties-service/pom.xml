@@ -23,7 +23,9 @@
 		    <instructions>
 			<Bundle-SymbolicName>ManagedPropertiesService</Bundle-SymbolicName>
 			<Private-Package>dk.netdesign.common.osgi.config,dk.netdesign.common.osgi.config.*</Private-Package>
-			<Export-Package>dk.netdesign.common.osgi.config.service,dk.netdesign.common.osgi.config.annotation,dk.netdesign.common.osgi.config.enhancement,dk.netdesign.common.osgi.config.filters</Export-Package>
+			<Export-Package>dk.netdesign.common.osgi.config.service,dk.netdesign.common.osgi.config.annotation,
+			    dk.netdesign.common.osgi.config.enhancement,dk.netdesign.common.osgi.config.filters,dk.netdesign.common.osgi.config.exception
+			</Export-Package>
 			<Bundle-Activator>dk.netdesign.common.osgi.config.ManagedPropertiesActivator</Bundle-Activator>
 			<DynamicImport-Package>*</DynamicImport-Package>
 		    </instructions>

@@ -92,7 +92,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	requiredIds = new ArrayList<>();
 	for (Method classMethod : type.getMethods()) {
 	    if (classMethod.isAnnotationPresent(Property.class)) {
-		if(classMethod.getParameterCount() > 0){
+		if(classMethod.getParameterTypes().length > 0){
 		    throw new InvalidMethodException("Could not create handler for this method. Methods annotated with "+Property.class.getName()+
 			    " must not take parameters");
 		}
