@@ -55,9 +55,12 @@ import org.slf4j.LoggerFactory;
 public class ManagedProperties implements InvocationHandler, MetaTypeProvider, ManagedService, ConfigurationCallbackHandler, EnhancedProperty {
 
     private static final Logger logger = LoggerFactory.getLogger(ManagedProperties.class);
-
-    private ServiceRegistration managedServiceReg;
-    private ServiceRegistration metatypeServiceReg;
+    public static final String BindingID = "ManagedPropertiesBinding";
+    
+    
+    private ServiceRegistration<ManagedService> managedServiceReg;
+    private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
+    private ServiceRegistration<EnhancedProperty> selfReg; 
     private ObjectClassDefinition ocd;
     private Map<String, Object> config = new HashMap<>();
     private final List<ConfigurationCallback> callbacks;
@@ -406,16 +409,21 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
      *
      * @param context The context in which to register this ManagedProperties object.
      */
-    public void register(BundleContext context) {
+    public void register(BundleContext context, Class configBindingClass) {
 	Hashtable<String, Object> managedServiceProps = new Hashtable<>();
 	managedServiceProps.put(Constants.SERVICE_PID, typeDefinition.id());
-	managedServiceReg = context.registerService(ManagedService.class.getName(), this, managedServiceProps);
+	managedServiceReg = context.registerService(ManagedService.class, this, managedServiceProps);
 
 	Hashtable<String, Object> metaTypeProps = new Hashtable<>();
 	metaTypeProps.put(Constants.SERVICE_PID, typeDefinition.id());
 	metaTypeProps.put("metadata.type", "Server");
 	metaTypeProps.put("metadata.version", "1.0.0");
-	metatypeServiceReg = context.registerService(MetaTypeProvider.class.getName(), this, metaTypeProps);
+	metatypeServiceReg = context.registerService(MetaTypeProvider.class, this, metaTypeProps);
+	
+	Hashtable<String, Object> selfRegProps = new Hashtable<>();
+	metaTypeProps.put(Constants.SERVICE_PID, typeDefinition.id());
+	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
+	selfReg = context.registerService(EnhancedProperty.class, this, selfRegProps);
     }
 
     private static ObjectClassDefinition buildOCD(String id, String name, String description, String file, Collection<AD> attributes) throws InvalidTypeException {
