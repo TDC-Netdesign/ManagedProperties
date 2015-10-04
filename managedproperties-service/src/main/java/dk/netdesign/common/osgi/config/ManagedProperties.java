@@ -400,8 +400,10 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     public void unregisterProperties() {
 	managedServiceReg.unregister();
 	metatypeServiceReg.unregister();
+	selfReg.unregister();
 	managedServiceReg = null;
 	metatypeServiceReg = null;
+	selfReg = null;
     }
 
     /**
