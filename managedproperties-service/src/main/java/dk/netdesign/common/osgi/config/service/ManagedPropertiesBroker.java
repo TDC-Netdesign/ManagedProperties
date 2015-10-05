@@ -63,6 +63,9 @@ public class ManagedPropertiesBroker implements ManagedPropertiesService {
 	PropertyDefinition propertyDefinition = getDefinitionAnnotation(type);
 	  try {
 		for(ServiceReference<EnhancedProperty> ref : context.getServiceReferences(EnhancedProperty.class, "("+Constants.SERVICE_PID+"="+propertyDefinition.id()+")")){
+		    if(logger.isDebugEnabled()){
+			logger.debug("Found ServiceReference for Configuration: "+propertyDefinition.name()+"["+propertyDefinition.id()+"]");
+		    }
 		    EnhancedProperty service = context.getService(ref);
 		    if(ManagedProperties.class.isAssignableFrom(service.getClass())){
 			  if(ref.getProperty(ManagedProperties.BindingID).equals(type.getCanonicalName())){

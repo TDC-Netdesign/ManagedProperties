@@ -87,7 +87,7 @@
 	
     <modules>
 	<module>managedproperties-service</module>
-	<module>managedproperties-feature</module>
+	<!--<module>managedproperties-feature</module>-->
 	<module>managedproperties-consumer</module>
     </modules>
     

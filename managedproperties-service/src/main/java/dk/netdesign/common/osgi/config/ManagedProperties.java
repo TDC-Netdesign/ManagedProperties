@@ -410,6 +410,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
      * Registers this ManagedProperties object with the bundle context. This is done when the proxy is first created.
      *
      * @param context The context in which to register this ManagedProperties object.
+     * @param configBindingClass The interface which was bound to this ManagedProperties
      */
     public void register(BundleContext context, Class configBindingClass) {
 	Hashtable<String, Object> managedServiceProps = new Hashtable<>();
@@ -423,7 +424,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	metatypeServiceReg = context.registerService(MetaTypeProvider.class, this, metaTypeProps);
 	
 	Hashtable<String, Object> selfRegProps = new Hashtable<>();
-	metaTypeProps.put(Constants.SERVICE_PID, typeDefinition.id());
+	selfRegProps.put(Constants.SERVICE_PID, typeDefinition.id());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
 	selfReg = context.registerService(EnhancedProperty.class, this, selfRegProps);
     }
