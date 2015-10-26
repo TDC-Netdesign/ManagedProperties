@@ -7,6 +7,7 @@
 package dk.netdesign.common.osgi.config.test.consumer;
 
 import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
 import java.util.logging.Level;
 import org.osgi.framework.BundleActivator;
@@ -22,20 +23,13 @@ import org.slf4j.LoggerFactory;
  */
 public class Consumer implements BundleActivator{
     private static final Logger logger = LoggerFactory.getLogger(Consumer.class);
-    private static ServiceTracker<ManagedPropertiesService, ManagedPropertiesService> tracker;
     private PropertiesWithStandardTypes props;
     private Thread printer;
     private boolean run = true;
 
     @Override
     public void start(BundleContext context) throws Exception {
-	logger.info("Getting tracker");
-	tracker = new ServiceTracker(context, ManagedPropertiesService.class, null);
-        tracker.open();
-	logger.info("Tracker open");
-	ManagedPropertiesService service = tracker.getService();
-	logger.info("Service: "+service);
-	props = service.register(PropertiesWithStandardTypes.class, new DefaultProperties());
+	props = ManagedPropertiesFactory.register(PropertiesWithStandardTypes.class, new DefaultProperties(), context);
 	logger.info("Getting properties");
 	logger.info(props.getCharacterProperty()+"");
 	logger.info(props.getDoubleProperty()+"");
@@ -49,7 +43,6 @@ public class Consumer implements BundleActivator{
 
     @Override
     public void stop(BundleContext context) throws Exception {
-	tracker.close();
 	((EnhancedProperty)props).unregisterProperties();
 	run = false;
 	

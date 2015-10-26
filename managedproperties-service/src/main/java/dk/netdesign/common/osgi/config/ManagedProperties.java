@@ -398,6 +398,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     @Override
     public void unregisterProperties() {
+	logger.info("Unregistering properties for "+typeDefinition.id());
 	managedServiceReg.unregister();
 	metatypeServiceReg.unregister();
 	selfReg.unregister();
