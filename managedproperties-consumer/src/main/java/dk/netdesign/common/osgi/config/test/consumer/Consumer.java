@@ -8,12 +8,8 @@ package dk.netdesign.common.osgi.config.test.consumer;
 
 import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
-import java.util.logging.Level;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
-import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

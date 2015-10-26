@@ -1,14 +1,13 @@
 # ManagedProperties
 This project aims to simplify the process of making an OSGi bundle interact with the [Felix Configuration Admin](http://felix.apache.org/documentation/subprojects/apache-felix-config-admin.html)
  and [MetaType](http://felix.apache.org/documentation/subprojects/apache-felix-metatype-service.html).
- The ManagedProperties bundle hosts a Service called register. In order to use ManagedProperties to register your configuration, annotate an interface
- and register it with the service.
+ The ManagedProperties bundle provides a Factory to bind a Configuration Admin configuration to an Object. In order to use ManagedProperties to register your configuration, annotate an interface and provide it to the Factory.
  
 ## Requirements
-A quick rundown of what is needed to use the service.
+A quick rundown of what is needed to use this bundle.
 
 ### Required Container
-The ManagedProperties service should work on any Felix container, but is currently only tested on Karaf.
+The ManagedProperties bundle should work on any Felix container, but is currently only tested on Karaf.
 It requires that the Felix Configuration Admin and MetaType are active in order to function.
 
 ### Required Bundles
@@ -44,14 +43,11 @@ public interface BundleProperties{
 	public Byte getByte() throws InvalidTypeException, TypeFilterException;
 }
 ```
-and registers it at the service:
+and registers it with the factory:
 
 ```
-	ServiceTracker tracker = new ServiceTracker(context, ManagedPropertiesService.class, null);
-  tracker.open();
-	ManagedPropertiesService service = tracker.getService();
-	BundleProperties props = service.register(BundleProperties.class, null);
-	tracker.close();
+	BundleProperties props = ManagedPropertiesFactory.register(BundleProperties.class, null);
+
 ```
 ManagedProperties then parses the information, creates the ObjectClassDefinition and AttributeDefinitions and registers the configuration
 as both a ManagedService and MetaTypeProvider.
@@ -66,11 +62,7 @@ In case of a project where some (or all) of the configuration items are not avai
 defaults, along with the interface type.
 In order to use defaults, simply implement the interface used for the properties, and pass that along with the register method.
 ```
-	ServiceTracker tracker = new ServiceTracker(context, ManagedPropertiesService.class, null);
-  tracker.open();
-	ManagedPropertiesService service = tracker.getService();
-	BundleProperties props = service.register(BundleProperties.class, new BundlePropertiesDefaults());
-	tracker.close();
+	BundleProperties props = ManagedPropertiesFactory.register(BundleProperties.class, new BundlePropertiesDefaults());
 ```
 Where BundlePropertiesDefaults is an implementation of the BundleProperties interface.
 
@@ -105,11 +97,7 @@ TypeFilters are used to convert simple ConfigAdmin types to other types, as well
 In case that an application needs to be made aware of configuration changes, and application can register a CallBack with the
 returned ManagedProperties object.
 ```
-ServiceTracker tracker = new ServiceTracker(context, ManagedPropertiesService.class, null);
-  tracker.open();
-	ManagedPropertiesService service = tracker.getService();
-	BundleProperties props = service.register(BundleProperties.class, new BundlePropertiesDefaults());
-	tracker.close();
+	BundleProperties props = ManagedPropertiesFactory.register(BundleProperties.class, new BundlePropertiesDefaults());
 	ConfigurationCallback callback = new ConfigurationCallbackImpl();
 ((ConfigurationCallbackHandler)props).addConfigurationCallback(callback);
 ```
