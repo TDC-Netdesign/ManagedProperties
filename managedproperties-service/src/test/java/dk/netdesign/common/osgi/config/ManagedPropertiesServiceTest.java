@@ -15,7 +15,7 @@ import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.filters.FileFilter;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesBroker;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.io.File;
 import java.io.InputStream;
@@ -55,7 +55,6 @@ import org.osgi.service.cm.ConfigurationException;
 public class ManagedPropertiesServiceTest {
 
     ContextStub stub;
-    ManagedPropertiesBroker service;
     TestInterface testi;
     ManagedProperties props;
     File testfile;
@@ -74,8 +73,7 @@ public class ManagedPropertiesServiceTest {
     @Before
     public void setUp() throws Exception {
 	stub = new ContextStub();
-	service = new ManagedPropertiesBroker(stub);
-	testi = service.register(TestInterface.class, new TestInterfaceDefaults());
+	testi = ManagedPropertiesFactory.register(TestInterface.class, new TestInterfaceDefaults(), stub);
 	props = (ManagedProperties) stub.lastRegistered;
 	testfile = new File("testFile.test");
 	testfile.createNewFile();
@@ -186,17 +184,17 @@ public class ManagedPropertiesServiceTest {
 
     @Test(expected = TypeFilterException.class)
     public void testBadFilter() throws Exception {
-	service.register(TestBadFilter.class);
+	ManagedPropertiesFactory.register(TestBadFilter.class, stub);
     }
 
     @Test(expected = InvalidTypeException.class)
     public void testBadType() throws Exception {
-	service.register(TestBadType.class);
+	ManagedPropertiesFactory.register(TestBadType.class, stub);
     }
 
     @Test(expected = InvalidTypeException.class)
     public void testNotInterface() throws Exception {
-	service.register(Integer.class);
+	ManagedPropertiesFactory.register(Integer.class, stub);
     }
 
     @Test
@@ -210,7 +208,7 @@ public class ManagedPropertiesServiceTest {
 
     @Test
     public void testTestNarrowing() throws Exception {
-	TestNarrowing narrowing = service.register(TestNarrowing.class);
+	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, stub);
 	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
 
 	Dictionary<String, Object> newConfig = new Hashtable<>();
@@ -226,7 +224,7 @@ public class ManagedPropertiesServiceTest {
     
     @Test(expected = ConfigurationException.class)
     public void testTestNarrowingBadInput() throws Exception {
-	TestNarrowing narrowing = service.register(TestNarrowing.class);
+	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, stub);
 	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
@@ -237,7 +235,7 @@ public class ManagedPropertiesServiceTest {
     
     @Test
     public void testCardinalityOnUpdate() throws Exception{
-	TestCardinality cardinality = service.register(TestCardinality.class);
+	TestCardinality cardinality = ManagedPropertiesFactory.register(TestCardinality.class, stub);
 	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
@@ -253,7 +251,7 @@ public class ManagedPropertiesServiceTest {
     
     @Test(expected = ConfigurationException.class)
     public void testMissingRequredValueOnUpdate() throws Exception{
-	TestCardinality cardinality = service.register(TestCardinality.class);
+	TestCardinality cardinality = ManagedPropertiesFactory.register(TestCardinality.class, stub);
 	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
@@ -265,19 +263,19 @@ public class ManagedPropertiesServiceTest {
     
     @Test(expected = InvalidMethodException.class)
     public void testBadListCardinality() throws Exception{
-	TestBadListCardinality cardinality = service.register(TestBadListCardinality.class);
+	TestBadListCardinality cardinality = ManagedPropertiesFactory.register(TestBadListCardinality.class, stub);
     }
     
     @Test(expected = InvalidMethodException.class)
     public void testBadListType() throws Exception{
-	TestBadListType cardinality = service.register(TestBadListType.class);
+	TestBadListType cardinality = ManagedPropertiesFactory.register(TestBadListType.class, stub);
     }
     
     
     
     @Test
     public void testNarrowingDefaultsNoUpdate() throws Exception{
-	TestNarrowing narrowing = service.register(TestNarrowing.class, new NarrowingDefaults());
+	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
 	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
 
 	assertEquals(new NarrowingDefaults().getNumber(), narrowing.getNumber());
@@ -286,7 +284,7 @@ public class ManagedPropertiesServiceTest {
     
     @Test
     public void testNarrowingDefaultsPartialUpdate() throws Exception{
-	TestNarrowing narrowing = service.register(TestNarrowing.class, new NarrowingDefaults());
+	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
 	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
 
 	Dictionary<String, Object> newConfig = new Hashtable<>();
@@ -298,7 +296,7 @@ public class ManagedPropertiesServiceTest {
     
     @Test(expected = UnknownValueException.class)
     public void testNarrowingMissingDefaults() throws Exception{
-	TestNarrowing narrowing = service.register(TestNarrowing.class, new NarrowingDefaults());
+	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
 	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
 	narrowing.getNumberFloat(); //Returns null
     }
@@ -333,38 +331,38 @@ public class ManagedPropertiesServiceTest {
 
     @Test(expected = InvalidTypeException.class)
     public void testUnknownInputType() throws Exception {
-	service.register(TestUnknownInputType.class);
+	ManagedPropertiesFactory.register(TestUnknownInputType.class, stub);
     }
 
     @Test(expected = TypeFilterException.class)
     public void testAbstract() throws Exception {
-	service.register(TestAbstractReturn.class);
+	ManagedPropertiesFactory.register(TestAbstractReturn.class, stub);
     }
 
     @Test(expected = DoubleIDException.class)
     public void testDoubleAttributeID() throws Exception {
-	service.register(TestDoubleAttributeID.class);
+	ManagedPropertiesFactory.register(TestDoubleAttributeID.class, stub);
     }
 
     @Test(expected = DoubleIDException.class) @Ignore
     public void testDoubleInterfaceID() throws Exception {
-	service.register(TestDoubleInterfaceID1.class);
-	service.register(TestDoubleInterfaceID2.class);
+	ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
+	ManagedPropertiesFactory.register(TestDoubleInterfaceID2.class, stub);
     }
     
     @Test(expected = InvalidMethodException.class)
     public void testMethodWithParams() throws Exception {
-	service.register(IllegalMethod.class);
+	ManagedPropertiesFactory.register(IllegalMethod.class, stub);
     }
     
     @Test(expected = InvalidTypeException.class)
     public void testIllegalInputType() throws Exception{
-	service.register(IllegalInputType.class);
+	ManagedPropertiesFactory.register(IllegalInputType.class, stub);
     }
     
     @Test @Ignore
     public void testLegalInputType() throws Exception{
-	service.register(LegalInputTypes.class);
+	ManagedPropertiesFactory.register(LegalInputTypes.class, stub);
 	String testString = "test";
 	Integer testInteger = 123;
 	Long testLong = 112l;
@@ -396,9 +394,9 @@ public class ManagedPropertiesServiceTest {
 
     @Test @Ignore
     public void testRepeatedInterface() throws Exception {
-	TestDoubleInterfaceID1 i1 = service.register(TestDoubleInterfaceID1.class);
+	TestDoubleInterfaceID1 i1 = ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
 	ManagedProperties i1i2Props = (ManagedProperties) stub.lastRegistered;
-	TestDoubleInterfaceID1 i2 = service.register(TestDoubleInterfaceID1.class);
+	TestDoubleInterfaceID1 i2 = ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
 
 	Dictionary<String, Object> newConfig = new Hashtable<>();
 	newConfig.put("String", Collections.singletonList("Stringval"));

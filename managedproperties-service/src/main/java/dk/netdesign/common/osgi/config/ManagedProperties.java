@@ -1,7 +1,6 @@
 
 package dk.netdesign.common.osgi.config;
 
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesBroker;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
@@ -12,6 +11,7 @@ import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.io.File;
 import java.lang.reflect.InvocationHandler;
@@ -91,7 +91,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	r = lock.readLock();
 	w = lock.writeLock();
 	attributeToMethodMapping = new HashMap<>();
-	typeDefinition = ManagedPropertiesBroker.getDefinitionAnnotation(type);
+	typeDefinition = ManagedPropertiesFactory.getDefinitionAnnotation(type);
 	requiredIds = new ArrayList<>();
 	for (Method classMethod : type.getMethods()) {
 	    if (classMethod.isAnnotationPresent(Property.class)) {
@@ -274,23 +274,6 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 			break;
 		}
 		newprops.put(key, configValue);
-		/*if (definition.filter != null) {
-		 try {
-		 TypeFilter filterinstance = definition.filter.newInstance();
-		 Object filterValue = filterinstance.parse(configValue);
-		 newprops.put(key, filterValue);
-		 } catch (InstantiationException | IllegalAccessException ex) {
-		 throw new ConfigurationException(key, "Could not load properties. Could not instantiate filter.", ex);
-		 } catch (TypeFilterException ex) {
-		 throw new ConfigurationException(key, "Could not load properties. Could not filter value.", ex);
-		 }
-		 } else {
-		 if (definition.getInputType().isAssignableFrom(configValue.getClass())) {
-		 newprops.put(key, configValue);
-		 } else {
-		 throw new ConfigurationException(key, "Could not load properties. The property " + key + " is not of the expected type. Expected type was " + definition.getInputType().getName() + " but was " + configValue.getClass().getName());
-		 }
-		 }*/
 
 	    }
 	    if(!required.isEmpty()){

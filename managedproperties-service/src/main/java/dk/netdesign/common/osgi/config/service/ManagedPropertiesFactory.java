@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 mnn.
+ * Copyright 2015 TDC Netdesign.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,46 @@ import org.slf4j.LoggerFactory;
 public class ManagedPropertiesFactory {
     private static final Logger logger = LoggerFactory.getLogger(ManagedPropertiesFactory.class);
     
+    /**
+     * Registers a configuration that is based on the Interface referenced by {@code type}.
+     * Equivalent to {@link #register(Class, Object, BundleContext)}, with a null defaults object.
+     * @param <T> The return type of the configuration.
+     * @param type The type of configuration to create. The type of interface must be be annotated by 
+     * {@link dk.netdesign.common.osgi.config.annotation.Property}, and each parameter must be annotated by 
+     * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition}
+     * @param context The {@link BundleContext} under which to register this configuration
+     * @return A proxy representing a Configuration Admin configuration.
+     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
+     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
+     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
+     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
+     */
     public static synchronized <T extends Object> T register(Class<T> type, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	return register(type, null, context);
     }
     
+    /**
+     * Registers a configuration backed by the Configuration Admin. When this method is called, a {@link Proxy} object is created based on the {@code type} 
+     * provided to the method. The configuration is automatically registered as a {@link org.osgi.service.cm.ManagedService} and {@link org.osgi.service.metatype.MetaTypeProvider}.
+     * The configuration can also be created with a Defaults object. In order to create a Defaults object, implement the Interface provided by {@code type} 
+     * and supplying an instance of that class to {@code defaults}. {@code defaults} may be null.
+     * 
+     * * Example:
+     * SomeInterface properties = ManagedPropertiesFactory.register(SomeInterface.class, new SomeInterfaceImpl(), context);
+     * 
+     * @param <I> The return type ofs the configuration.
+     * @param <T> The return type of the default.
+     * @param type The type of configuration to create. The type of interface must be be annotated by 
+     * {@link dk.netdesign.common.osgi.config.annotation.Property}, and each parameter must be annotated by 
+     * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition}
+     * @param defaults The defaults object to create. When a configuration item is not found in the Configuration Admin, the defaults method is called.
+     * @param context The {@link BundleContext} under which to register this configuration
+     * @return A proxy representing a Configuration Admin configuration.
+     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
+     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
+     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
+     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
+     */
     public static synchronized <I, T extends I> I register(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	ManagedProperties handler = null;
 	if (!type.isInterface()) {
@@ -72,19 +108,6 @@ public class ManagedPropertiesFactory {
 		handler.register(context, type);
 		logger.info("Registered "+handler);
 	  }
-		/*
-		if (propertyInstances.containsKey(propertyDefinition.id())) {
-		ManagedPropertiesRegistration currentRegistration = propertyInstances.get(propertyDefinition.id());
-		if (!currentRegistration.registeredInterface.isAssignableFrom(type)) {
-		throw new DoubleIDException("Could not register the interface" + type + ". This id is already in use by " + currentRegistration.registeredInterface);
-		}
-		handler = currentRegistration.properties;
-		} else {
-		handler = getInvocationHandler(type, defaults);
-		handler.register(context);
-		propertyInstances.put(propertyDefinition.id(), new ManagedPropertiesRegistration(type, handler));
-		logger.info("Registered "+handler);
-		}*/
 	  
 	
 	return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, EnhancedProperty.class, ConfigurationCallbackHandler.class}, handler));
