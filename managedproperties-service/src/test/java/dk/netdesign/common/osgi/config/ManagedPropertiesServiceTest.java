@@ -54,7 +54,7 @@ import org.osgi.service.cm.ConfigurationException;
  */
 public class ManagedPropertiesServiceTest {
 
-    ContextStub stub;
+    MockContext stub;
     TestInterface testi;
     ManagedProperties props;
     File testfile;
@@ -72,7 +72,7 @@ public class ManagedPropertiesServiceTest {
 
     @Before
     public void setUp() throws Exception {
-	stub = new ContextStub();
+	stub = new MockContext();
 	testi = ManagedPropertiesFactory.register(TestInterface.class, new TestInterfaceDefaults(), stub);
 	props = (ManagedProperties) stub.lastRegistered;
 	testfile = new File("testFile.test");
@@ -724,143 +724,6 @@ public class ManagedPropertiesServiceTest {
 
     }
 
-    private static class ContextStub implements BundleContext {
-
-	Object lastRegistered;
-
-	@Override
-	public <S> ServiceRegistration<S> registerService(Class<S> arg0, S arg1, Dictionary<String, ?> arg2) {
-	    lastRegistered = arg1;
-	    return null;
-	}
-	
-	@Override
-	public ServiceRegistration<?> registerService(String[] arg0, Object arg1, Dictionary<String, ?> arg2) {
-	    lastRegistered = arg1;
-	    return null;
-	}
-	
-	@Override
-	public ServiceRegistration<?> registerService(String arg0, Object arg1, Dictionary<String, ?> arg2) {
-	    lastRegistered = arg1;
-	    return null;
-	}
-
-	@Override
-	public String getProperty(String key) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public Bundle getBundle() {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public Bundle installBundle(String arg0, InputStream arg1) throws BundleException {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public Bundle installBundle(String arg0) throws BundleException {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public Bundle getBundle(long id) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public Bundle[] getBundles() {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public void addServiceListener(ServiceListener listener, String filter) throws InvalidSyntaxException {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public void addServiceListener(ServiceListener listener) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public void removeServiceListener(ServiceListener arg0) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public void addBundleListener(BundleListener listener) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public void removeBundleListener(BundleListener arg0) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public void addFrameworkListener(FrameworkListener listener) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public void removeFrameworkListener(FrameworkListener arg0) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public ServiceReference<?>[] getServiceReferences(String arg0, String arg1) throws InvalidSyntaxException {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public ServiceReference<?>[] getAllServiceReferences(String clazz, String filter) throws InvalidSyntaxException {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public ServiceReference<?> getServiceReference(String arg0) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public <S> ServiceReference<S> getServiceReference(Class<S> arg0) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public <S> Collection<ServiceReference<S>> getServiceReferences(Class<S> arg0, String arg1) throws InvalidSyntaxException {
-	    return Collections.EMPTY_LIST;
-	}
-
-	@Override
-	public <S> S getService(ServiceReference<S> arg0) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public boolean ungetService(ServiceReference<?> arg0) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public File getDataFile(String filename) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public Filter createFilter(String filter) throws InvalidSyntaxException {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-	@Override
-	public Bundle getBundle(String location) {
-	    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-	}
-
-    }
+    
 
 }

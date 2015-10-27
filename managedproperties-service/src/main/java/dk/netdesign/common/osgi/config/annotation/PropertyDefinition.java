@@ -23,13 +23,13 @@ public @interface PropertyDefinition {
      * The name of the configuration in the Configuration Admin. This is a required value.
      * @return The name of the configuration
      */
-    public String name();
+    public String name() default "";
 
     /**
      * The ID of the configuration in the Configuration Admin. This is a required value.
      * @return The ID of the configuration
      */
-    public String id();
+    public String id() default "";
 
     /**
      * The description of the configuration in the Configuration Admin.

@@ -25,6 +25,8 @@ import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
@@ -84,11 +86,10 @@ public class ManagedPropertiesFactory {
 	if (!type.isInterface()) {
 	    throw new InvalidTypeException("Could  not register the type " + type.getName() + " as a Managed Property. The type must be an interface");
 	}
-	PropertyDefinition propertyDefinition = getDefinitionAnnotation(type);
 	  try {
-		for(ServiceReference<EnhancedProperty> ref : context.getServiceReferences(EnhancedProperty.class, "("+Constants.SERVICE_PID+"="+propertyDefinition.id()+")")){
+		for(ServiceReference<EnhancedProperty> ref : context.getServiceReferences(EnhancedProperty.class, "("+Constants.SERVICE_PID+"="+getDefinitionID(type)+")")){
 		    if(logger.isDebugEnabled()){
-			logger.debug("Found ServiceReference for Configuration: "+propertyDefinition.name()+"["+propertyDefinition.id()+"]");
+			logger.debug("Found ServiceReference for Configuration: "+getDefinitionName(type)+"["+getDefinitionID(type)+"]");
 		    }
 		    EnhancedProperty service = context.getService(ref);
 		    if(ManagedProperties.class.isAssignableFrom(service.getClass())){
@@ -131,25 +132,58 @@ public class ManagedPropertiesFactory {
 	return new ManagedProperties(type, defaults);
     }
 
-    public static PropertyDefinition getDefinitionAnnotation(Class<?> type) throws InvalidTypeException {
+    public static final PropertyDefinition getDefinitionAnnotation(Class<?> type) throws InvalidTypeException {
 	if (type == null) {
 	    throw new InvalidTypeException("Could not build OCD. Type was null");
 	}
-	if (!type.isAnnotationPresent(PropertyDefinition.class)) {
+	
+	List<PropertyDefinition> definitions = getDefinition(type);
+	
+	if (definitions.isEmpty()) {
 	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Type did not contain the annotation " + PropertyDefinition.class.getName());
 	}
 
-	PropertyDefinition typeDefinition = type.getAnnotation(PropertyDefinition.class);
-
-	if (typeDefinition.id().isEmpty()) {
+/*	if (typeDefinition.id().isEmpty()) {
 	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". ID was not set on " + PropertyDefinition.class.getSimpleName());
 	}
 
 	if (typeDefinition.name().isEmpty()) {
 	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Name was not set on " + PropertyDefinition.class.getSimpleName());
 	}
-
-	return typeDefinition;
+*/
+	if(definitions.size()>1){
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". More than one instance of " + PropertyDefinition.class.getSimpleName()+" was found in the heirachy");
+	}
+	return definitions.get(0);
+    }
+    
+    private static List<PropertyDefinition> getDefinition(Class<?> toScan){
+	List<PropertyDefinition> definitions = new ArrayList<>();
+	if(toScan.isAnnotationPresent(PropertyDefinition.class)){
+	    definitions.add(toScan.getAnnotation(PropertyDefinition.class));
+	}
+	for(Class<?> parent : toScan.getInterfaces()){
+	    definitions.addAll(getDefinition(parent));
+	}
+	return definitions;
+    }
+    
+    public static String getDefinitionID(Class<?> type) throws InvalidTypeException {
+	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
+	if(typeDefinition.id().isEmpty()){
+	    return type.getCanonicalName();
+	}else{
+	    return typeDefinition.id();
+	}
+    }
+    
+    public static String getDefinitionName(Class<?> type) throws InvalidTypeException {
+	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
+	if(typeDefinition.name().isEmpty()){
+	    return type.getSimpleName();
+	}else{
+	    return typeDefinition.name();
+	}
     }
     
 }

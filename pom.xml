@@ -183,6 +183,13 @@
 		<version>4.12</version>
 		<scope>test</scope>
 	    </dependency>
+	    
+	    <dependency>
+		<groupId>org.apache.sling</groupId>
+		<artifactId>org.apache.sling.testing.osgi-mock</artifactId>
+		<version>1.4.0</version>
+		<scope>test</scope>
+	    </dependency>
 	</dependencies>
     </dependencyManagement>
 

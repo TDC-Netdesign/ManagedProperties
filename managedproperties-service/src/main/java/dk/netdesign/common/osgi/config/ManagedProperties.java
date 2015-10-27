@@ -66,7 +66,6 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     private final List<ConfigurationCallback> callbacks;
     private final ReadWriteLock lock;
     private final Lock r, w;
-    private final PropertyDefinition typeDefinition;
     private final Map<String, AD> attributeToMethodMapping;
     private final List<Method> allowedMethods;
     private final Class type;
@@ -91,7 +90,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	r = lock.readLock();
 	w = lock.writeLock();
 	attributeToMethodMapping = new HashMap<>();
-	typeDefinition = ManagedPropertiesFactory.getDefinitionAnnotation(type);
+	PropertyDefinition typeDefinition = ManagedPropertiesFactory.getDefinitionAnnotation(type);
 	requiredIds = new ArrayList<>();
 	for (Method classMethod : type.getMethods()) {
 	    if (classMethod.isAnnotationPresent(Property.class)) {
@@ -109,7 +108,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
 	ensureUniqueIDs(attributeToMethodMapping.values());
 
-	ocd = buildOCD(typeDefinition.id(), typeDefinition.name(), typeDefinition.description(), typeDefinition.iconFile(), attributeToMethodMapping.values());
+	ocd = buildOCD(ManagedPropertiesFactory.getDefinitionID(type), ManagedPropertiesFactory.getDefinitionName(type), typeDefinition.description(), typeDefinition.iconFile(), attributeToMethodMapping.values());
 
 	allowedMethods = new ArrayList<>();
 
@@ -213,7 +212,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
      */
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
-	logger.info("Attempting to update properties on "+typeDefinition.name()+"["+typeDefinition.id()+"] with "+properties);
+	logger.info("Attempting to update properties on "+ocd.getName()+"["+ocd.getID()+"] with "+properties);
 	if(properties == null){
 	    return;
 	}
@@ -381,7 +380,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     @Override
     public void unregisterProperties() {
-	logger.info("Unregistering properties for "+typeDefinition.id());
+	logger.info("Unregistering properties for "+ocd.getID());
 	managedServiceReg.unregister();
 	metatypeServiceReg.unregister();
 	selfReg.unregister();
@@ -398,17 +397,17 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
      */
     public void register(BundleContext context, Class configBindingClass) {
 	Hashtable<String, Object> managedServiceProps = new Hashtable<>();
-	managedServiceProps.put(Constants.SERVICE_PID, typeDefinition.id());
+	managedServiceProps.put(Constants.SERVICE_PID, ocd.getID());
 	managedServiceReg = context.registerService(ManagedService.class, this, managedServiceProps);
 
 	Hashtable<String, Object> metaTypeProps = new Hashtable<>();
-	metaTypeProps.put(Constants.SERVICE_PID, typeDefinition.id());
+	metaTypeProps.put(Constants.SERVICE_PID, ocd.getID());
 	metaTypeProps.put("metadata.type", "Server");
 	metaTypeProps.put("metadata.version", "1.0.0");
 	metatypeServiceReg = context.registerService(MetaTypeProvider.class, this, metaTypeProps);
 	
 	Hashtable<String, Object> selfRegProps = new Hashtable<>();
-	selfRegProps.put(Constants.SERVICE_PID, typeDefinition.id());
+	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
 	selfReg = context.registerService(EnhancedProperty.class, this, selfRegProps);
     }
@@ -434,9 +433,9 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     @Override
     public String toString() {
 	ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
-	builder.append("id", typeDefinition.id());
-	builder.append("name", typeDefinition.name());
-	builder.append("description", typeDefinition.description());
+	builder.append("id", ocd.getID());
+	builder.append("name", ocd.getName());
+	builder.append("description", ocd.getDescription());
 	r.lock();
 	try{
 	    for(String key : config.keySet()){

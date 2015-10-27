@@ -74,6 +74,11 @@
             <artifactId>junit</artifactId>
 	    <scope>test</scope>
         </dependency>
+	
+	<dependency>
+	    <groupId>org.apache.sling</groupId>
+	    <artifactId>org.apache.sling.testing.osgi-mock</artifactId>
+	</dependency>
 		
     </dependencies>
 
