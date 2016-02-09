@@ -19,19 +19,20 @@ import org.slf4j.LoggerFactory;
  */
 public class Consumer implements BundleActivator{
     private static final Logger logger = LoggerFactory.getLogger(Consumer.class);
-    private PropertiesWithStandardTypes props;
+    private InheritedProperties props;
     private Thread printer;
     private boolean run = true;
 
     @Override
     public void start(BundleContext context) throws Exception {
-	props = ManagedPropertiesFactory.register(PropertiesWithStandardTypes.class, new DefaultProperties(), context);
+	props = ManagedPropertiesFactory.register(InheritedProperties.class, new DefaultProperties(), context);
 	logger.info("Getting properties");
 	logger.info(props.getCharacterProperty()+"");
 	logger.info(props.getDoubleProperty()+"");
 	logger.info(props.getStringInteger()+"");
 	logger.info(props.getStringProperty()+"");
 	logger.info(props.getStringListProperty()+"");
+	logger.info(props.getSubString());
 	logger.info(props+"");	
 	printer = new PrinterThread();
 	printer.start();

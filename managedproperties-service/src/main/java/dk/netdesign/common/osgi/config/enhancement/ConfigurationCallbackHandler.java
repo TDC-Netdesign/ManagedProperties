@@ -5,7 +5,6 @@
  */
 package dk.netdesign.common.osgi.config.enhancement;
 
-import dk.netdesign.common.osgi.config.ConfigurationCallback;
 import java.util.List;
 
 /**

@@ -17,6 +17,7 @@
 package dk.netdesign.common.osgi.config.service;
 
 import dk.netdesign.common.osgi.config.ManagedProperties;
+import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
 import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
@@ -24,9 +25,14 @@ import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
@@ -102,6 +108,9 @@ public class ManagedPropertiesFactory {
 		}
 	  } catch (InvalidSyntaxException ex) {
 		throw new IllegalStateException("Could not register this service. There was an error in the search filter when searching existing mappings.", ex);
+	  } catch(IllegalStateException | NullPointerException ex){
+	        logger.warn("An error occured while attempting to get the current Configuration Proxies.", ex);
+	        handler = null;
 	  }
 	  
 	  if(handler == null){
@@ -155,6 +164,41 @@ public class ManagedPropertiesFactory {
 	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". More than one instance of " + PropertyDefinition.class.getSimpleName()+" was found in the heirachy");
 	}
 	return definitions.get(0);
+    }
+    
+    public static final Property getMethodAnnotation(Method toScan) throws InvalidMethodException{
+	if(toScan == null){
+	    throw new InvalidMethodException("Could not find property for this method. toScan was null");
+	}
+	
+	List<Property> annotations = getAnnotations(toScan);
+	
+	if (annotations.isEmpty()) {
+	    return null;
+	}
+	if(annotations.size()>1){
+	    throw new InvalidMethodException("Could not get method annotation for " + toScan.getName() + ". More than one instance of " + Property.class.getSimpleName()+" was found in the heirachy for this method");
+	}
+	
+	return annotations.get(0);
+	
+    }
+    
+    private static List<Property> getAnnotations(Method toScan){
+	List<Property> annotations = new ArrayList<>();
+	if(toScan.isAnnotationPresent(Property.class)){
+	    annotations.add(toScan.getAnnotation(Property.class));
+	}
+	
+	for(Class superInterface : toScan.getDeclaringClass().getInterfaces()){
+	    try {
+		Method method = superInterface.getDeclaredMethod(toScan.getName(), toScan.getParameterTypes());
+		annotations.addAll(getAnnotations(method));
+	    } catch (NoSuchMethodException | SecurityException ex) {
+		//There was no method with that signature in this interface. Stop looking!
+	    }
+	}
+	return annotations;
     }
     
     private static List<PropertyDefinition> getDefinition(Class<?> toScan){

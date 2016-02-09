@@ -5,6 +5,7 @@
  */
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallback;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
@@ -144,6 +145,28 @@ public class ManagedPropertiesServiceTest {
 	assertArrayEquals(expected.getPassword(), testi.getPassword());
 	
     }
+    
+    @Test
+    public void testDefaultsInheritance() throws Exception{
+	TestInterface properties = ManagedPropertiesFactory.register(TestInterface.class, new TestInterfaceDefaultsOverride(), stub);
+	props = (ManagedProperties) stub.lastRegistered;
+	
+	TestInterfaceDefaults expected = new TestInterfaceDefaultsOverride();
+	assertEquals(expected.getBigDecimal(), properties.getBigDecimal());
+	assertEquals(expected.getBigInteger(), properties.getBigInteger());
+	assertEquals(expected.getBoolean(), properties.getBoolean());
+	assertEquals(expected.getByte(), properties.getByte());
+	assertEquals(expected.getCharacter(), properties.getCharacter());
+	assertEquals(expected.getDouble(), properties.getDouble());
+	assertEquals(expected.getFile(), properties.getFile());
+	assertEquals(expected.getFloat(), properties.getFloat());
+	assertEquals(expected.getInteger(), properties.getInteger());
+	assertEquals(expected.getLong(), properties.getLong());
+	assertEquals(expected.getStringInteger(), properties.getStringInteger());
+	assertArrayEquals(expected.getPassword(), properties.getPassword());
+	
+    }
+    
     @Test(expected = UnknownValueException.class)
     public void testOfflineMissing() throws Exception{
 	testi.getString();
@@ -524,6 +547,22 @@ public class ManagedPropertiesServiceTest {
 	public File getFile() throws InvalidTypeException, TypeFilterException {
 	    return new File("test");
 	}
+	
+    }
+    
+    private static class TestInterfaceDefaultsOverride extends TestInterfaceDefaults{
+
+	@Override
+	public String getStringInteger() throws InvalidTypeException, TypeFilterException {
+	    return "53";
+	}
+
+	@Override
+	public Integer getInteger() throws InvalidTypeException, TypeFilterException {
+	    return 53;
+	}
+	
+	
 	
     }
     

@@ -48,7 +48,7 @@ public class AnnotationTest {
     
     @Before
     public void setUp() {
-	context = new MockContext();
+	context = MockOsgi.newBundleContext();
 	
     }
     
@@ -64,6 +64,7 @@ public class AnnotationTest {
     public void testInheritance() throws Exception{
 	SuperConfiguration superConfig = ManagedPropertiesFactory.register(SuperConfiguration.class, context);
 	SubConfiguration subConfig = ManagedPropertiesFactory.register(SubConfiguration.class, context);
+	
     }
     
     @Test(expected = InvalidTypeException.class)

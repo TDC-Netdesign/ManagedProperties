@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author mnn
  */
-@PropertyDefinition(id = "TestConsumer1", name = "TestConsumer one")
+@PropertyDefinition(name = "TestConsumer one")
 public interface PropertiesWithStandardTypes {
     
     @Property

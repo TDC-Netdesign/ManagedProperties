@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @author mnn
  */
-public class DefaultProperties implements PropertiesWithStandardTypes{
+public class DefaultProperties implements InheritedProperties{
 
     @Override
     public String getStringProperty() {
@@ -44,6 +44,11 @@ public class DefaultProperties implements PropertiesWithStandardTypes{
     @Override
     public URL getURLProperty() {
 	return null;
+    }
+
+    @Override
+    public String getSubString() {
+	return "subdubdee";
     }
     
     

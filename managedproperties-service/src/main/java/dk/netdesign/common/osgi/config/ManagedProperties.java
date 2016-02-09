@@ -1,6 +1,7 @@
 
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallback;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
@@ -93,7 +94,8 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	PropertyDefinition typeDefinition = ManagedPropertiesFactory.getDefinitionAnnotation(type);
 	requiredIds = new ArrayList<>();
 	for (Method classMethod : type.getMethods()) {
-	    if (classMethod.isAnnotationPresent(Property.class)) {
+	    Property methodAnnotation = ManagedPropertiesFactory.getMethodAnnotation(classMethod);
+	    if (methodAnnotation != null) {
 		if(classMethod.getParameterTypes().length > 0){
 		    throw new InvalidMethodException("Could not create handler for this method. Methods annotated with "+Property.class.getName()+
 			    " must not take parameters");
@@ -177,17 +179,22 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    //This SHOULD not be possible, given the generic constructor. But still. Better safe than sorry.
 	    throw new InvocationException("Could not get defaults. The defaults "+defaults+" are not of the expected type "+type);
 	}
-	Method defaultValueProvider;
-	try {
-	    defaultValueProvider = defaults.getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
-	} catch (NoSuchMethodException ex) {
-	    throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set "
-		    + "and no matching method existed in the defaults", ex);
-	}
+	Method defaultValueProvider = findDefaultMethod(defaults.getClass(), method);
 	return defaultValueProvider.invoke(defaults, new Object[0]);
 
-	
-	
+    }
+    
+    private Method findDefaultMethod(Class clazz, Method method) throws UnknownValueException{
+	try{
+	    return clazz.getDeclaredMethod(method.getName(), method.getParameterTypes());
+	} catch (NoSuchMethodException ex){ //The method was not declared here. Go to the superclass and retry.
+	    if(clazz.getSuperclass() != null && !clazz.getSuperclass().equals(Object.class)){
+		return findDefaultMethod(clazz.getSuperclass(), method);
+	    }else{
+		throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set "
+		    + "and no matching method existed in the defaults");
+	    }
+	}
     }
 
     @Override

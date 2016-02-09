@@ -10,6 +10,7 @@ import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
@@ -56,7 +57,7 @@ public class AD implements AttributeDefinition {
      * or a missing @Property annotation.
      */
     protected AD(Method method) throws TypeFilterException, InvalidTypeException, InvalidMethodException {
-	Property methodProperty = method.getAnnotation(Property.class);
+	Property methodProperty = ManagedPropertiesFactory.getMethodAnnotation(method);;
 	name = getAttributeName(method);
 	id = name;
 
