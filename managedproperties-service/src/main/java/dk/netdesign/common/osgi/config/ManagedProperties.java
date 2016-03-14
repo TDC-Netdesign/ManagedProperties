@@ -249,7 +249,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 		Object configValue = null;
 		switch (definition.cardinalityDef) {
 		    case Optional:
-			configValue = retrieveOptionalObject(key, properties.get(key));
+			configValue = retrieveOptionalObject(key, properties.get(key), definition.getInputType());
 			ensureCorrectType(key, configValue, definition.getInputType());
 			if (definition.getFilter() != null) {
 			    configValue = filterObject(key, configValue, definition.getFilter(), definition.getInputType());
@@ -316,9 +316,12 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     }
 
-    private Object retrieveOptionalObject(String key, Object configItemObject) throws ConfigurationException {
+    private Object retrieveOptionalObject(String key, Object configItemObject, Class expectedType) throws ConfigurationException {
+	if(expectedType.isAssignableFrom(configItemObject.getClass())){
+	    return configItemObject;
+	}
 	if (!List.class.isAssignableFrom(configItemObject.getClass())) {
-	    throw new ConfigurationException(key, "This value should be optional, and be represented by a list: " + configItemObject);
+	    throw new ConfigurationException(key, "This value is optional, and be represented as type '"+expectedType.getCanonicalName()+"' or as a List with one or no elements." + configItemObject);
 	}
 	List configItemList = (List) configItemObject;
 	if (configItemList.isEmpty()) {
