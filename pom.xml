@@ -30,6 +30,9 @@
 
 	<cxf.version>3.0.2</cxf.version>
 	<slf4j.version>1.7.12</slf4j.version>
+	<pax.exam.version>4.8.0</pax.exam.version>
+	<karaf.version>4.0.3</karaf.version>
+	<karaf.features.version>4.0.3</karaf.features.version>
 		
 	<maven.compiler.source>1.7</maven.compiler.source>
 	<maven.compiler.target>1.7</maven.compiler.target>
@@ -84,11 +87,12 @@
 	    </build>
 	</profile>
     </profiles>
-	
+    
     <modules>
 	<module>managedproperties-service</module>
 	<!--<module>managedproperties-feature</module>-->
 	<module>managedproperties-consumer</module>
+	<module>managedproperties-itest</module>
     </modules>
     
     <build>
@@ -183,6 +187,66 @@
 		<version>3.3.2</version>
 		<scope>provided</scope>
 	    </dependency>
+	    <dependency>
+	    <groupId>org.apache.karaf.features</groupId>
+	    <artifactId>standard</artifactId>
+	    <classifier>features</classifier>
+	    <type>xml</type>
+	    <version>${karaf.features.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.karaf.features</groupId>
+	    <artifactId>enterprise</artifactId>
+	    <classifier>features</classifier>
+	    <type>xml</type>
+	    <version>${karaf.features.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.karaf</groupId>
+	    <artifactId>apache-karaf</artifactId>
+	    <type>tar.gz</type>
+	    <version>${karaf.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.apache.activemq</groupId>
+	    <artifactId>activemq-karaf</artifactId>
+	    <classifier>features</classifier>
+	    <type>xml</type>
+	    <version>5.13.0</version>
+	</dependency>
+
+	
+	<!--Test dependency start-->
+	<dependency>
+	    <groupId>org.ops4j.pax.exam</groupId>
+	    <artifactId>pax-exam-container-karaf</artifactId>
+	    <version>${pax.exam.version}</version>
+	    <scope>test</scope>
+	</dependency>
+	<dependency>
+	    <groupId>org.ops4j.pax.exam</groupId>
+	    <artifactId>pax-exam-junit4</artifactId>
+	    <version>${pax.exam.version}</version>
+	    <scope>test</scope>
+	</dependency>
+	<dependency>
+	    <groupId>org.ops4j.pax.exam</groupId>
+	    <artifactId>pax-exam</artifactId>
+	    <version>${pax.exam.version}</version>
+	    <scope>test</scope>
+	</dependency>
+	<dependency>
+	    <groupId>org.ops4j.pax.url</groupId>
+	    <artifactId>pax-url-aether</artifactId>
+	    <version>2.4.1</version><!--<version>1.6.0</version>-->
+	    <scope>test</scope>
+	</dependency>
+	<dependency>
+	    <groupId>javax.inject</groupId>
+	    <artifactId>javax.inject</artifactId>
+	    <version>1</version>
+	    <scope>test</scope>
+	</dependency>
 	    <dependency>
 		<groupId>junit</groupId>
 		<artifactId>junit</artifactId>

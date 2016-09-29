@@ -14,7 +14,7 @@ import java.util.concurrent.locks.Lock;
  * Implementations of this interface can lock the set so it will not recieve updates, and unregister the ConfigAdmin and MetaTypeProvider services.
  * @author mnn
  */
-public interface EnhancedProperty {
+public interface PropertyActions {
 
     /**
      * When this method is called, the backing @see dk.netdesign.common.osgi.config.service.ManagedProperties object is locked for further updates.

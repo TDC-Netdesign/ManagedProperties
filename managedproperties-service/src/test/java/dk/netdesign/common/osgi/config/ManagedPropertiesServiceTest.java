@@ -9,7 +9,7 @@ import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallback;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
-import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
+import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
@@ -330,7 +330,7 @@ public class ManagedPropertiesServiceTest {
 	newConfig.put("String", Collections.singletonList("Stringval"));
 	props.updated(newConfig);
 
-	Lock lock = ((EnhancedProperty)testi).lockPropertiesUpdate();
+	Lock lock = ((PropertyActions)testi).lockPropertiesUpdate();
 	String toTest;
 	try {
 	    toTest = testi.getString();
@@ -567,7 +567,7 @@ public class ManagedPropertiesServiceTest {
     }
     
     @PropertyDefinition(id = "CardinalityTest", name = "CardinalityTestName")
-    private static interface TestCardinality extends EnhancedProperty, ConfigurationCallback {
+    private static interface TestCardinality extends PropertyActions, ConfigurationCallback {
 
 	@Property(cardinality = Property.Cardinality.List, type = String.class)
 	public List<String> getList() throws InvalidTypeException, TypeFilterException;
@@ -580,7 +580,7 @@ public class ManagedPropertiesServiceTest {
     }
     
     @PropertyDefinition(id = "BadCardinalityTest", name = "BadCardinalityTestName")
-    private static interface TestBadListCardinality extends EnhancedProperty, ConfigurationCallback {
+    private static interface TestBadListCardinality extends PropertyActions, ConfigurationCallback {
 
 	@Property(cardinality = Property.Cardinality.List)
 	public String getList() throws InvalidTypeException, TypeFilterException;
@@ -588,7 +588,7 @@ public class ManagedPropertiesServiceTest {
     }
     
     @PropertyDefinition(id = "TestBadListType", name = "TestBadListTypeName")
-    private static interface TestBadListType extends EnhancedProperty, ConfigurationCallback {
+    private static interface TestBadListType extends PropertyActions, ConfigurationCallback {
 
 	@Property(cardinality = Property.Cardinality.List)
 	public List<String> getList() throws InvalidTypeException, TypeFilterException;

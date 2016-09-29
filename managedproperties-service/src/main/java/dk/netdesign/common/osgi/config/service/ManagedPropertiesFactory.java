@@ -20,7 +20,8 @@ import dk.netdesign.common.osgi.config.ManagedProperties;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
-import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
+import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
+import dk.netdesign.common.osgi.config.enhancement.PropertyConfig;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
@@ -93,11 +94,11 @@ public class ManagedPropertiesFactory {
 	    throw new InvalidTypeException("Could  not register the type " + type.getName() + " as a Managed Property. The type must be an interface");
 	}
 	  try {
-		for(ServiceReference<EnhancedProperty> ref : context.getServiceReferences(EnhancedProperty.class, "("+Constants.SERVICE_PID+"="+getDefinitionID(type)+")")){
+		for(ServiceReference<PropertyActions> ref : context.getServiceReferences(PropertyActions.class, "("+Constants.SERVICE_PID+"="+getDefinitionID(type)+")")){
 		    if(logger.isDebugEnabled()){
 			logger.debug("Found ServiceReference for Configuration: "+getDefinitionName(type)+"["+getDefinitionID(type)+"]");
 		    }
-		    EnhancedProperty service = context.getService(ref);
+		    PropertyActions service = context.getService(ref);
 		    if(ManagedProperties.class.isAssignableFrom(service.getClass())){
 			  if(ref.getProperty(ManagedProperties.BindingID).equals(type.getCanonicalName())){
 				handler = (ManagedProperties)service;
@@ -120,7 +121,7 @@ public class ManagedPropertiesFactory {
 	  }
 	  
 	
-	return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, EnhancedProperty.class, ConfigurationCallbackHandler.class}, handler));
+	return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, PropertyActions.class, PropertyConfig.class, ConfigurationCallbackHandler.class}, handler));
     }
     
     /**

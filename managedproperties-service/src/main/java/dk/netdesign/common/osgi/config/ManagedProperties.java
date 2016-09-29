@@ -5,7 +5,8 @@ import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallback;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
-import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
+import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
+import dk.netdesign.common.osgi.config.enhancement.PropertyConfig;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
@@ -29,6 +30,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -53,7 +56,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author mnn
  */
-public class ManagedProperties implements InvocationHandler, MetaTypeProvider, ManagedService, ConfigurationCallbackHandler, EnhancedProperty {
+public class ManagedProperties implements InvocationHandler, MetaTypeProvider, ManagedService, ConfigurationCallbackHandler, PropertyActions, PropertyConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(ManagedProperties.class);
     public static final String BindingID = "ManagedPropertiesBinding";
@@ -61,12 +64,14 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
-    private ServiceRegistration<EnhancedProperty> selfReg; 
+    private ServiceRegistration<PropertyActions> selfReg; 
     private ObjectClassDefinition ocd;
     private Map<String, Object> config = new HashMap<>();
+    private long nanosToWait = TimeUnit.SECONDS.toNanos(5);
     private final List<ConfigurationCallback> callbacks;
     private final ReadWriteLock lock;
     private final Lock r, w;
+    private final Condition updated;
     private final Map<String, AD> attributeToMethodMapping;
     private final List<Method> allowedMethods;
     private final Class type;
@@ -90,6 +95,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	lock = new ReentrantReadWriteLock();
 	r = lock.readLock();
 	w = lock.writeLock();
+	updated = w.newCondition();
 	attributeToMethodMapping = new HashMap<>();
 	PropertyDefinition typeDefinition = ManagedPropertiesFactory.getDefinitionAnnotation(type);
 	requiredIds = new ArrayList<>();
@@ -114,7 +120,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
 	allowedMethods = new ArrayList<>();
 
-	allowedMethods.addAll(Arrays.asList(EnhancedProperty.class.getDeclaredMethods()));
+	allowedMethods.addAll(Arrays.asList(PropertyActions.class.getDeclaredMethods()));
 	allowedMethods.addAll(Arrays.asList(ConfigurationCallbackHandler.class.getDeclaredMethods()));
 	allowedMethods.addAll(Arrays.asList(Object.class.getDeclaredMethods()));
 	this.type = type;
@@ -136,13 +142,19 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException {
 	if (method.isAnnotationPresent(Property.class)) {
 	    AD propertyDefinition = attributeToMethodMapping.get(method.getName());
 	    Object returnValue = getConfigItem(propertyDefinition.getID());
 	    if (returnValue == null) {
 		returnValue = getDefaultItem(method);
 		if(returnValue == null){
+		    w.lock();
+		    try{
+			  updated.awaitNanos(nanosToWait);
+		    }finally{
+			  w.unlock();
+		    }
 		    throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set.");
 		}
 	    }
@@ -287,6 +299,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    }
 	    config = newprops;
 	} finally {
+	    updated.signalAll();
 	    w.unlock();
 	}
 	logger.info("updated configuration\n"+this);
@@ -399,6 +412,13 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	selfReg = null;
     }
 
+    @Override
+    public void setPropertyWriteDelay(int delay, TimeUnit unit) {
+	  nanosToWait = unit.toNanos(delay);
+    }
+    
+    
+
     /**
      * Registers this ManagedProperties object with the bundle context. This is done when the proxy is first created.
      *
@@ -419,7 +439,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	Hashtable<String, Object> selfRegProps = new Hashtable<>();
 	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
-	selfReg = context.registerService(EnhancedProperty.class, this, selfRegProps);
+	selfReg = context.registerService(PropertyActions.class, this, selfRegProps);
     }
 
     private static ObjectClassDefinition buildOCD(String id, String name, String description, String file, Collection<AD> attributes) throws InvalidTypeException {

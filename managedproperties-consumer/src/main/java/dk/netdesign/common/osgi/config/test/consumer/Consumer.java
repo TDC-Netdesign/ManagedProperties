@@ -6,7 +6,7 @@
 
 package dk.netdesign.common.osgi.config.test.consumer;
 
-import dk.netdesign.common.osgi.config.enhancement.EnhancedProperty;
+import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -40,7 +40,7 @@ public class Consumer implements BundleActivator{
 
     @Override
     public void stop(BundleContext context) throws Exception {
-	((EnhancedProperty)props).unregisterProperties();
+	((PropertyActions)props).unregisterProperties();
 	run = false;
 	
     }
