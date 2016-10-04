@@ -15,6 +15,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -42,7 +43,7 @@ public class AD implements AttributeDefinition {
     private String[] defValue;
     private String[] optionalLabels;
     private String[] optionalValues;
-    private Class outputType;
+    //private Class outputType;
     private Class<? extends TypeFilter> filter;
     Property.Cardinality cardinalityDef;
 
@@ -63,15 +64,17 @@ public class AD implements AttributeDefinition {
 	name = getAttributeName(method);
 	id = name;
 
+	Class methodReturnType = getMethodReturnType(method);
+	
 	cardinalityDef = methodProperty.cardinality();
-	outputType = getMethodReturnType(method);
-	inputType = outputType;
+	
+	inputType = getMethodReturnType(method);
 	if(methodProperty.type() != void.class){
 	    inputType = methodProperty.type();
 	}
-	inputTypeAsInt = getAttributeType(inputType);
+	
 	if (logger.isTraceEnabled()) {
-	    logger.trace("Found @Property on " + method.getName() + "[" + outputType + "]");
+	    logger.trace("Found @Property on " + method.getName() + "[" + methodReturnType + "]");
 	}
 
 	if (!methodProperty.id().isEmpty()) {
@@ -86,6 +89,9 @@ public class AD implements AttributeDefinition {
 	    if(!List.class.isAssignableFrom(method.getReturnType())){
 		throw new InvalidMethodException("Could not create handler for method "+method.getName()+". Methods with list cardinality must return a list");
 	    }
+	    if(Collection.class.isAssignableFrom(inputType)){
+		throw new InvalidMethodException("Could not create handler for method "+method.getName()+". Methods with list must define a property type");
+	    }
 	    //if(filterFromAnnotation != TypeFilter.class){//YOU MUST!
 	    //	throw new InvalidMethodException("Could not create handler for method "+method+". Cannot use filters with lists");
 	    //}
@@ -93,11 +99,16 @@ public class AD implements AttributeDefinition {
 	
 	
 	if (filterFromAnnotation == TypeFilter.class) {
-	    FilterReference ref = new FilterReference(inputType, outputType);
-	    filter = defaultFilters.get(ref);
-	    if (!List.class.isAssignableFrom(method.getReturnType()) && !method.getReturnType().isAssignableFrom(outputType)) {
-		throw new InvalidTypeException("Could not create method definition. The returntype of the method '" + method.getReturnType() + "' is not compatible with the outputtype of the Property '" + outputType + "'.");
+	    if (!cardinalityDef.equals(cardinalityDef.List)) {
+		FilterReference ref = new FilterReference(inputType, methodReturnType);
+		filter = defaultFilters.get(ref);
+		if (!List.class.isAssignableFrom(method.getReturnType()) && !method.getReturnType().isAssignableFrom(methodReturnType)) {
+		    throw new InvalidTypeException("Could not create method definition. The returntype of the method '" + method.getReturnType() + "' is not compatible with the outputtype of the Property '" + methodReturnType + "'.");
+		}
+	    }else{
+		filter = null;
 	    }
+
 	}else{
 	    filter = filterFromAnnotation;
 	}
@@ -110,14 +121,11 @@ public class AD implements AttributeDefinition {
 		throw new TypeFilterException("Could not add filter. An exception occured while examining the parse method", ex);
 	    }
 
-	    if (!outputType.isAssignableFrom(parseMethod.getReturnType())) {
+	    if (!cardinalityDef.equals(cardinalityDef.List) && !methodReturnType.isAssignableFrom(parseMethod.getReturnType())) {
 		throw new TypeFilterException("Could not use Filter type " + filter.getName() + " with the method " + parseMethod.getName()
-			+ " The output of the configuration method '" + outputType + "' must be assignable to the return of the filter parse method '" + parseMethod.getReturnType() + "'");
+			+ " The output of the configuration method '" + methodReturnType + "' must be assignable to the return of the filter parse method '" + parseMethod.getReturnType() + "'");
 	    }
 
-	    //if (outputType.isInterface() || Modifier.isAbstract(outputType.getModifiers())) {
-	    //	throw new TypeFilterException("Could not instantiate filter for " + parseMethod + ". Filter does not return an instantiable value.");
-	    //}
 	}
 	    
 	
@@ -128,6 +136,7 @@ public class AD implements AttributeDefinition {
 	description = methodProperty.description();
 	optionalLabels = methodProperty.optionLabels();
 	optionalValues = methodProperty.optionValues();
+	inputTypeAsInt = getAttributeType(inputType);
     }
 
 
@@ -146,7 +155,7 @@ public class AD implements AttributeDefinition {
 	Class methodReturnType = classMethod.getReturnType();
 	if (classMethod.isAnnotationPresent(Property.class)) {
 	    Property methodProperty = classMethod.getAnnotation(Property.class);
-	    if(List.class.isAssignableFrom(methodReturnType) && methodProperty.type() != void.class){
+	    if(List.class.isAssignableFrom(methodReturnType) && methodProperty.type() == void.class){
 		throw new InvalidMethodException("Could not create handler for method "+classMethod.getName()+". Lists must be accompanied by a returnType");
 	    }
 	}
@@ -299,18 +308,6 @@ public class AD implements AttributeDefinition {
 	this.defValue = defValue;
     }
 
-    /**
-     * Return the inputType resulting from parsing the @Property and method return types.
-     * @return The return type of the method, or the override in the @Property annotation
-     */
-    public Class getOutputType() {
-	return outputType;
-    }
-
-    protected void setOutputType(Class outputType) {
-	this.outputType = outputType;
-    }
-
     public Class getInputType() {
 	return inputType;
     }
@@ -349,7 +346,7 @@ public class AD implements AttributeDefinition {
     public String toString() {
 	ToStringBuilder builder = new ToStringBuilder(this);
 	builder.append("id", id).append("name", name).append("type", inputTypeAsInt).append("cardinality", cardinality).append("description", description)
-		.append("defValue", defValue).append("optionalLabels", optionalLabels).append("optionalValues", optionalValues);
+		.append("defValue", defValue).append("optionalLabels", optionalLabels).append("optionalValues", optionalValues).append("filter", filter);
 	return builder.toString();
     }
 

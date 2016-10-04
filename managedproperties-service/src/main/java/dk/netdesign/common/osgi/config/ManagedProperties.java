@@ -122,6 +122,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 		if (methodDefinition.getCardinalityDef().equals(Property.Cardinality.Required)) {
 		    requiredIds.add(methodDefinition.getID());
 		}
+		logger.debug("Adding method to mapping: "+methodDefinition);
 		attributeToMethodMapping.put(classMethod.getName(), methodDefinition);
 	    }
 	}
@@ -296,7 +297,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 			}
 			break;
 		    case List:
-			List<Object> valueAsList = retrieveList(key, properties.get(key), definition.getOutputType());
+			List<Object> valueAsList = retrieveList(key, properties.get(key));
 			List<Object> outputList = new ArrayList<>();
 			for (Object value : valueAsList) {
 				Object listValue = ensureCorrectType(key, value, definition.getInputType());
@@ -378,16 +379,12 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	
     }
 
-    private List retrieveList(String key, Object configItemObject, Class expectedClass) throws ConfigurationException {
+    private List retrieveList(String key, Object configItemObject) throws ConfigurationException {
 	if (!List.class.isAssignableFrom(configItemObject.getClass())) {
 	    throw new ConfigurationException(key, "This value should be a List: " + configItemObject);
 	}
 	List configItemList = (List) configItemObject;
-	for (Object listMember : configItemList) {
-	    if (listMember != null && !expectedClass.isAssignableFrom(listMember.getClass())) {
-		throw new ConfigurationException(key, "Could not match this object to the expected object. Expected a list of " + expectedClass + " but list contained a " + listMember.getClass() + ": " + listMember);
-	    }
-	}
+	
 	return configItemList;
     }
 

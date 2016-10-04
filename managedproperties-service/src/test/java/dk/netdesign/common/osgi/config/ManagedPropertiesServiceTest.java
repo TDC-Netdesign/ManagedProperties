@@ -19,12 +19,10 @@ import dk.netdesign.common.osgi.config.filters.FileFilter;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.io.File;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -37,16 +35,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.BundleListener;
-import org.osgi.framework.Filter;
-import org.osgi.framework.FrameworkListener;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceListener;
-import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
 
 /**
@@ -210,7 +198,7 @@ public class ManagedPropertiesServiceTest {
 	ManagedPropertiesFactory.register(TestBadFilter.class, stub);
     }
 
-    @Test(expected = InvalidTypeException.class)
+    @Test(expected = InvalidTypeException.class) @Ignore @Deprecated
     public void testBadType() throws Exception {
 	ManagedPropertiesFactory.register(TestBadType.class, stub);
     }
@@ -357,7 +345,7 @@ public class ManagedPropertiesServiceTest {
 	ManagedPropertiesFactory.register(TestUnknownInputType.class, stub);
     }
 
-    @Test(expected = TypeFilterException.class)
+    @Test(expected = TypeFilterException.class) @Ignore @Deprecated
     public void testAbstract() throws Exception {
 	ManagedPropertiesFactory.register(TestAbstractReturn.class, stub);
     }
