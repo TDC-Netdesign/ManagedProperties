@@ -43,6 +43,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.osgi.framework.BundleContext;
@@ -134,6 +135,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	allowedMethods = new ArrayList<>();
 
 	allowedMethods.addAll(Arrays.asList(PropertyActions.class.getDeclaredMethods()));
+	allowedMethods.addAll(Arrays.asList(PropertyConfig.class.getDeclaredMethods()));
 	allowedMethods.addAll(Arrays.asList(ConfigurationCallbackHandler.class.getDeclaredMethods()));
 	allowedMethods.addAll(Arrays.asList(Object.class.getDeclaredMethods()));
 	this.type = type;
@@ -542,5 +544,17 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	}
 	return builder.build();
     }
+
+    @Override
+    public String getPropertyPID() {
+	try {
+	    return ManagedPropertiesFactory.getDefinitionAnnotation(type).id();
+	} catch (InvalidTypeException ex) {
+	    logger.warn("getPropertyPID called on a type which did not have a propertydefinition", ex);
+	    return null;
+	}
+    }
+    
+    
 
 }

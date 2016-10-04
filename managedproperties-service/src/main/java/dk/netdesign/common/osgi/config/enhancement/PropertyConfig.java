@@ -25,5 +25,6 @@ import java.util.concurrent.TimeUnit;
 public interface PropertyConfig {
     
     public void setPropertyWriteDelay(int delay, TimeUnit unit);
+    public String getPropertyPID();
     
 }

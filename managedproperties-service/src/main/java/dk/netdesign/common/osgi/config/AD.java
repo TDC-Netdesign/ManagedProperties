@@ -89,33 +89,10 @@ public class AD implements AttributeDefinition {
 	
 	Class<? extends TypeFilter> filterFromAnnotation = methodProperty.typeMapper();
 
-	if(cardinalityDef.equals(cardinalityDef.List)){
-	    if(!List.class.isAssignableFrom(method.getReturnType())){
-		throw new InvalidMethodException("Could not create handler for method "+method.getName()+". Methods with list cardinality must return a list");
-	    }
-	    if(Collection.class.isAssignableFrom(inputType)){
-		throw new InvalidMethodException("Could not create handler for method "+method.getName()+". Methods with list must define a property type");
-	    }
-	    //if(filterFromAnnotation != TypeFilter.class){//YOU MUST!
-	    //	throw new InvalidMethodException("Could not create handler for method "+method+". Cannot use filters with lists");
-	    //}
-	}
+	checkCardinality(method);
 	
 	
-	if (filterFromAnnotation == TypeFilter.class) {
-	    if (!cardinalityDef.equals(cardinalityDef.List)) {
-		FilterReference ref = new FilterReference(inputType, methodReturnType);
-		filter = defaultFilters.get(ref);
-		if (!List.class.isAssignableFrom(method.getReturnType()) && !method.getReturnType().isAssignableFrom(methodReturnType)) {
-		    throw new InvalidTypeException("Could not create method definition. The returntype of the method '" + method.getReturnType() + "' is not compatible with the outputtype of the Property '" + methodReturnType + "'.");
-		}
-	    }else{
-		filter = null;
-	    }
-
-	}else{
-	    filter = filterFromAnnotation;
-	}
+	filter = getFilters(filterFromAnnotation, defaultFilters, method);
 	
 	if (filter != null) {
 	    Method parseMethod;
@@ -142,7 +119,32 @@ public class AD implements AttributeDefinition {
 	optionalValues = methodProperty.optionValues();
 	inputTypeAsInt = getAttributeType(inputType);
     }
+    
+    private void checkCardinality(Method method) throws InvalidMethodException{
+	if(cardinalityDef.equals(cardinalityDef.List)){
+	    if(!List.class.isAssignableFrom(method.getReturnType())){
+		throw new InvalidMethodException("Could not create handler for method "+method.getName()+". Methods with list cardinality must return a list");
+	    }
+	    if(Collection.class.isAssignableFrom(inputType)){
+		throw new InvalidMethodException("Could not create handler for method "+method.getName()+". Methods with list must define a property type");
+	    }
+	}
+    }
+    
+    private Class<? extends TypeFilter> getFilters(Class<? extends TypeFilter> filterFromAnnotation, Map<FilterReference, Class<? extends TypeFilter>> defaultFilters, Method method) throws InvalidMethodException{
+	Class methodReturnType = getMethodReturnType(method);
+	if (filterFromAnnotation == TypeFilter.class) {
+	    if (!cardinalityDef.equals(cardinalityDef.List)) {
+		FilterReference ref = new FilterReference(inputType, methodReturnType);
+		return defaultFilters.get(ref);
+	    }else{
+		return null;
+	    }
 
+	}else{
+	    return filterFromAnnotation;
+	}
+    }
 
     private static String getAttributeName(Method classMethod) {
 	String attributeName = classMethod.getName().replaceAll("^get", "");

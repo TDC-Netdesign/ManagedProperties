@@ -23,27 +23,32 @@ import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.List;
 import javax.inject.Inject;
 import org.junit.After;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
+import static org.ops4j.pax.exam.CoreOptions.*;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.junit.PaxExam;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
+import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
+import org.ops4j.pax.exam.options.MavenUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.ops4j.pax.exam.CoreOptions.*;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
-import org.ops4j.pax.exam.options.MavenUrlReference;
-import org.osgi.framework.BundleContext;
 
 /**
  *
@@ -54,6 +59,9 @@ import org.osgi.framework.BundleContext;
 public class PropertiesTest {
     @Inject
     private BundleContext context;
+    
+    @Inject 
+    private ConfigurationAdmin configAdmin;
     
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertiesTest.class);
     
@@ -154,14 +162,33 @@ public class PropertiesTest {
 	}
     }
     
-    @Test @Ignore//Until i can figure out how to test lists. Rely on consumer test for now.
+    @Test 
     public void testListFiltering() throws Exception {
+	
 	
 	AutoFilteringListTypes types = null;
 	try{
 	    types = ManagedPropertiesFactory.register(AutoFilteringListTypes.class, context);
-	    assertEquals(2, types.getURLs().size());
+	    String configPid = PropertyAccess.configuration(types).getPropertyPID();
+	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
+	    
+	    Dictionary newConfig = new Hashtable();
+	    newConfig.put("service.pid", configPid);
+	    List<String> files = Arrays.asList(new String[]{"test1", "test2"});
+	    newConfig.put("Files", files);
+	    List<String> urls = Arrays.asList(new String[]{"http://test1.dk", "http://test2.dk", "http://test3.dk"});
+	    newConfig.put("URLs", urls);
+	    
+	    config.update(newConfig);
+	    config.update();
+	    
+	    LOGGER.info("RESULTS [FILE] "+types.getFiles());
+	    LOGGER.info("RESULTS [URL] "+types.getURLs());
+	    
+	    assertEquals(3, types.getURLs().size());
 	    assertEquals(2, types.getFiles().size());
+	    
+	    
 
 	}finally{
 	    if(types != null){
