@@ -68,6 +68,10 @@ public class AD implements AttributeDefinition {
 	
 	cardinalityDef = methodProperty.cardinality();
 	
+	if(List.class.isAssignableFrom(method.getReturnType())){
+	    cardinalityDef = Property.Cardinality.List;
+	}
+	
 	inputType = getMethodReturnType(method);
 	if(methodProperty.type() != void.class){
 	    inputType = methodProperty.type();

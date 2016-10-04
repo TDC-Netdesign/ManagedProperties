@@ -11,6 +11,7 @@ import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.filters.URLFilter;
+import java.io.File;
 import java.net.URL;
 import java.util.List;
 
@@ -35,6 +36,9 @@ public interface PropertiesWithStandardTypes {
     
     @Property(type = String.class, cardinality = Property.Cardinality.List)
     public List<String> getStringListProperty() throws InvalidTypeException, TypeFilterException;
+    
+    @Property(type = String.class)
+    public List<File> getFileListProperty() throws InvalidTypeException, TypeFilterException;
     
     @Property(type = String.class, typeMapper = URLFilter.class)
     public URL getURLProperty() throws InvalidTypeException, TypeFilterException;

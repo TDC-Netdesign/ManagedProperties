@@ -18,6 +18,7 @@ package dk.netdesign.common.osgi.config.test;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
+import dk.netdesign.common.osgi.config.test.properties.AutoFilteringListTypes;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypesDefaults;
@@ -93,6 +94,7 @@ public class PropertiesTest {
 	  replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.url.mvn.cfg").toURI())),
 	  replaceConfigurationFile("etc/WrapperTypes.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/WrapperTypes.cfg").toURI())),
 	  replaceConfigurationFile("etc/FilteringConfig.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/FilteringConfig.cfg").toURI())),
+	  replaceConfigurationFile("etc/AutoFilteringListTypes.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/AutoFilteringListTypes.cfg").toURI())),
 	    	
 	
    };
@@ -145,6 +147,22 @@ public class PropertiesTest {
 	    types = ManagedPropertiesFactory.register(FilteringConfig.class, context);
 	    assertEquals(new URL("http://test.dk"), types.getURL());
 	    assertEquals(new File("some/file"), types.getFile());
+
+	}finally{
+	    if(types != null){
+		PropertyAccess.actions(types).unregisterProperties();
+	    }
+	}
+    }
+    
+    @Test
+    public void testListFiltering() throws Exception {
+	
+	AutoFilteringListTypes types = null;
+	try{
+	    types = ManagedPropertiesFactory.register(AutoFilteringListTypes.class, context);
+	    assertEquals(2, types.getURLs().size());
+	    assertEquals(2, types.getFiles().size());
 
 	}finally{
 	    if(types != null){

@@ -44,6 +44,10 @@
 	  </dependency>
 	  <dependency>
 		<groupId>dk.netdesign</groupId>
+		<artifactId>managedproperties-consumer</artifactId>
+	  </dependency>
+	  <dependency>
+		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-test-resources</artifactId>
 	  </dependency>
         <dependency>
@@ -77,7 +81,7 @@
             <artifactId>commons-lang3</artifactId>
 	    <scope>provided</scope>
         </dependency>
-	  	    <dependency>
+	<dependency>
 	    <groupId>org.apache.karaf.features</groupId>
 	    <artifactId>standard</artifactId>
 	    <classifier>features</classifier>

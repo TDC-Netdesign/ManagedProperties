@@ -33,6 +33,7 @@ public class Consumer implements BundleActivator{
 	logger.info(props.getStringProperty()+"");
 	logger.info(props.getStringListProperty()+"");
 	logger.info(props.getSubString());
+	logger.info(props.getFileListProperty()+"");
 	logger.info(props+"");	
 	printer = new PrinterThread();
 	printer.start();

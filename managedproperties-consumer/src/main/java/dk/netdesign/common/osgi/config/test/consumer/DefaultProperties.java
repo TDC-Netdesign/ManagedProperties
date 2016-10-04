@@ -6,6 +6,9 @@
 
 package dk.netdesign.common.osgi.config.test.consumer;
 
+import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
+import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -50,6 +53,13 @@ public class DefaultProperties implements InheritedProperties{
     public String getSubString() {
 	return "subdubdee";
     }
+
+    @Override
+    public List<File> getFileListProperty() throws InvalidTypeException, TypeFilterException {
+	return Arrays.asList(new File[]{new File("default")});
+    }
+    
+    
     
     
 
