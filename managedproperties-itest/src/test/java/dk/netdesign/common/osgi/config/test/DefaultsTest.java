@@ -22,7 +22,6 @@ import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypesDefaults;
 import java.io.File;
-import java.net.URL;
 import javax.inject.Inject;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -51,7 +50,7 @@ import org.osgi.framework.BundleContext;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
-public class PropertiesTest {
+public class DefaultsTest {
     @Inject
     private BundleContext context;
     
@@ -84,22 +83,17 @@ public class PropertiesTest {
             .frameworkUrl(karafUrl)
             .unpackDirectory(new File("target/exam"))
             .useDeployFolder(false),
-        keepRuntimeFolder(),
+        //keepRuntimeFolder(),
         features(karafStandardRepo, "webconsole"),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-service").versionAsInProject(),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-test-resources").versionAsInProject(),
 	  mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
 	  replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.logging.cfg").toURI())),
 	  replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.url.mvn.cfg").toURI())),
-	  replaceConfigurationFile("etc/WrapperTypes.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/WrapperTypes.cfg").toURI())),
-	  replaceConfigurationFile("etc/FilteringConfig.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/FilteringConfig.cfg").toURI())),
-	    	
-	
+	  	  
    };
 }
     
-    public PropertiesTest() {
-    }
     
     @BeforeClass
     public static void setUpClass() {
@@ -117,19 +111,20 @@ public class PropertiesTest {
     public void tearDown() {
     }
 
-    
     @Test
-    public void testImmediateAccess() throws Exception {
+    public void testDefaults() throws Exception {
+	WrapperTypes defaults = new WrapperTypesDefaults();
+	
 	WrapperTypes types = null;
 	try{
-	    types = ManagedPropertiesFactory.register(WrapperTypes.class, context);
-	    assertEquals(new Double(55.12), types.getDouble());
-	    assertEquals(new Float(22.22), types.getFloat());
-	    assertEquals(new Integer(42), types.getInt());
-	    assertEquals(true, types.getBoolean());
-	    assertEquals(new Byte((byte)1), types.getByte());
-	    assertEquals(new Long(100), types.getLong());
-	    assertEquals(new Short((short)3), types.getShort());
+	    types = ManagedPropertiesFactory.register(WrapperTypes.class, defaults, context);
+	    assertEquals(defaults.getBoolean(), types.getBoolean());
+	    assertEquals(defaults.getByte(), types.getByte());
+	    assertEquals(defaults.getDouble(), types.getDouble());
+	    assertEquals(defaults.getFloat(), types.getFloat());
+	    assertEquals(defaults.getInt(), types.getInt());
+	    assertEquals(defaults.getLong(), types.getLong());
+	    assertEquals(defaults.getShort(), types.getShort());
 	}finally{
 	    if(types != null){
 		PropertyAccess.actions(types).unregisterProperties();
@@ -137,22 +132,8 @@ public class PropertiesTest {
 	}
     }
     
-    @Test
-    public void testAutomaticFiltering() throws Exception {
-	
-	FilteringConfig types = null;
-	try{
-	    types = ManagedPropertiesFactory.register(FilteringConfig.class, context);
-	    assertEquals(new URL("http://test.dk"), types.getURL());
-	    assertEquals(new File("some/file"), types.getFile());
-
-	}finally{
-	    if(types != null){
-		PropertyAccess.actions(types).unregisterProperties();
-	    }
-	}
-    }
-
+    
+    
 	
     
 }

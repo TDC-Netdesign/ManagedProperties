@@ -1,4 +1,3 @@
-
 package dk.netdesign.common.osgi.config;
 
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallback;
@@ -13,6 +12,15 @@ import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import dk.netdesign.common.osgi.config.filters.FileFilter;
+import dk.netdesign.common.osgi.config.filters.StringToBooleanFilter;
+import dk.netdesign.common.osgi.config.filters.StringToByteFilter;
+import dk.netdesign.common.osgi.config.filters.StringToDoubleFilter;
+import dk.netdesign.common.osgi.config.filters.StringToFloatFilter;
+import dk.netdesign.common.osgi.config.filters.StringToIntegerFilter;
+import dk.netdesign.common.osgi.config.filters.StringToLongFilter;
+import dk.netdesign.common.osgi.config.filters.StringToShortFilter;
+import dk.netdesign.common.osgi.config.filters.URLFilter;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.io.File;
@@ -60,11 +68,10 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     private static final Logger logger = LoggerFactory.getLogger(ManagedProperties.class);
     public static final String BindingID = "ManagedPropertiesBinding";
-    
-    
+
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
-    private ServiceRegistration<PropertyActions> selfReg; 
+    private ServiceRegistration<PropertyActions> selfReg;
     private ObjectClassDefinition ocd;
     private Map<String, Object> config = new HashMap<>();
     private long nanosToWait = TimeUnit.SECONDS.toNanos(5);
@@ -77,20 +84,22 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     private final Class type;
     private final Object defaults;
     private final List<String> requiredIds;
-    
+    private final Map<FilterReference, Class<? extends TypeFilter>> defaultFilters;
+
     /**
      * Returns a ManagedProperties object with the defined defaults.
+     *
      * @param <E> The type of object to return.
-     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with 
+     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
-     * @param defaults The default values to use if a configuration item is not currently in the configuration set. The defaults must be an object
-     * of a type that implements the type denoted by @see I.
+     * @param defaults The default values to use if a configuration item is not currently in the configuration set. The defaults must be an object of a type
+     * that implements the type denoted by @see I.
      * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
      * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    public <E> ManagedProperties(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException{
+    public <E> ManagedProperties(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	callbacks = new ArrayList<>();
 	lock = new ReentrantReadWriteLock();
 	r = lock.readLock();
@@ -99,15 +108,18 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	attributeToMethodMapping = new HashMap<>();
 	PropertyDefinition typeDefinition = ManagedPropertiesFactory.getDefinitionAnnotation(type);
 	requiredIds = new ArrayList<>();
+
+	defaultFilters = getDefaultFilterMap();
+
 	for (Method classMethod : type.getMethods()) {
 	    Property methodAnnotation = ManagedPropertiesFactory.getMethodAnnotation(classMethod);
 	    if (methodAnnotation != null) {
-		if(classMethod.getParameterTypes().length > 0){
-		    throw new InvalidMethodException("Could not create handler for this method. Methods annotated with "+Property.class.getName()+
-			    " must not take parameters");
+		if (classMethod.getParameterTypes().length > 0) {
+		    throw new InvalidMethodException("Could not create handler for this method. Methods annotated with " + Property.class.getName()
+			    + " must not take parameters");
 		}
-		AD methodDefinition = new AD(classMethod);
-		if(methodDefinition.getCardinalityDef().equals(Property.Cardinality.Required)){
+		AD methodDefinition = new AD(classMethod, defaultFilters);
+		if (methodDefinition.getCardinalityDef().equals(Property.Cardinality.Required)) {
 		    requiredIds.add(methodDefinition.getID());
 		}
 		attributeToMethodMapping.put(classMethod.getName(), methodDefinition);
@@ -129,8 +141,9 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     /**
      * The same as the other constructor, but does not set defaults.
-     * @see #ManagedProperties(java.lang.Class, java.lang.Object) 
-     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with 
+     *
+     * @see #ManagedProperties(java.lang.Class, java.lang.Object)
+     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
      * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
      * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
@@ -148,18 +161,24 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    Object returnValue = getConfigItem(propertyDefinition.getID());
 	    if (returnValue == null) {
 		returnValue = getDefaultItem(method);
-		if(returnValue == null){
+		if (returnValue == null) {
 		    w.lock();
-		    try{
-			  updated.awaitNanos(nanosToWait);
-		    }finally{
-			  w.unlock();
+		    try {
+			logger.debug("Value was null. Awaiting update");
+			updated.awaitNanos(nanosToWait);
+			returnValue = getConfigItem(propertyDefinition.getID());
+			logger.debug("Waited for value: " + returnValue);
+		    } finally {
+			w.unlock();
 		    }
-		    throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set.");
+		    if(returnValue == null){
+			throw new UnknownValueException("Could not return the value for method " + method.getName() + ". The value did not exist in the config set.");
+		    }
+		    
 		}
 	    }
 	    if (!method.getReturnType().isAssignableFrom(returnValue.getClass())) {
-		throw new InvalidTypeException("Could not return the value for method " + method.getName() + " the value " + returnValue + " had Type " + returnValue.getClass() + " expected " + method.getReturnType());
+		throw new InvalidTypeException("Could not return the value for method " + method.getName() + ". The value " + returnValue + " had Type " + returnValue.getClass() + " expected " + method.getReturnType());
 	    }
 	    return returnValue;
 	} else if (allowedMethods.contains(method)) {
@@ -170,7 +189,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    }
 	}
 
-	throw new UnsupportedOperationException("The method " + method + " was not recognized and was not annotated with the annotation " + Property.class.getName()+" allowed methods: "+allowedMethods);
+	throw new UnsupportedOperationException("The method " + method + " was not recognized and was not annotated with the annotation " + Property.class.getName() + " allowed methods: " + allowedMethods);
     }
 
     private Object getConfigItem(String id) {
@@ -181,37 +200,38 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    r.unlock();
 	}
     }
-    
-    private Object getDefaultItem(Method method) throws InvocationException, InvalidTypeException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
-	if(defaults == null){
-	    throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set "
-		    + "and no defaults were found");
+
+    private Object getDefaultItem(Method method) throws InvocationException, InvalidTypeException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	if (defaults == null) {
+	    //throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set "
+	    //	    + "and no defaults were found");
+	    return null;
 	}
-	if(!type.isAssignableFrom(defaults.getClass())){
+	if (!type.isAssignableFrom(defaults.getClass())) {
 	    //This SHOULD not be possible, given the generic constructor. But still. Better safe than sorry.
-	    throw new InvocationException("Could not get defaults. The defaults "+defaults+" are not of the expected type "+type);
+	    throw new InvocationException("Could not get defaults. The defaults " + defaults + " are not of the expected type " + type);
 	}
 	Method defaultValueProvider = findDefaultMethod(defaults.getClass(), method);
 	return defaultValueProvider.invoke(defaults, new Object[0]);
 
     }
-    
-    private Method findDefaultMethod(Class clazz, Method method) throws UnknownValueException{
-	try{
+
+    private Method findDefaultMethod(Class clazz, Method method) throws UnknownValueException {
+	try {
 	    return clazz.getDeclaredMethod(method.getName(), method.getParameterTypes());
-	} catch (NoSuchMethodException ex){ //The method was not declared here. Go to the superclass and retry.
-	    if(clazz.getSuperclass() != null && !clazz.getSuperclass().equals(Object.class)){
+	} catch (NoSuchMethodException ex) { //The method was not declared here. Go to the superclass and retry.
+	    if (clazz.getSuperclass() != null && !clazz.getSuperclass().equals(Object.class)) {
 		return findDefaultMethod(clazz.getSuperclass(), method);
-	    }else{
+	    } else {
 		throw new UnknownValueException("Could not return the value for method " + method.getName() + " the value did not exist in the config set "
-		    + "and no matching method existed in the defaults");
+			+ "and no matching method existed in the defaults");
 	    }
 	}
     }
 
     @Override
     public ObjectClassDefinition getObjectClassDefinition(String id, String locale) {
-	logger.info("Getting OCD for "+id+" "+locale);
+	logger.info("Getting OCD for " + id + " " + locale);
 	return ocd;
     }
 
@@ -221,18 +241,18 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
     }
 
     /**
-     * The updated method is called when the ConfigAdmin detects a change in the configuration bound to this class.
-     * When called, the method will parse the Dictionary of properties and parse the data for each Method/Configuration item.
-     * For each Configuration Item, the type of the object is checked against the return types, the filters are run, and the data parsed.
-     * The result is that it is the final, parsed and validated versions of the configuration that is actually returned. The original properties are never
-     * stored in this object.
+     * The updated method is called when the ConfigAdmin detects a change in the configuration bound to this class. When called, the method will parse the
+     * Dictionary of properties and parse the data for each Method/Configuration item. For each Configuration Item, the type of the object is checked against
+     * the return types, the filters are run, and the data parsed. The result is that it is the final, parsed and validated versions of the configuration that
+     * is actually returned. The original properties are never stored in this object.
+     *
      * @param properties The properties that are sent from the Configuration Admin
      * @throws ConfigurationException If the data is invalid, or a filter fails.
      */
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
-	logger.info("Attempting to update properties on "+ocd.getName()+"["+ocd.getID()+"] with "+properties);
-	if(properties == null){
+	logger.info("Attempting to update properties on " + ocd.getName() + "[" + ocd.getID() + "] with " + properties);
+	if (properties == null) {
 	    return;
 	}
 	w.lock();
@@ -244,7 +264,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    while (keys.hasMoreElements()) {
 		String key = keys.nextElement();
 
-		if (key.equals("service.pid") ||key.equals("felix.fileinstall.filename")) {
+		if (key.equals("service.pid") || key.equals("felix.fileinstall.filename")) {
 		    continue;
 		}
 
@@ -261,8 +281,8 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 		Object configValue = null;
 		switch (definition.cardinalityDef) {
 		    case Optional:
-			configValue = retrieveOptionalObject(key, properties.get(key), definition.getInputType());
-			ensureCorrectType(key, configValue, definition.getInputType());
+			configValue = retrieveOptionalObject(key, properties.get(key));
+			configValue = ensureCorrectType(key, configValue, definition.getInputType());
 			if (definition.getFilter() != null) {
 			    configValue = filterObject(key, configValue, definition.getFilter(), definition.getInputType());
 			}
@@ -270,45 +290,58 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 		    case Required:
 			required.remove(definition.getID());
 			configValue = properties.get(key);
-			ensureCorrectType(key, configValue, definition.getInputType());
+			configValue = ensureCorrectType(key, configValue, definition.getInputType());
 			if (definition.getFilter() != null) {
 			    configValue = filterObject(key, configValue, definition.getFilter(), definition.getInputType());
 			}
 			break;
 		    case List:
-			List<Object> valueAsList = retrieveList(key, properties.get(key), definition.getInputType());
-			for(Object configObject : valueAsList){
-			    ensureCorrectType(key, configObject, definition.getInputType());
-			}
-			if (definition.getFilter() != null) {
-			    List filteredList = new ArrayList();
-			    for (Object value : valueAsList) {
-				filteredList.add(filterObject(key, value, definition.getFilter(), definition.getInputType()));
+			List<Object> valueAsList = retrieveList(key, properties.get(key), definition.getOutputType());
+			List<Object> outputList = new ArrayList<>();
+			for (Object value : valueAsList) {
+				Object listValue = ensureCorrectType(key, value, definition.getInputType());
+				if(definition.getFilter() != null){
+				    listValue = filterObject(key, listValue, definition.getFilter(), definition.getInputType());
+				}
+				outputList.add(listValue);
 			    }
-			    configValue = filteredList;
-			} else {
-			    configValue = valueAsList;
-			}
+			configValue = outputList;
 			break;
 		}
 		newprops.put(key, configValue);
 
 	    }
-	    if(!required.isEmpty()){
-		throw new ConfigurationException(required.pollFirst(), "Could not update configuration. Missing required fields: "+new ArrayList<>(required));
+	    if (!required.isEmpty()) {
+		throw new ConfigurationException(required.pollFirst(), "Could not update configuration. Missing required fields: " + new ArrayList<>(required));
 	    }
 	    config = newprops;
 	} finally {
 	    updated.signalAll();
 	    w.unlock();
 	}
-	logger.info("updated configuration\n"+this);
+	logger.info("updated configuration\n" + this);
     }
-    
-    private void ensureCorrectType(String key, Object configurationValue, Class expectedType) throws ConfigurationException{
-	if(!expectedType.isAssignableFrom(configurationValue.getClass())){
-	    throw new ConfigurationException(key, "Could not assign "+configurationValue+" to "+key+". It did not match the expected type: "+expectedType);
+
+    private Object ensureCorrectType(String key, Object configurationValue, Class expectedType) throws ConfigurationException {
+	Object toParse = configurationValue;
+	if (!expectedType.isAssignableFrom(toParse.getClass())) {
+	    logger.debug("Could not assign " + toParse.getClass() + " to " + expectedType.getClass() + ". Attempting intermediate filtering from default filters.");
+	    FilterReference ref = new FilterReference(toParse.getClass(), expectedType);
+	    if (!defaultFilters.containsKey(ref)) {
+		throw new ConfigurationException(key, "Could not assign " + configurationValue + " to " + key + ". It did not match the expected type: " + expectedType);
+	    }
+	    try {
+		Class<? extends TypeFilter> intermediateFilterClass = defaultFilters.get(ref);
+		logger.debug("Performing intermediate filtering of " + toParse + "[" + toParse.getClass() + "] with " + intermediateFilterClass);
+		TypeFilter filterinstance = intermediateFilterClass.newInstance();
+		toParse = filterinstance.parse(toParse);
+	    } catch (InstantiationException | IllegalAccessException ex) {
+		throw new ConfigurationException(key, "Could not load properties. Could not instantiate intermediate filter.", ex);
+	    } catch (TypeFilterException ex) {
+		throw new ConfigurationException(key, "Could not load properties. Could not perform intermediate filtering on value.", ex);
+	    }
 	}
+	return toParse;
     }
 
     private void ensureUniqueIDs(Collection<AD> attributeDefinitions) throws DoubleIDException {
@@ -329,21 +362,20 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     }
 
-    private Object retrieveOptionalObject(String key, Object configItemObject, Class expectedType) throws ConfigurationException {
-	if(expectedType.isAssignableFrom(configItemObject.getClass())){
+    private Object retrieveOptionalObject(String key, Object configItemObject) throws ConfigurationException {
+	if (Collection.class.isAssignableFrom(configItemObject.getClass())) {
+	    List configItemList = new ArrayList<>((Collection)configItemObject);
+	    if (configItemList.isEmpty()) {
+		return null;
+	    } else if (configItemList.size() == 1) {
+		return configItemList.get(0);
+	    } else {
+		throw new ConfigurationException(key, "The optional value " + key + " had more than one item assigned to it: " + configItemList);
+	    }
+	}else{
 	    return configItemObject;
 	}
-	if (!List.class.isAssignableFrom(configItemObject.getClass())) {
-	    throw new ConfigurationException(key, "This value is optional, and be represented as type '"+expectedType.getCanonicalName()+"' or as a List with one or no elements." + configItemObject);
-	}
-	List configItemList = (List) configItemObject;
-	if (configItemList.isEmpty()) {
-	    return null;
-	} else if (configItemList.size() == 1) {
-	    return configItemList.get(0);
-	} else {
-	    throw new ConfigurationException(key, "The optional value " + key + " had more than one item assigned to it: " + configItemList);
-	}
+	
     }
 
     private List retrieveList(String key, Object configItemObject, Class expectedClass) throws ConfigurationException {
@@ -361,7 +393,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     private Object filterObject(String key, Object input, Class<? extends TypeFilter> filterType, Class expectedType) throws ConfigurationException {
 	if (!expectedType.isAssignableFrom(input.getClass())) {
-	    throw new ConfigurationException(key, "Could not match this object to the expected object. Expected " + expectedType + " found " + input.getClass());
+	    throw new ConfigurationException(key, "Could not filter this object. The input type was incorrect. Expected " + expectedType + " found " + input.getClass());
 	}
 	try {
 	    TypeFilter filterinstance = filterType.newInstance();
@@ -403,7 +435,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     @Override
     public void unregisterProperties() {
-	logger.info("Unregistering properties for "+ocd.getID());
+	logger.info("Unregistering properties for " + ocd.getID());
 	managedServiceReg.unregister();
 	metatypeServiceReg.unregister();
 	selfReg.unregister();
@@ -414,10 +446,8 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     @Override
     public void setPropertyWriteDelay(int delay, TimeUnit unit) {
-	  nanosToWait = unit.toNanos(delay);
+	nanosToWait = unit.toNanos(delay);
     }
-    
-    
 
     /**
      * Registers this ManagedProperties object with the bundle context. This is done when the proxy is first created.
@@ -435,7 +465,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	metaTypeProps.put("metadata.type", "Server");
 	metaTypeProps.put("metadata.version", "1.0.0");
 	metatypeServiceReg = context.registerService(MetaTypeProvider.class, this, metaTypeProps);
-	
+
 	Hashtable<String, Object> selfRegProps = new Hashtable<>();
 	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
@@ -460,6 +490,45 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	return newocd;
     }
 
+    protected final Map<FilterReference, Class<? extends TypeFilter>> getDefaultFilterMap() throws TypeFilterException {
+	Map<FilterReference, Class<? extends TypeFilter>> filterMap = new HashMap<>();
+	for (Class<? extends TypeFilter> filter : getDefaultFilters()) {
+	    FilterReference reference = getReference(filter);
+	    logger.debug("Checking defaults reference: " + reference);
+	    if (filterMap.containsKey(reference)) {
+		throw new TypeFilterException("Could not create defaults. Only two filters must have the same combination of input and output types");
+	    }
+	    filterMap.put(reference, filter);
+	}
+	return filterMap;
+    }
+
+    protected final FilterReference getReference(Class<? extends TypeFilter> filterClass) throws TypeFilterException {
+	Method[] methods = filterClass.getDeclaredMethods();
+	for (Method method : methods) {
+	    if (method.getName().equals("parse") && method.getParameterCount() == 1) {
+		Class inputType = method.getParameterTypes()[0];
+		Class outputType = method.getReturnType();
+		return new FilterReference(inputType, outputType);
+	    }
+	}
+	throw new TypeFilterException("Could not find a parse method on this typefilter: " + filterClass);
+    }
+
+    protected List<Class<? extends TypeFilter>> getDefaultFilters() {
+	List<Class<? extends TypeFilter>> toReturn = new ArrayList<>();
+	toReturn.add(StringToBooleanFilter.class);
+	toReturn.add(StringToByteFilter.class);
+	toReturn.add(StringToDoubleFilter.class);
+	toReturn.add(StringToFloatFilter.class);
+	toReturn.add(StringToIntegerFilter.class);
+	toReturn.add(StringToLongFilter.class);
+	toReturn.add(StringToShortFilter.class);
+	toReturn.add(URLFilter.class);
+	toReturn.add(FileFilter.class);
+	return toReturn;
+    }
+
     @Override
     public String toString() {
 	ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
@@ -467,16 +536,14 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	builder.append("name", ocd.getName());
 	builder.append("description", ocd.getDescription());
 	r.lock();
-	try{
-	    for(String key : config.keySet()){
+	try {
+	    for (String key : config.keySet()) {
 		builder.append(key, config.get(key));
 	    }
-	}finally{
+	} finally {
 	    r.unlock();
 	}
 	return builder.build();
     }
-    
-    
 
 }
