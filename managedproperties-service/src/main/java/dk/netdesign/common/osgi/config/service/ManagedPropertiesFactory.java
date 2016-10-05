@@ -16,7 +16,7 @@
 
 package dk.netdesign.common.osgi.config.service;
 
-import dk.netdesign.common.osgi.config.ManagedProperties;
+import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
@@ -89,7 +89,7 @@ public class ManagedPropertiesFactory {
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
     public static synchronized <I, T extends I> I register(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
-	ManagedProperties handler = null;
+	ManagedPropertiesController handler = null;
 	if (!type.isInterface()) {
 	    throw new InvalidTypeException("Could  not register the type " + type.getName() + " as a Managed Property. The type must be an interface");
 	}
@@ -99,11 +99,11 @@ public class ManagedPropertiesFactory {
 			logger.debug("Found ServiceReference for Configuration: "+getDefinitionName(type)+"["+getDefinitionID(type)+"]");
 		    }
 		    PropertyActions service = context.getService(ref);
-		    if(ManagedProperties.class.isAssignableFrom(service.getClass())){
-			  if(ref.getProperty(ManagedProperties.BindingID).equals(type.getCanonicalName())){
-				handler = (ManagedProperties)service;
+		    if(ManagedPropertiesController.class.isAssignableFrom(service.getClass())){
+			  if(ref.getProperty(ManagedPropertiesController.BindingID).equals(type.getCanonicalName())){
+				handler = (ManagedPropertiesController)service;
 			  }else{
-				throw new DoubleIDException("Could not register the interface" + type + ". This id is already in use by " + ref.getProperty(ManagedProperties.BindingID));
+				throw new DoubleIDException("Could not register the interface" + type + ". This id is already in use by " + ref.getProperty(ManagedPropertiesController.BindingID));
 			  }
 		    }
 		}
@@ -116,7 +116,7 @@ public class ManagedPropertiesFactory {
 	  
 	  if(handler == null){
 		handler = getInvocationHandler(type, defaults);
-		handler.register(context, type);
+		//handler.register(context, type);
 		logger.info("Registered "+handler);
 	  }
 	  
@@ -138,8 +138,8 @@ public class ManagedPropertiesFactory {
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    protected static <E> ManagedProperties getInvocationHandler(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
-	return new ManagedProperties(type, defaults);
+    protected static <E> ManagedPropertiesController getInvocationHandler(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+	return new ManagedPropertiesController(type, defaults);
     }
 
     public static final PropertyDefinition getDefinitionAnnotation(Class<?> type) throws InvalidTypeException {
@@ -167,40 +167,9 @@ public class ManagedPropertiesFactory {
 	return definitions.get(0);
     }
     
-    public static final Property getMethodAnnotation(Method toScan) throws InvalidMethodException{
-	if(toScan == null){
-	    throw new InvalidMethodException("Could not find property for this method. toScan was null");
-	}
-	
-	List<Property> annotations = getAnnotations(toScan);
-	
-	if (annotations.isEmpty()) {
-	    return null;
-	}
-	if(annotations.size()>1){
-	    throw new InvalidMethodException("Could not get method annotation for " + toScan.getName() + ". More than one instance of " + Property.class.getSimpleName()+" was found in the heirachy for this method");
-	}
-	
-	return annotations.get(0);
-	
-    }
     
-    private static List<Property> getAnnotations(Method toScan){
-	List<Property> annotations = new ArrayList<>();
-	if(toScan.isAnnotationPresent(Property.class)){
-	    annotations.add(toScan.getAnnotation(Property.class));
-	}
-	
-	for(Class superInterface : toScan.getDeclaringClass().getInterfaces()){
-	    try {
-		Method method = superInterface.getDeclaredMethod(toScan.getName(), toScan.getParameterTypes());
-		annotations.addAll(getAnnotations(method));
-	    } catch (NoSuchMethodException | SecurityException ex) {
-		//There was no method with that signature in this interface. Stop looking!
-	    }
-	}
-	return annotations;
-    }
+    
+    
     
     private static List<PropertyDefinition> getDefinition(Class<?> toScan){
 	List<PropertyDefinition> definitions = new ArrayList<>();

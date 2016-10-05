@@ -10,6 +10,7 @@ import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.filters.FileFilter;
@@ -22,8 +23,8 @@ import dk.netdesign.common.osgi.config.filters.StringToLongFilter;
 import dk.netdesign.common.osgi.config.filters.StringToShortFilter;
 import dk.netdesign.common.osgi.config.filters.URLFilter;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import static dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory.getDefinitionAnnotation;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
-import java.io.File;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,29 +32,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.cm.ConfigurationException;
-import org.osgi.service.cm.ManagedService;
-import org.osgi.service.metatype.AttributeDefinition;
-import org.osgi.service.metatype.MetaTypeProvider;
-import org.osgi.service.metatype.ObjectClassDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,22 +56,17 @@ import org.slf4j.LoggerFactory;
  *
  * @author mnn
  */
-public class ManagedProperties implements InvocationHandler, MetaTypeProvider, ManagedService, ConfigurationCallbackHandler, PropertyActions, PropertyConfig {
+public class ManagedPropertiesController implements InvocationHandler, ConfigurationTarget, ConfigurationCallbackHandler, PropertyActions, PropertyConfig {
 
-    private static final Logger logger = LoggerFactory.getLogger(ManagedProperties.class);
-    public static final String BindingID = "ManagedPropertiesBinding";
-
-    private ServiceRegistration<ManagedService> managedServiceReg;
-    private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
-    private ServiceRegistration<PropertyActions> selfReg;
-    private ObjectClassDefinition ocd;
+    private static final Logger logger = LoggerFactory.getLogger(ManagedPropertiesController.class);
+    
     private Map<String, Object> config = new HashMap<>();
     private long nanosToWait = TimeUnit.SECONDS.toNanos(5);
     private final List<ConfigurationCallback> callbacks;
     private final ReadWriteLock lock;
     private final Lock r, w;
     private final Condition updated;
-    private final Map<String, AD> attributeToMethodMapping;
+    private final Map<String, Attribute> attributeToMethodMapping;
     private final List<Method> allowedMethods;
     private final Class type;
     private final Object defaults;
@@ -100,7 +86,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    public <E> ManagedProperties(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+    public <E> ManagedPropertiesController(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	callbacks = new ArrayList<>();
 	lock = new ReentrantReadWriteLock();
 	r = lock.readLock();
@@ -113,13 +99,13 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	defaultFilters = getDefaultFilterMap();
 
 	for (Method classMethod : type.getMethods()) {
-	    Property methodAnnotation = ManagedPropertiesFactory.getMethodAnnotation(classMethod);
+	    Property methodAnnotation = getMethodAnnotation(classMethod);
 	    if (methodAnnotation != null) {
 		if (classMethod.getParameterTypes().length > 0) {
 		    throw new InvalidMethodException("Could not create handler for this method. Methods annotated with " + Property.class.getName()
 			    + " must not take parameters");
 		}
-		AD methodDefinition = new AD(classMethod, defaultFilters);
+		Attribute methodDefinition = new Attribute(classMethod, defaultFilters);
 		if (methodDefinition.getCardinalityDef().equals(Property.Cardinality.Required)) {
 		    requiredIds.add(methodDefinition.getID());
 		}
@@ -130,7 +116,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
 	ensureUniqueIDs(attributeToMethodMapping.values());
 
-	ocd = buildOCD(ManagedPropertiesFactory.getDefinitionID(type), ManagedPropertiesFactory.getDefinitionName(type), typeDefinition.description(), typeDefinition.iconFile(), attributeToMethodMapping.values());
+	
 
 	allowedMethods = new ArrayList<>();
 
@@ -153,14 +139,14 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    public ManagedProperties(Class type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+    public ManagedPropertiesController(Class type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	this(type, null);
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException {
 	if (method.isAnnotationPresent(Property.class)) {
-	    AD propertyDefinition = attributeToMethodMapping.get(method.getName());
+	    Attribute propertyDefinition = attributeToMethodMapping.get(method.getName());
 	    Object returnValue = getConfigItem(propertyDefinition.getID());
 	    if (returnValue == null) {
 		returnValue = getDefaultItem(method);
@@ -232,16 +218,6 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	}
     }
 
-    @Override
-    public ObjectClassDefinition getObjectClassDefinition(String id, String locale) {
-	logger.info("Getting OCD for " + id + " " + locale);
-	return ocd;
-    }
-
-    @Override
-    public String[] getLocales() {
-	return null;
-    }
 
     /**
      * The updated method is called when the ConfigAdmin detects a change in the configuration bound to this class. When called, the method will parse the
@@ -253,33 +229,31 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
      * @throws ConfigurationException If the data is invalid, or a filter fails.
      */
     @Override
-    public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+    public Map<String, Object> updateConfig(Map<String, Object> properties) throws ParsingException{
 	logger.info("Attempting to update properties on " + ocd.getName() + "[" + ocd.getID() + "] with " + properties);
+	Map<String, Object> unknownConfigs = new HashMap<>();
 	if (properties == null) {
-	    return;
+	    throw new ParsingException("Could not update configuration. Map was null");
 	}
+	
 	w.lock();
 	TreeSet<String> required = new TreeSet<String>();
 	required.addAll(requiredIds);
 	Map<String, Object> newprops = new HashMap<>();
 	try {
-	    Enumeration<String> keys = properties.keys();
-	    while (keys.hasMoreElements()) {
-		String key = keys.nextElement();
+	    Set<String> keys = properties.keySet();
+	    for (String key : keys) {
 
-		if (key.equals("service.pid") || key.equals("felix.fileinstall.filename")) {
-		    continue;
-		}
-
-		AD definition = null;
-		for (AD possibleDefinition : attributeToMethodMapping.values()) {
+		Attribute definition = null;
+		for (Attribute possibleDefinition : attributeToMethodMapping.values()) {
 		    if (possibleDefinition.getID().equals(key)) {
 			definition = possibleDefinition;
 			break;
 		    }
 		}
 		if (definition == null) {
-		    throw new ConfigurationException(key, "Could not load properties. The property " + key + " is not known to this configuration. Supported methods: " + attributeToMethodMapping.keySet());
+		    logger.debug(key, "Could not load property. The property " + key + " is not known to this configuration. Supported methods: " + attributeToMethodMapping.keySet());
+		    unknownConfigs.put(key, properties.get(key));
 		}
 		Object configValue = null;
 		switch (definition.cardinalityDef) {
@@ -315,23 +289,26 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
 	    }
 	    if (!required.isEmpty()) {
-		throw new ConfigurationException(required.pollFirst(), "Could not update configuration. Missing required fields: " + new ArrayList<>(required));
+		throw new ParsingException(required.pollFirst(), "Could not update configuration. Missing required fields: " + new ArrayList<>(required));
 	    }
 	    config = newprops;
 	} finally {
 	    updated.signalAll();
 	    w.unlock();
+	    
 	}
+	
 	logger.info("updated configuration\n" + this);
+	return unknownConfigs;
     }
 
-    private Object ensureCorrectType(String key, Object configurationValue, Class expectedType) throws ConfigurationException {
+    private Object ensureCorrectType(String key, Object configurationValue, Class expectedType) throws ParsingException {
 	Object toParse = configurationValue;
 	if (!expectedType.isAssignableFrom(toParse.getClass())) {
 	    logger.debug("Could not assign " + toParse.getClass() + " to " + expectedType.getClass() + ". Attempting intermediate filtering from default filters.");
 	    FilterReference ref = new FilterReference(toParse.getClass(), expectedType);
 	    if (!defaultFilters.containsKey(ref)) {
-		throw new ConfigurationException(key, "Could not assign " + configurationValue + " to " + key + ". It did not match the expected type: " + expectedType);
+		throw new ParsingException(key, "Could not assign " + configurationValue + " to " + key + ". It did not match the expected type: " + expectedType);
 	    }
 	    try {
 		Class<? extends TypeFilter> intermediateFilterClass = defaultFilters.get(ref);
@@ -339,24 +316,24 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 		TypeFilter filterinstance = intermediateFilterClass.newInstance();
 		toParse = filterinstance.parse(toParse);
 	    } catch (InstantiationException | IllegalAccessException ex) {
-		throw new ConfigurationException(key, "Could not load properties. Could not instantiate intermediate filter.", ex);
+		throw new ParsingException(key, "Could not load properties. Could not instantiate intermediate filter.", ex);
 	    } catch (TypeFilterException ex) {
-		throw new ConfigurationException(key, "Could not load properties. Could not perform intermediate filtering on value.", ex);
+		throw new ParsingException(key, "Could not load properties. Could not perform intermediate filtering on value.", ex);
 	    }
 	}
 	return toParse;
     }
 
-    private void ensureUniqueIDs(Collection<AD> attributeDefinitions) throws DoubleIDException {
-	TreeSet<AD> adSet = new TreeSet<>(new Comparator<AD>() {
+    private void ensureUniqueIDs(Collection<Attribute> attributeDefinitions) throws DoubleIDException {
+	TreeSet<Attribute> adSet = new TreeSet<>(new Comparator<Attribute>() {
 
 	    @Override
-	    public int compare(AD o1, AD o2) {
+	    public int compare(Attribute o1, Attribute o2) {
 		return o1.getID().compareTo(o2.getID());
 	    }
 	});
 
-	for (AD attributeDefinition : attributeDefinitions) {
+	for (Attribute attributeDefinition : attributeDefinitions) {
 	    if (adSet.contains(attributeDefinition)) {
 		throw new DoubleIDException("Could not add the attribute " + attributeDefinition + " with id " + attributeDefinition + ". ID already used");
 	    }
@@ -365,7 +342,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 
     }
 
-    private Object retrieveOptionalObject(String key, Object configItemObject) throws ConfigurationException {
+    private Object retrieveOptionalObject(String key, Object configItemObject) throws ParsingException {
 	if (Collection.class.isAssignableFrom(configItemObject.getClass())) {
 	    List configItemList = new ArrayList<>((Collection)configItemObject);
 	    if (configItemList.isEmpty()) {
@@ -373,7 +350,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	    } else if (configItemList.size() == 1) {
 		return configItemList.get(0);
 	    } else {
-		throw new ConfigurationException(key, "The optional value " + key + " had more than one item assigned to it: " + configItemList);
+		throw new ParsingException(key, "The optional value " + key + " had more than one item assigned to it: " + configItemList);
 	    }
 	}else{
 	    return configItemObject;
@@ -381,27 +358,27 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	
     }
 
-    private List retrieveList(String key, Object configItemObject) throws ConfigurationException {
+    private List retrieveList(String key, Object configItemObject) throws ParsingException {
 	if (!List.class.isAssignableFrom(configItemObject.getClass())) {
-	    throw new ConfigurationException(key, "This value should be a List: " + configItemObject);
+	    throw new ParsingException(key, "This value should be a List: " + configItemObject);
 	}
 	List configItemList = (List) configItemObject;
 	
 	return configItemList;
     }
 
-    private Object filterObject(String key, Object input, Class<? extends TypeFilter> filterType, Class expectedType) throws ConfigurationException {
+    private Object filterObject(String key, Object input, Class<? extends TypeFilter> filterType, Class expectedType) throws ParsingException {
 	if (!expectedType.isAssignableFrom(input.getClass())) {
-	    throw new ConfigurationException(key, "Could not filter this object. The input type was incorrect. Expected " + expectedType + " found " + input.getClass());
+	    throw new ParsingException(key, "Could not filter this object. The input type was incorrect. Expected " + expectedType + " found " + input.getClass());
 	}
 	try {
 	    TypeFilter filterinstance = filterType.newInstance();
 	    Object filterValue = filterinstance.parse(input);
 	    return filterValue;
 	} catch (InstantiationException | IllegalAccessException ex) {
-	    throw new ConfigurationException(key, "Could not load properties. Could not instantiate filter.", ex);
+	    throw new ParsingException(key, "Could not load properties. Could not instantiate filter.", ex);
 	} catch (TypeFilterException ex) {
-	    throw new ConfigurationException(key, "Could not load properties. Could not filter value.", ex);
+	    throw new ParsingException(key, "Could not load properties. Could not filter value.", ex);
 	}
     }
 
@@ -448,46 +425,7 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	nanosToWait = unit.toNanos(delay);
     }
 
-    /**
-     * Registers this ManagedProperties object with the bundle context. This is done when the proxy is first created.
-     *
-     * @param context The context in which to register this ManagedProperties object.
-     * @param configBindingClass The interface which was bound to this ManagedProperties
-     */
-    public void register(BundleContext context, Class configBindingClass) {
-	Hashtable<String, Object> managedServiceProps = new Hashtable<>();
-	managedServiceProps.put(Constants.SERVICE_PID, ocd.getID());
-	managedServiceReg = context.registerService(ManagedService.class, this, managedServiceProps);
 
-	Hashtable<String, Object> metaTypeProps = new Hashtable<>();
-	metaTypeProps.put(Constants.SERVICE_PID, ocd.getID());
-	metaTypeProps.put("metadata.type", "Server");
-	metaTypeProps.put("metadata.version", "1.0.0");
-	metatypeServiceReg = context.registerService(MetaTypeProvider.class, this, metaTypeProps);
-
-	Hashtable<String, Object> selfRegProps = new Hashtable<>();
-	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
-	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
-	selfReg = context.registerService(PropertyActions.class, this, selfRegProps);
-    }
-
-    private static ObjectClassDefinition buildOCD(String id, String name, String description, String file, Collection<AD> attributes) throws InvalidTypeException {
-
-	if (logger.isDebugEnabled()) {
-	    logger.debug("Building ObjectClassDefinition for '" + name + "'");
-	}
-
-	File iconFile = null;
-	if (!file.isEmpty()) {
-	    iconFile = new File(file);
-	}
-
-	OCD newocd = new OCD(id, attributes.toArray(new AttributeDefinition[attributes.size()]));
-	newocd.setName(name);
-	newocd.setDescription(description);
-	newocd.setIconFile(iconFile);
-	return newocd;
-    }
 
     protected final Map<FilterReference, Class<? extends TypeFilter>> getDefaultFilterMap() throws TypeFilterException {
 	Map<FilterReference, Class<? extends TypeFilter>> filterMap = new HashMap<>();
@@ -552,6 +490,70 @@ public class ManagedProperties implements InvocationHandler, MetaTypeProvider, M
 	} catch (InvalidTypeException ex) {
 	    logger.warn("getPropertyPID called on a type which did not have a propertydefinition", ex);
 	    return null;
+	}
+    }
+    
+    public static final Property getMethodAnnotation(Method toScan) throws InvalidMethodException{
+	if(toScan == null){
+	    throw new InvalidMethodException("Could not find property for this method. toScan was null");
+	}
+	
+	List<Property> annotations = getAnnotations(toScan);
+	
+	if (annotations.isEmpty()) {
+	    return null;
+	}
+	if(annotations.size()>1){
+	    throw new InvalidMethodException("Could not get method annotation for " + toScan.getName() + ". More than one instance of " + Property.class.getSimpleName()+" was found in the heirachy for this method");
+	}
+	
+	return annotations.get(0);
+	
+    }
+    
+    private static List<Property> getAnnotations(Method toScan){
+	List<Property> annotations = new ArrayList<>();
+	if(toScan.isAnnotationPresent(Property.class)){
+	    annotations.add(toScan.getAnnotation(Property.class));
+	}
+	
+	for(Class superInterface : toScan.getDeclaringClass().getInterfaces()){
+	    try {
+		Method method = superInterface.getDeclaredMethod(toScan.getName(), toScan.getParameterTypes());
+		annotations.addAll(getAnnotations(method));
+	    } catch (NoSuchMethodException | SecurityException ex) {
+		//There was no method with that signature in this interface. Stop looking!
+	    }
+	}
+	return annotations;
+    }
+    
+    public static List<PropertyDefinition> getDefinition(Class<?> toScan){
+	List<PropertyDefinition> definitions = new ArrayList<>();
+	if(toScan.isAnnotationPresent(PropertyDefinition.class)){
+	    definitions.add(toScan.getAnnotation(PropertyDefinition.class));
+	}
+	for(Class<?> parent : toScan.getInterfaces()){
+	    definitions.addAll(getDefinition(parent));
+	}
+	return definitions;
+    }
+    
+    public static String getDefinitionID(Class<?> type) throws InvalidTypeException {
+	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
+	if(typeDefinition.id().isEmpty()){
+	    return type.getCanonicalName();
+	}else{
+	    return typeDefinition.id();
+	}
+    }
+    
+    public static String getDefinitionName(Class<?> type) throws InvalidTypeException {
+	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
+	if(typeDefinition.name().isEmpty()){
+	    return type.getSimpleName();
+	}else{
+	    return typeDefinition.name();
 	}
     }
     

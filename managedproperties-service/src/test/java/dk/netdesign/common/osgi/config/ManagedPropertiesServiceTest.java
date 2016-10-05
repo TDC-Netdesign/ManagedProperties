@@ -45,7 +45,7 @@ public class ManagedPropertiesServiceTest {
 
     MockContext stub;
     TestInterface testi;
-    ManagedProperties props;
+    ManagedPropertiesController props;
     File testfile;
 
     public ManagedPropertiesServiceTest() {
@@ -63,7 +63,7 @@ public class ManagedPropertiesServiceTest {
     public void setUp() throws Exception {
 	stub = new MockContext();
 	testi = ManagedPropertiesFactory.register(TestInterface.class, new TestInterfaceDefaults(), stub);
-	props = (ManagedProperties) stub.lastRegistered;
+	props = (ManagedPropertiesController) stub.lastRegistered;
 	testfile = new File("testFile.test");
 	testfile.createNewFile();
     }
@@ -137,7 +137,7 @@ public class ManagedPropertiesServiceTest {
     @Test
     public void testDefaultsInheritance() throws Exception{
 	TestInterface properties = ManagedPropertiesFactory.register(TestInterface.class, new TestInterfaceDefaultsOverride(), stub);
-	props = (ManagedProperties) stub.lastRegistered;
+	props = (ManagedPropertiesController) stub.lastRegistered;
 	
 	TestInterfaceDefaults expected = new TestInterfaceDefaultsOverride();
 	assertEquals(expected.getBigDecimal(), properties.getBigDecimal());
@@ -220,7 +220,7 @@ public class ManagedPropertiesServiceTest {
     @Test
     public void testTestNarrowing() throws Exception {
 	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, stub);
-	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 
 	Dictionary<String, Object> newConfig = new Hashtable<>();
 	newConfig.put("Number", Collections.singletonList(10));
@@ -236,7 +236,7 @@ public class ManagedPropertiesServiceTest {
     @Test(expected = ConfigurationException.class)
     public void testTestNarrowingBadInput() throws Exception {
 	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, stub);
-	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
 	newConfig.put("Number", Collections.singletonList(10d));
@@ -247,7 +247,7 @@ public class ManagedPropertiesServiceTest {
     @Test
     public void testCardinalityOnUpdate() throws Exception{
 	TestCardinality cardinality = ManagedPropertiesFactory.register(TestCardinality.class, stub);
-	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
 	newConfig.put("Optional", Collections.singletonList(10));
@@ -263,7 +263,7 @@ public class ManagedPropertiesServiceTest {
     @Test(expected = ConfigurationException.class)
     public void testMissingRequredValueOnUpdate() throws Exception{
 	TestCardinality cardinality = ManagedPropertiesFactory.register(TestCardinality.class, stub);
-	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	
 	Dictionary<String, Object> newConfig = new Hashtable<>();
 	newConfig.put("Optional", Collections.singletonList(10));
@@ -287,7 +287,7 @@ public class ManagedPropertiesServiceTest {
     @Test
     public void testNarrowingDefaultsNoUpdate() throws Exception{
 	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
-	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 
 	assertEquals(new NarrowingDefaults().getNumber(), narrowing.getNumber());
 	assertEquals(new NarrowingDefaults().getNumberDouble(), narrowing.getNumberDouble());
@@ -296,7 +296,7 @@ public class ManagedPropertiesServiceTest {
     @Test
     public void testNarrowingDefaultsPartialUpdate() throws Exception{
 	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
-	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 
 	Dictionary<String, Object> newConfig = new Hashtable<>();
 	newConfig.put("Number", Collections.singletonList(10));
@@ -308,7 +308,7 @@ public class ManagedPropertiesServiceTest {
     @Test(expected = UnknownValueException.class)
     public void testNarrowingMissingDefaults() throws Exception{
 	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
-	ManagedProperties mprops = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	narrowing.getNumberFloat(); //Returns null
     }
 
@@ -406,7 +406,7 @@ public class ManagedPropertiesServiceTest {
     @Test @Ignore
     public void testRepeatedInterface() throws Exception {
 	TestDoubleInterfaceID1 i1 = ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
-	ManagedProperties i1i2Props = (ManagedProperties) stub.lastRegistered;
+	ManagedPropertiesController i1i2Props = (ManagedPropertiesController) stub.lastRegistered;
 	TestDoubleInterfaceID1 i2 = ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
 
 	Dictionary<String, Object> newConfig = new Hashtable<>();

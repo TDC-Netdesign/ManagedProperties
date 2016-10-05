@@ -10,16 +10,12 @@ import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.osgi.service.metatype.AttributeDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,14 +26,12 @@ import org.slf4j.LoggerFactory;
  * This class is what binds a method to a configuration item.
  * @author mnn
  */
-public class AD implements AttributeDefinition {
+public class Attribute {
 
-    private static final Logger logger = LoggerFactory.getLogger(AD.class);
+    private static final Logger logger = LoggerFactory.getLogger(Attribute.class);
 
     private String id;
-    private int inputTypeAsInt;
     private Class inputType;
-    private int cardinality;
     private String name;
     private String description;
     private String[] defValue;
@@ -59,8 +53,8 @@ public class AD implements AttributeDefinition {
      * @throws InvalidMethodException Thrown if there is a problem with anything but the type, or filter. This could be missing information, invalid combinations,
      * or a missing @Property annotation.
      */
-    protected AD(Method method, Map<FilterReference, Class<? extends TypeFilter>> defaultFilters) throws TypeFilterException, InvalidTypeException, InvalidMethodException {
-	Property methodProperty = ManagedPropertiesFactory.getMethodAnnotation(method);
+    protected Attribute(Method method, Map<FilterReference, Class<? extends TypeFilter>> defaultFilters) throws TypeFilterException, InvalidTypeException, InvalidMethodException {
+	Property methodProperty = ManagedPropertiesController.getMethodAnnotation(method);
 	name = getAttributeName(method);
 	id = name;
 
@@ -85,7 +79,6 @@ public class AD implements AttributeDefinition {
 	    id = methodProperty.id();
 	}
 
-	cardinality = getCardinality(cardinalityDef);
 	
 	Class<? extends TypeFilter> filterFromAnnotation = methodProperty.typeMapper();
 
@@ -111,13 +104,13 @@ public class AD implements AttributeDefinition {
 	    
 	
 	if (logger.isTraceEnabled()) {
-	    logger.trace("Building AttributeDefinition with attributeID '" + id + "' attributeType '" + inputTypeAsInt + "' cardinality '" + cardinality + "'");
+	    logger.trace("Building AttributeDefinition with attributeID '" + id + "' inputType '" + inputType + "' cardinality '" + cardinalityDef + "'");
 	}
 	defValue = methodProperty.defaultValue();
 	description = methodProperty.description();
 	optionalLabels = methodProperty.optionLabels();
 	optionalValues = methodProperty.optionValues();
-	inputTypeAsInt = getAttributeType(inputType);
+
     }
     
     private void checkCardinality(Method method) throws InvalidMethodException{
@@ -168,69 +161,10 @@ public class AD implements AttributeDefinition {
 	return methodReturnType;
     }
 
-    private static Integer getAttributeType(Class methodReturnType) throws InvalidTypeException {
-	Integer attributeType = null;
-	if (methodReturnType.equals(String.class)) {
-	    attributeType = AttributeDefinition.STRING;
-	} else if (methodReturnType.equals(Long.class)) {
-	    attributeType = AttributeDefinition.LONG;
-	} else if (methodReturnType.equals(Integer.class)) {
-	    attributeType = AttributeDefinition.INTEGER;
-	} else if (methodReturnType.equals(Short.class)) {
-	    attributeType = AttributeDefinition.SHORT;
-	} else if (methodReturnType.equals(Character.class)) {
-	    attributeType = AttributeDefinition.CHARACTER;
-	} else if (methodReturnType.equals(Byte.class)) {
-	    attributeType = AttributeDefinition.BYTE;
-	} else if (methodReturnType.equals(Double.class)) {
-	    attributeType = AttributeDefinition.DOUBLE;
-	} else if (methodReturnType.equals(Float.class)) {
-	    attributeType = AttributeDefinition.FLOAT;
-	} else if (methodReturnType.equals(BigInteger.class)) {
-	    attributeType = AttributeDefinition.BIGINTEGER;
-	} else if (methodReturnType.equals(BigDecimal.class)) {
-	    attributeType = AttributeDefinition.BIGDECIMAL;
-	} else if (methodReturnType.equals(Boolean.class)) {
-	    attributeType = AttributeDefinition.BOOLEAN;
-	} else if (methodReturnType.equals(Character[].class)) {
-	    attributeType = AttributeDefinition.PASSWORD;
-	}
-	if (attributeType == null) {
-	    throw new InvalidTypeException("Could not create Attribute definition. The type " + methodReturnType + " is not a valid type for an InputType");
-	}
-	return attributeType;
-    }
-
-    private static int getCardinality(Property.Cardinality cardinality) {
-	int adCardinality = 0;
-	switch (cardinality) {
-	    case Required:
-		adCardinality = 0;
-		break;
-	    case Optional:
-		adCardinality = -1;
-		break;
-	    case List:
-		adCardinality = Integer.MIN_VALUE;
-		break;
-	}
-	return adCardinality;
-    }
-
-    /**
-     * The cardinality of this Method
-     * @return The cardinality of the configuration item defined by this method, returned as MetaType information
-     */
-    @Override
-    public int getCardinality() {
-	return cardinality;
-    }
-
-    /**
+        /**
      * The default value of this method
      * @return The possible default values for this configuration item defined by this method, returned as MetaType information
      */
-    @Override
     public String[] getDefaultValue() {
 	return defValue;
     }
@@ -239,7 +173,6 @@ public class AD implements AttributeDefinition {
      * The description of this method
      * @return The description for the configuration item defined by this method
      */
-    @Override
     public String getDescription() {
 	return description;
     }
@@ -248,7 +181,6 @@ public class AD implements AttributeDefinition {
      * The configurationID for this method
      * @return The ID for the configuration item.
      */
-    @Override
     public String getID() {
 	return id;
     }
@@ -257,7 +189,6 @@ public class AD implements AttributeDefinition {
      * The display name for this method
      * @return The name for the configuration item
      */
-    @Override
     public String getName() {
 	return name;
     }
@@ -266,7 +197,6 @@ public class AD implements AttributeDefinition {
      * The option labels for this method
      * @return The Option labels for the configuration item
      */
-    @Override
     public String[] getOptionLabels() {
 	return optionalLabels;
     }
@@ -275,24 +205,11 @@ public class AD implements AttributeDefinition {
      * The option values for this method
      * @return The option values for this configuration item
      */
-    @Override
     public String[] getOptionValues() {
 	return optionalValues;
     }
 
-    /**
-     * The type for this method
-     * @return The type for this configuration item, defined as MetaType provider data.
-     */
-    @Override
-    public int getType() {
-	return inputTypeAsInt;
-    }
-
-    @Override
-    public String validate(String arg0) {
-	return null;
-    }
+    
 
     protected void setOptionLabels(String[] labels) {
 	optionalLabels = labels;
@@ -347,11 +264,13 @@ public class AD implements AttributeDefinition {
     public void setCardinalityDef(Property.Cardinality cardinalityDef) {
 	this.cardinalityDef = cardinalityDef;
     }
+    
+    
 
     @Override
     public String toString() {
 	ToStringBuilder builder = new ToStringBuilder(this);
-	builder.append("id", id).append("name", name).append("type", inputTypeAsInt).append("cardinality", cardinality).append("description", description)
+	builder.append("id", id).append("name", name).append("description", description)
 		.append("defValue", defValue).append("optionalLabels", optionalLabels).append("optionalValues", optionalValues).append("filter", filter);
 	return builder.toString();
     }
