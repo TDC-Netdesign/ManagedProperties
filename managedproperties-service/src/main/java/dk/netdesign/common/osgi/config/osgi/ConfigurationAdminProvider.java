@@ -17,20 +17,20 @@
 package dk.netdesign.common.osgi.config.osgi;
 
 import dk.netdesign.common.osgi.config.Attribute;
-import dk.netdesign.common.osgi.config.ConfigurationTarget;
-import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.ManagedPropertiesProvider;
-import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
-import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
+import dk.netdesign.common.osgi.config.PropertiesProvider;
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.exception.ParsingException;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
@@ -46,20 +46,25 @@ import org.slf4j.LoggerFactory;
  *
  * @author mnn
  */
-public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService{
+public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService,PropertiesProvider{
     public static final String BindingID = "ManagedPropertiesBinding";
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationAdminProvider.class);
     private final BundleContext bundleContext;
+    private final ObjectClassDefinition ocd;
+    
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
-    private ServiceRegistration<PropertyActions> selfReg;
+    private ServiceRegistration<PropertiesProvider> selfReg;
 
-    public ConfigurationAdminProvider(BundleContext bundleContext, ConfigurationTarget target) {
+    public ConfigurationAdminProvider(BundleContext bundleContext, ConfigurationTarget target) throws InvalidTypeException {
 	super(target);
 	this.bundleContext = bundleContext;
 	Class type = getTarget().getConfigurationType();
-	PropertyDefinition typeDefinition = ManagedPropertiesController.getDefinitionAnnotation(type);
-	ocd = buildOCD(ManagedPropertiesController.getDefinitionID(type), ManagedPropertiesController.getDefinitionName(type), typeDefinition.description(), typeDefinition.iconFile(), attributeToMethodMapping.values());
+	List<AttributeDefinition> attributes = new ArrayList<>();
+	for(Attribute attribute : target.getAttributes()){
+	    attributes.add(new MetaTypeAttributeDefinition(attribute));
+	}
+	ocd = buildOCD(target.getID(), target.getName(), target.getDescription(), target.getIconFile(), attributes);
     }
     
     
@@ -78,47 +83,44 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 		configurationToReturn.put(key, properties.get(key));
 
 	    }
-	//Do actual update
-	
-	//Add remaining config to context properties as managedservice requests
+	try {
+	    //Do actual update
+	    Map<String, Object> remainingConfig = getTarget().updateConfig(configurationToReturn);
+	    //Add remaining config to context properties as managedservice requests
+	} catch (ParsingException ex) {
+	    throw new ConfigurationException(ex.getKey(), "Could not update configuration for "+getTarget().getName()+"["+getTarget().getID()+"]", ex);
+	}
     }
 
     @Override
     public void start() throws Exception {
-	register(bundleContext, getTarget().getConfigurationType());
-    }
-
-    @Override
-    public void stop() throws Exception {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-    
-    
-    
-        /**
-     * Registers this ManagedProperties object with the bundle context. This is done when the proxy is first created.
-     *
-     * @param context The context in which to register this ManagedProperties object.
-     * @param configBindingClass The interface which was bound to this ManagedProperties
-     */
-    public void register(BundleContext context, Class configBindingClass) {
+	Class configBindingClass = getTarget().getConfigurationType();
 	Hashtable<String, Object> managedServiceProps = new Hashtable<>();
 	managedServiceProps.put(Constants.SERVICE_PID, ocd.getID());
-	managedServiceReg = context.registerService(ManagedService.class, this, managedServiceProps);
+	managedServiceReg = bundleContext.registerService(ManagedService.class, this, managedServiceProps);
 
 	Hashtable<String, Object> metaTypeProps = new Hashtable<>();
 	metaTypeProps.put(Constants.SERVICE_PID, ocd.getID());
 	metaTypeProps.put("metadata.type", "Server");
 	metaTypeProps.put("metadata.version", "1.0.0");
-	metatypeServiceReg = context.registerService(MetaTypeProvider.class, this, metaTypeProps);
+	metatypeServiceReg = bundleContext.registerService(MetaTypeProvider.class, this, metaTypeProps);
 
 	Hashtable<String, Object> selfRegProps = new Hashtable<>();
 	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
-	selfReg = context.registerService(PropertyActions.class, this, selfRegProps);
+	selfReg = bundleContext.registerService(PropertiesProvider.class, this, selfRegProps);
+
     }
 
-    private static ObjectClassDefinition buildOCD(String id, String name, String description, String file, Collection<Attribute> attributes) throws InvalidTypeException {
+    @Override
+    public void stop() throws Exception {
+	selfReg.unregister();
+	metatypeServiceReg.unregister();
+	managedServiceReg.unregister();
+    }
+    
+    
+    private static ObjectClassDefinition buildOCD(String id, String name, String description, String file, Collection<AttributeDefinition> attributes) throws InvalidTypeException {
 
 	if (logger.isDebugEnabled()) {
 	    logger.debug("Building ObjectClassDefinition for '" + name + "'");

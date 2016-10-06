@@ -20,21 +20,6 @@ package dk.netdesign.common.osgi.config;
  *
  * @author mnn
  */
-public abstract class ManagedPropertiesProvider {
-    private final ConfigurationTarget target;
-    
-    public ManagedPropertiesProvider(ConfigurationTarget target){
-	this.target = target;
-    }
-    
-    public ConfigurationTarget getTarget(){
-	return target;
-    }
-    
-    public abstract void start() throws Exception;
-    
-    public abstract void stop() throws Exception;
-    
-    
+public interface PropertiesProvider {
     
 }

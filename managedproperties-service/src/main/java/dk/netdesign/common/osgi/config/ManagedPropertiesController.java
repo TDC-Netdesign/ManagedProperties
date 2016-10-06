@@ -1,5 +1,7 @@
 package dk.netdesign.common.osgi.config;
 
+import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesProvider;
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallback;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
@@ -23,7 +25,6 @@ import dk.netdesign.common.osgi.config.filters.StringToLongFilter;
 import dk.netdesign.common.osgi.config.filters.StringToShortFilter;
 import dk.netdesign.common.osgi.config.filters.URLFilter;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import static dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory.getDefinitionAnnotation;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -62,6 +63,10 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     
     private Map<String, Object> config = new HashMap<>();
     private long nanosToWait = TimeUnit.SECONDS.toNanos(5);
+    private final String id;
+    private final String name;
+    private final String description;
+    private final String iconFile;
     private final List<ConfigurationCallback> callbacks;
     private final ReadWriteLock lock;
     private final Lock r, w;
@@ -72,7 +77,8 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     private final Object defaults;
     private final List<String> requiredIds;
     private final Map<FilterReference, Class<? extends TypeFilter>> defaultFilters;
-
+    private ManagedPropertiesProvider provider;
+    
     /**
      * Returns a ManagedProperties object with the defined defaults.
      *
@@ -87,13 +93,13 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
     public <E> ManagedPropertiesController(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
 	callbacks = new ArrayList<>();
 	lock = new ReentrantReadWriteLock();
 	r = lock.readLock();
 	w = lock.writeLock();
 	updated = w.newCondition();
 	attributeToMethodMapping = new HashMap<>();
-	PropertyDefinition typeDefinition = ManagedPropertiesFactory.getDefinitionAnnotation(type);
 	requiredIds = new ArrayList<>();
 
 	defaultFilters = getDefaultFilterMap();
@@ -116,7 +122,6 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
 	ensureUniqueIDs(attributeToMethodMapping.values());
 
-	
 
 	allowedMethods = new ArrayList<>();
 
@@ -126,6 +131,10 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	allowedMethods.addAll(Arrays.asList(Object.class.getDeclaredMethods()));
 	this.type = type;
 	this.defaults = defaults;
+	id = getDefinitionID(type);
+	name = getDefinitionName(type);
+	description = typeDefinition.description();
+	iconFile = typeDefinition.iconFile();
     }
 
     /**
@@ -230,7 +239,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
      */
     @Override
     public Map<String, Object> updateConfig(Map<String, Object> properties) throws ParsingException{
-	logger.info("Attempting to update properties on " + ocd.getName() + "[" + ocd.getID() + "] with " + properties);
+	logger.info("Attempting to update properties on " + name + "[" + id + "] with " + properties);
 	Map<String, Object> unknownConfigs = new HashMap<>();
 	if (properties == null) {
 	    throw new ParsingException("Could not update configuration. Map was null");
@@ -410,14 +419,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
 
     @Override
-    public void unregisterProperties() {
-	logger.info("Unregistering properties for " + ocd.getID());
-	managedServiceReg.unregister();
-	metatypeServiceReg.unregister();
-	selfReg.unregister();
-	managedServiceReg = null;
-	metatypeServiceReg = null;
-	selfReg = null;
+    public void unregisterProperties() throws Exception{
+	logger.info("Unregistering properties for " + id);
+	provider.stop();
     }
 
     @Override
@@ -469,9 +473,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     @Override
     public String toString() {
 	ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
-	builder.append("id", ocd.getID());
-	builder.append("name", ocd.getName());
-	builder.append("description", ocd.getDescription());
+	builder.append("id", id);
+	builder.append("name", name);
+	builder.append("description", description);
 	r.lock();
 	try {
 	    for (String key : config.keySet()) {
@@ -484,13 +488,41 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
 
     @Override
-    public String getPropertyPID() {
-	try {
-	    return ManagedPropertiesFactory.getDefinitionAnnotation(type).id();
-	} catch (InvalidTypeException ex) {
-	    logger.warn("getPropertyPID called on a type which did not have a propertydefinition", ex);
-	    return null;
-	}
+    public Class getConfigurationType() {
+	return type;
+    }
+
+    @Override
+    public String getID() {
+	return id;
+    }
+
+    @Override
+    public String getName() {
+	return name;
+    }
+
+    @Override
+    public String getDescription() {
+	return description;
+    }
+
+    @Override
+    public String getIconFile() {
+	return iconFile;
+    }
+
+    @Override
+    public List<Attribute> getAttributes() {
+	return new ArrayList<>(attributeToMethodMapping.values());
+    }
+
+    public ManagedPropertiesProvider getProvider() {
+	return provider;
+    }
+
+    public void setProvider(ManagedPropertiesProvider provider) {
+	this.provider = provider;
     }
     
     public static final Property getMethodAnnotation(Method toScan) throws InvalidMethodException{
@@ -557,6 +589,29 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	}
     }
     
-    
+        public static final PropertyDefinition getDefinitionAnnotation(Class<?> type) throws InvalidTypeException {
+	if (type == null) {
+	    throw new InvalidTypeException("Could not build OCD. Type was null");
+	}
+	
+	List<PropertyDefinition> definitions = getDefinition(type);
+	
+	if (definitions.isEmpty()) {
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Type did not contain the annotation " + PropertyDefinition.class.getName());
+	}
+
+/*	if (typeDefinition.id().isEmpty()) {
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". ID was not set on " + PropertyDefinition.class.getSimpleName());
+	}
+
+	if (typeDefinition.name().isEmpty()) {
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Name was not set on " + PropertyDefinition.class.getSimpleName());
+	}
+*/
+	if(definitions.size()>1){
+	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". More than one instance of " + PropertyDefinition.class.getSimpleName()+" was found in the heirachy");
+	}
+	return definitions.get(0);
+    }
 
 }

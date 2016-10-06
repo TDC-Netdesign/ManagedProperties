@@ -25,6 +25,7 @@ import dk.netdesign.common.osgi.config.enhancement.PropertyConfig;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
+import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -47,6 +48,12 @@ import org.slf4j.LoggerFactory;
  */
 public class ManagedPropertiesFactory {
     private static final Logger logger = LoggerFactory.getLogger(ManagedPropertiesFactory.class);
+    private HandlerFactory handlerFactory;
+
+    public ManagedPropertiesFactory(HandlerFactory handlerFactory) {
+	this.handlerFactory = handlerFactory;
+    }
+    
     
     /**
      * Registers a configuration that is based on the Interface referenced by {@code type}.
@@ -55,15 +62,14 @@ public class ManagedPropertiesFactory {
      * @param type The type of configuration to create. The type of interface must be be annotated by 
      * {@link dk.netdesign.common.osgi.config.annotation.Property}, and each parameter must be annotated by 
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition}
-     * @param context The {@link BundleContext} under which to register this configuration
      * @return A proxy representing a Configuration Admin configuration.
      * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
      * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    public static synchronized <T extends Object> T register(Class<T> type, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
-	return register(type, null, context);
+    public synchronized <T extends Object> T register(Class<T> type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException {
+	return register(type, null);
     }
     
     /**
@@ -81,123 +87,23 @@ public class ManagedPropertiesFactory {
      * {@link dk.netdesign.common.osgi.config.annotation.Property}, and each parameter must be annotated by 
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition}
      * @param defaults The defaults object to create. When a configuration item is not found in the Configuration Admin, the defaults method is called.
-     * @param context The {@link BundleContext} under which to register this configuration
      * @return A proxy representing a Configuration Admin configuration.
      * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
      * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    public static synchronized <I, T extends I> I register(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+    public synchronized <I, T extends I> I register(Class<I> type, T defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException {
 	ManagedPropertiesController handler = null;
 	if (!type.isInterface()) {
 	    throw new InvalidTypeException("Could  not register the type " + type.getName() + " as a Managed Property. The type must be an interface");
 	}
-	  try {
-		for(ServiceReference<PropertyActions> ref : context.getServiceReferences(PropertyActions.class, "("+Constants.SERVICE_PID+"="+getDefinitionID(type)+")")){
-		    if(logger.isDebugEnabled()){
-			logger.debug("Found ServiceReference for Configuration: "+getDefinitionName(type)+"["+getDefinitionID(type)+"]");
-		    }
-		    PropertyActions service = context.getService(ref);
-		    if(ManagedPropertiesController.class.isAssignableFrom(service.getClass())){
-			  if(ref.getProperty(ManagedPropertiesController.BindingID).equals(type.getCanonicalName())){
-				handler = (ManagedPropertiesController)service;
-			  }else{
-				throw new DoubleIDException("Could not register the interface" + type + ". This id is already in use by " + ref.getProperty(ManagedPropertiesController.BindingID));
-			  }
-		    }
-		}
-	  } catch (InvalidSyntaxException ex) {
-		throw new IllegalStateException("Could not register this service. There was an error in the search filter when searching existing mappings.", ex);
-	  } catch(IllegalStateException | NullPointerException ex){
-	        logger.warn("An error occured while attempting to get the current Configuration Proxies.", ex);
-	        handler = null;
-	  }
 	  
-	  if(handler == null){
-		handler = getInvocationHandler(type, defaults);
-		//handler.register(context, type);
-		logger.info("Registered "+handler);
-	  }
-	  
+	handlerFactory.getController(type, defaults);
 	
 	return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, PropertyActions.class, PropertyConfig.class, ConfigurationCallbackHandler.class}, handler));
     }
     
-    /**
-     * Builds the ManagedProperties object for use as an invocation handler in the {@link Proxy proxy}.
-     * @param <E> The return type of the invocation handler.
-     * @param type The interface used to create the ManagedProperties object. This Interface must at least be annotated with the 
-     * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition} and have one method annotated with the 
-     * {@link dk.netdesign.common.osgi.config.annotation.Property Property}. The interface will be parsed in order to build the configuration metadata.
-     * @param defaults The defaults to use for the ManagedProperties object. Can be null. The defaults must implement the same interface as used in
-     * {@code type}.
-     * @return The finished ManagedProperties object
-     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
-     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
-     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
-     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
-     */
-    protected static <E> ManagedPropertiesController getInvocationHandler(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
-	return new ManagedPropertiesController(type, defaults);
-    }
-
-    public static final PropertyDefinition getDefinitionAnnotation(Class<?> type) throws InvalidTypeException {
-	if (type == null) {
-	    throw new InvalidTypeException("Could not build OCD. Type was null");
-	}
-	
-	List<PropertyDefinition> definitions = getDefinition(type);
-	
-	if (definitions.isEmpty()) {
-	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Type did not contain the annotation " + PropertyDefinition.class.getName());
-	}
-
-/*	if (typeDefinition.id().isEmpty()) {
-	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". ID was not set on " + PropertyDefinition.class.getSimpleName());
-	}
-
-	if (typeDefinition.name().isEmpty()) {
-	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". Name was not set on " + PropertyDefinition.class.getSimpleName());
-	}
-*/
-	if(definitions.size()>1){
-	    throw new InvalidTypeException("Could not build OCD for " + type.getName() + ". More than one instance of " + PropertyDefinition.class.getSimpleName()+" was found in the heirachy");
-	}
-	return definitions.get(0);
-    }
     
-    
-    
-    
-    
-    private static List<PropertyDefinition> getDefinition(Class<?> toScan){
-	List<PropertyDefinition> definitions = new ArrayList<>();
-	if(toScan.isAnnotationPresent(PropertyDefinition.class)){
-	    definitions.add(toScan.getAnnotation(PropertyDefinition.class));
-	}
-	for(Class<?> parent : toScan.getInterfaces()){
-	    definitions.addAll(getDefinition(parent));
-	}
-	return definitions;
-    }
-    
-    public static String getDefinitionID(Class<?> type) throws InvalidTypeException {
-	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
-	if(typeDefinition.id().isEmpty()){
-	    return type.getCanonicalName();
-	}else{
-	    return typeDefinition.id();
-	}
-    }
-    
-    public static String getDefinitionName(Class<?> type) throws InvalidTypeException {
-	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
-	if(typeDefinition.name().isEmpty()){
-	    return type.getSimpleName();
-	}else{
-	    return typeDefinition.name();
-	}
-    }
     
 }

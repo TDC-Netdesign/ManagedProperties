@@ -68,6 +68,12 @@ public class ParsingException extends Exception{
 	return builder.toString();
     }
 
+    public String getKey() {
+	return key;
+    }
+    
+    
+
     
     
     

@@ -28,7 +28,8 @@ public interface PropertyActions {
     /**
      * Calling this method will unregister the properties object so it will no longer recieve new updated configurations. Only call this method as cleanup,
      * as it will effectively kill the object. It cannot recover.
+     * @throws java.lang.Exception Throw an exception if unregistering the backing handler fails
      */
-    public void unregisterProperties();
+    public void unregisterProperties() throws Exception;
     
 }

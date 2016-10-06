@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Martin.
+ * Copyright 2016 mnn.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,26 @@
 
 package dk.netdesign.common.osgi.config.enhancement;
 
-import java.util.concurrent.TimeUnit;
+import dk.netdesign.common.osgi.config.Attribute;
+import dk.netdesign.common.osgi.config.exception.ParsingException;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
- * @author Martin
+ * @author mnn
  */
-public interface PropertyConfig extends ConfigurationTarget{
+public interface ConfigurationTarget {
     
-    public void setPropertyWriteDelay(int delay, TimeUnit unit);
+    public Map<String, Object> updateConfig(Map<String, Object> properties) throws ParsingException;
+    
+    public List<Attribute> getAttributes();
+    
+    public Class getConfigurationType();
+    
+    public String getID();
+    public String getName();
+    public String getDescription();
+    public String getIconFile();
     
 }

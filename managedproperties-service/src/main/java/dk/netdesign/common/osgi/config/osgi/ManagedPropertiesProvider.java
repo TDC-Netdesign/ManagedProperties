@@ -14,20 +14,29 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config;
+package dk.netdesign.common.osgi.config.osgi;
 
-import dk.netdesign.common.osgi.config.exception.ParsingException;
-import java.util.Map;
-import org.osgi.service.cm.ConfigurationException;
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
 
 /**
  *
  * @author mnn
  */
-public interface ConfigurationTarget {
+public abstract class ManagedPropertiesProvider{
+    private final ConfigurationTarget target;
     
-    public Map<String, Object> updateConfig(Map<String, Object> properties) throws ParsingException;
+    public ManagedPropertiesProvider(ConfigurationTarget target){
+	this.target = target;
+    }
     
-    public Class getConfigurationType();
+    protected ConfigurationTarget getTarget(){
+	return target;
+    }
+    
+    public abstract void start() throws Exception;
+    
+    public abstract void stop() throws Exception;
+    
+    
     
 }
