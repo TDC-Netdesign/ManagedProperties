@@ -99,7 +99,7 @@ public class ManagedPropertiesFactory {
 	    throw new InvalidTypeException("Could  not register the type " + type.getName() + " as a Managed Property. The type must be an interface");
 	}
 	  
-	handlerFactory.getController(type, defaults);
+	handler = handlerFactory.getController(type, defaults);
 	
 	return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, PropertyActions.class, PropertyConfig.class, ConfigurationCallbackHandler.class}, handler));
     }

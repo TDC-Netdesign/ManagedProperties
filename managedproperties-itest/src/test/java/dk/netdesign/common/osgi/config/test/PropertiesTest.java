@@ -17,6 +17,7 @@
 package dk.netdesign.common.osgi.config.test;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceProvider;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.test.properties.AutoFilteringListTypes;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
@@ -129,9 +130,11 @@ public class PropertiesTest {
     
     @Test
     public void testImmediateAccess() throws Exception {
+	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
+	
 	WrapperTypes types = null;
 	try{
-	    types = ManagedPropertiesFactory.register(WrapperTypes.class, context);
+	    types = factory.register(WrapperTypes.class, context);
 	    assertEquals(new Double(55.12), types.getDouble());
 	    assertEquals(new Float(22.22), types.getFloat());
 	    assertEquals(new Integer(42), types.getInt());
@@ -148,10 +151,11 @@ public class PropertiesTest {
     
     @Test
     public void testAutomaticFiltering() throws Exception {
+	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
 	
 	FilteringConfig types = null;
 	try{
-	    types = ManagedPropertiesFactory.register(FilteringConfig.class, context);
+	    types = factory.register(FilteringConfig.class, context);
 	    assertEquals(new URL("http://test.dk"), types.getURL());
 	    assertEquals(new File("some/file"), types.getFile());
 
@@ -164,12 +168,13 @@ public class PropertiesTest {
     
     @Test 
     public void testListFiltering() throws Exception {
+	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
 	
 	
 	AutoFilteringListTypes types = null;
 	try{
-	    types = ManagedPropertiesFactory.register(AutoFilteringListTypes.class, context);
-	    String configPid = PropertyAccess.configuration(types).getPropertyPID();
+	    types = factory.register(AutoFilteringListTypes.class, context);
+	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
 	    
 	    Dictionary newConfig = new Hashtable();

@@ -19,6 +19,7 @@ package dk.netdesign.common.osgi.config.annotation;
 import dk.netdesign.common.osgi.config.MockContext;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceProvider;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import org.apache.sling.testing.mock.osgi.MockOsgi;
 import org.junit.After;
@@ -34,6 +35,7 @@ import org.osgi.framework.BundleContext;
  * @author mnn
  */
 public class AnnotationTest {
+    ManagedPropertiesServiceProvider factory;
     BundleContext context;
     public AnnotationTest() {
     }
@@ -49,6 +51,7 @@ public class AnnotationTest {
     @Before
     public void setUp() {
 	context = MockOsgi.newBundleContext();
+	factory = new ManagedPropertiesServiceProvider();
 	
     }
     
@@ -62,14 +65,14 @@ public class AnnotationTest {
      */
     @Test
     public void testInheritance() throws Exception{
-	SuperConfiguration superConfig = ManagedPropertiesFactory.register(SuperConfiguration.class, context);
-	SubConfiguration subConfig = ManagedPropertiesFactory.register(SubConfiguration.class, context);
+	SuperConfiguration superConfig = factory.register(SuperConfiguration.class, context);
+	SubConfiguration subConfig = factory.register(SubConfiguration.class, context);
 	
     }
     
     @Test(expected = InvalidTypeException.class)
     public void testBadInheritance() throws Exception{
-	SuperConfiguration config = ManagedPropertiesFactory.register(FaultyConfiguration.class, context);
+	SuperConfiguration config = factory.register(FaultyConfiguration.class, context);
 
     }
 

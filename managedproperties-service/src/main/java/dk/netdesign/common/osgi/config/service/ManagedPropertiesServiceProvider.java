@@ -22,15 +22,22 @@ import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.osgi.OSGiHandlerFactory;
+import org.apache.felix.ipojo.annotations.Provides;
+import org.apache.felix.ipojo.dependency.interceptors.DefaultDependencyInterceptor;
+import org.apache.felix.ipojo.dependency.interceptors.ServiceBindingInterceptor;
+import org.apache.felix.ipojo.util.DependencyModel;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleReference;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Component;
 
 /**
  *
  * @author mnn
  */
+@Provides
 @Component(service = ManagedPropertiesService.class)
-public class ManagedPropertiesServiceProvider implements ManagedPropertiesService{
+public class ManagedPropertiesServiceProvider extends DefaultDependencyInterceptor implements ManagedPropertiesService {
     
 
     public ManagedPropertiesServiceProvider() {
@@ -55,14 +62,16 @@ public class ManagedPropertiesServiceProvider implements ManagedPropertiesServic
 
     @Override
     public <T> T register(Class<T> type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	BundleContext context = BundleReference.class.cast(type.getClassLoader()).getBundle().getBundleContext();
+	return register(type, context);
     }
 
     @Override
     public <I, T extends I> I register(Class<I> type, T defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException {
-	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	BundleContext context = BundleReference.class.cast(type.getClassLoader()).getBundle().getBundleContext();
+	return register(type, defaults, context);
     }
-    
-    
-    
+
+
+     
 }

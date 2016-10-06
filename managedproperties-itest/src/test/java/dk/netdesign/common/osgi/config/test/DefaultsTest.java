@@ -17,6 +17,7 @@
 package dk.netdesign.common.osgi.config.test;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceProvider;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
@@ -113,11 +114,12 @@ public class DefaultsTest {
 
     @Test
     public void testDefaults() throws Exception {
+	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
 	WrapperTypes defaults = new WrapperTypesDefaults();
 	
 	WrapperTypes types = null;
 	try{
-	    types = ManagedPropertiesFactory.register(WrapperTypes.class, defaults, context);
+	    types = factory.register(WrapperTypes.class, defaults, context);
 	    assertEquals(defaults.getBoolean(), types.getBoolean());
 	    assertEquals(defaults.getByte(), types.getByte());
 	    assertEquals(defaults.getDouble(), types.getDouble());

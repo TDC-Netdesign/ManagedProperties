@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
@@ -46,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author mnn
  */
-public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService,PropertiesProvider{
+public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService, PropertiesProvider{
     public static final String BindingID = "ManagedPropertiesBinding";
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationAdminProvider.class);
     private final BundleContext bundleContext;

@@ -17,6 +17,7 @@ import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.filters.FileFilter;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceProvider;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.io.File;
 import java.math.BigDecimal;
@@ -24,9 +25,11 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -47,6 +50,7 @@ public class ManagedPropertiesServiceTest {
     TestInterface testi;
     ManagedPropertiesController props;
     File testfile;
+    ManagedPropertiesServiceProvider factory;
 
     public ManagedPropertiesServiceTest() {
     }
@@ -61,8 +65,9 @@ public class ManagedPropertiesServiceTest {
 
     @Before
     public void setUp() throws Exception {
+	factory = new ManagedPropertiesServiceProvider();
 	stub = new MockContext();
-	testi = ManagedPropertiesFactory.register(TestInterface.class, new TestInterfaceDefaults(), stub);
+	testi = factory.register(TestInterface.class, new TestInterfaceDefaults(), stub);
 	props = (ManagedPropertiesController) stub.lastRegistered;
 	testfile = new File("testFile.test");
 	testfile.createNewFile();
@@ -75,7 +80,7 @@ public class ManagedPropertiesServiceTest {
 
     @Test
     public void testValidTypes() throws Exception {
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	String testString = "test";
 	Integer testInteger = 123;
 	Long testLong = 112l;
@@ -100,7 +105,7 @@ public class ManagedPropertiesServiceTest {
 	newConfig.put("BigDecimal", Collections.singletonList(testBigDecimal));
 	newConfig.put("Boolean", Collections.singletonList(testBoolean));
 	newConfig.put("Password", Collections.singletonList(testPassword));
-	props.updated(newConfig);
+	props.updateConfig(newConfig);
 
 	assertEquals(testString, testi.getString());
 	assertEquals(testInteger, testi.getInteger());
@@ -136,7 +141,7 @@ public class ManagedPropertiesServiceTest {
     
     @Test
     public void testDefaultsInheritance() throws Exception{
-	TestInterface properties = ManagedPropertiesFactory.register(TestInterface.class, new TestInterfaceDefaultsOverride(), stub);
+	TestInterface properties = factory.register(TestInterface.class, new TestInterfaceDefaultsOverride(), stub);
 	props = (ManagedPropertiesController) stub.lastRegistered;
 	
 	TestInterfaceDefaults expected = new TestInterfaceDefaultsOverride();
@@ -168,65 +173,65 @@ public class ManagedPropertiesServiceTest {
 
     @Test
     public void testTestDirectType() throws Exception {
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("String", Collections.singletonList("Stringval"));
 
-	props.updated(newConfig);
+	props.updateConfig(newConfig);
 	assertEquals("Stringval", testi.getString());
     }
 
     @Test
     public void testTestFilteredType() throws Exception {
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("StringInteger", Collections.singletonList(12));
 
-	props.updated(newConfig);
+	props.updateConfig(newConfig);
 	assertEquals("12", testi.getStringInteger());
     }
 
     @Test(expected = UnknownValueException.class)
     public void testNonExistant() throws Exception {
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("StringInteger", Collections.singletonList(12));
 
-	props.updated(newConfig);
+	props.updateConfig(newConfig);
 	testi.getString();
     }
 
     @Test(expected = TypeFilterException.class)
     public void testBadFilter() throws Exception {
-	ManagedPropertiesFactory.register(TestBadFilter.class, stub);
+	factory.register(TestBadFilter.class, stub);
     }
 
     @Test(expected = InvalidTypeException.class) @Ignore @Deprecated
     public void testBadType() throws Exception {
-	ManagedPropertiesFactory.register(TestBadType.class, stub);
+	factory.register(TestBadType.class, stub);
     }
 
     @Test(expected = InvalidTypeException.class)
     public void testNotInterface() throws Exception {
-	ManagedPropertiesFactory.register(Integer.class, stub);
+	factory.register(Integer.class, stub);
     }
 
     @Test
     public void testFileFilter() throws Exception {
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("File", Collections.singletonList(testfile.getName()));
 
-	props.updated(newConfig);
+	props.updateConfig(newConfig);
 	assertEquals(testfile, testi.getFile());
     }
 
     @Test
     public void testTestNarrowing() throws Exception {
-	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, stub);
+	TestNarrowing narrowing = factory.register(TestNarrowing.class, stub);
 	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("Number", Collections.singletonList(10));
 	newConfig.put("NumberDouble", Collections.singletonList(11d));
 	newConfig.put("NumberFloat", Collections.singletonList(12f));
-	mprops.updated(newConfig);
+	mprops.updateConfig(newConfig);
 
 	assertEquals(10, narrowing.getNumber());
 	assertEquals(11d, narrowing.getNumberDouble());
@@ -235,25 +240,25 @@ public class ManagedPropertiesServiceTest {
     
     @Test(expected = ConfigurationException.class)
     public void testTestNarrowingBadInput() throws Exception {
-	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, stub);
+	TestNarrowing narrowing = factory.register(TestNarrowing.class, stub);
 	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("Number", Collections.singletonList(10d));
-	mprops.updated(newConfig);
+	mprops.updateConfig(newConfig);
 
     }
     
     @Test
     public void testCardinalityOnUpdate() throws Exception{
-	TestCardinality cardinality = ManagedPropertiesFactory.register(TestCardinality.class, stub);
+	TestCardinality cardinality = factory.register(TestCardinality.class, stub);
 	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("Optional", Collections.singletonList(10));
 	newConfig.put("List", Arrays.asList(new String[]{"Test", "Fest"}));
 	newConfig.put("Required", 500l);
-	mprops.updated(newConfig);
+	mprops.updateConfig(newConfig);
 	
 	assertEquals(new Integer(10), cardinality.getOptional());
 	assertEquals(Arrays.asList(new String[]{"Test", "Fest"}), cardinality.getList());
@@ -262,31 +267,31 @@ public class ManagedPropertiesServiceTest {
     
     @Test(expected = ConfigurationException.class)
     public void testMissingRequredValueOnUpdate() throws Exception{
-	TestCardinality cardinality = ManagedPropertiesFactory.register(TestCardinality.class, stub);
+	TestCardinality cardinality = factory.register(TestCardinality.class, stub);
 	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("Optional", Collections.singletonList(10));
 	newConfig.put("List", Arrays.asList(new String[]{"Test", "Fest"}));
-	mprops.updated(newConfig);
+	mprops.updateConfig(newConfig);
 
     }
     
     @Test(expected = InvalidMethodException.class)
     public void testBadListCardinality() throws Exception{
-	TestBadListCardinality cardinality = ManagedPropertiesFactory.register(TestBadListCardinality.class, stub);
+	TestBadListCardinality cardinality = factory.register(TestBadListCardinality.class, stub);
     }
     
     @Test(expected = InvalidMethodException.class)
     public void testBadListType() throws Exception{
-	TestBadListType cardinality = ManagedPropertiesFactory.register(TestBadListType.class, stub);
+	TestBadListType cardinality = factory.register(TestBadListType.class, stub);
     }
     
     
     
     @Test
     public void testNarrowingDefaultsNoUpdate() throws Exception{
-	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
+	TestNarrowing narrowing = factory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
 	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 
 	assertEquals(new NarrowingDefaults().getNumber(), narrowing.getNumber());
@@ -295,28 +300,28 @@ public class ManagedPropertiesServiceTest {
     
     @Test
     public void testNarrowingDefaultsPartialUpdate() throws Exception{
-	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
+	TestNarrowing narrowing = factory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
 	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("Number", Collections.singletonList(10));
-	mprops.updated(newConfig);
+	mprops.updateConfig(newConfig);
 	assertEquals(10, narrowing.getNumber());
 	assertEquals(new NarrowingDefaults().getNumberDouble(), narrowing.getNumberDouble());
     }
     
     @Test(expected = UnknownValueException.class)
     public void testNarrowingMissingDefaults() throws Exception{
-	TestNarrowing narrowing = ManagedPropertiesFactory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
+	TestNarrowing narrowing = factory.register(TestNarrowing.class, new NarrowingDefaults(), stub);
 	ManagedPropertiesController mprops = (ManagedPropertiesController) stub.lastRegistered;
 	narrowing.getNumberFloat(); //Returns null
     }
 
     @Test
     public void testLock() throws Exception {
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("String", Collections.singletonList("Stringval"));
-	props.updated(newConfig);
+	props.updateConfig(newConfig);
 
 	Lock lock = ((PropertyActions)testi).lockPropertiesUpdate();
 	String toTest;
@@ -330,9 +335,9 @@ public class ManagedPropertiesServiceTest {
 
     @Test @Ignore
     public void testCallback() throws Exception {
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("String", Collections.singletonList("Stringval"));
-	props.updated(newConfig);
+	props.updateConfig(newConfig);
 
 	((ConfigurationCallbackHandler)testi).addConfigurationCallback(null);
 	String toTest;
@@ -342,38 +347,38 @@ public class ManagedPropertiesServiceTest {
 
     @Test(expected = InvalidTypeException.class)
     public void testUnknownInputType() throws Exception {
-	ManagedPropertiesFactory.register(TestUnknownInputType.class, stub);
+	factory.register(TestUnknownInputType.class, stub);
     }
 
     @Test(expected = TypeFilterException.class) @Ignore @Deprecated
     public void testAbstract() throws Exception {
-	ManagedPropertiesFactory.register(TestAbstractReturn.class, stub);
+	factory.register(TestAbstractReturn.class, stub);
     }
 
     @Test(expected = DoubleIDException.class)
     public void testDoubleAttributeID() throws Exception {
-	ManagedPropertiesFactory.register(TestDoubleAttributeID.class, stub);
+	factory.register(TestDoubleAttributeID.class, stub);
     }
 
     @Test(expected = DoubleIDException.class) @Ignore
     public void testDoubleInterfaceID() throws Exception {
-	ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
-	ManagedPropertiesFactory.register(TestDoubleInterfaceID2.class, stub);
+	factory.register(TestDoubleInterfaceID1.class, stub);
+	factory.register(TestDoubleInterfaceID2.class, stub);
     }
     
     @Test(expected = InvalidMethodException.class)
     public void testMethodWithParams() throws Exception {
-	ManagedPropertiesFactory.register(IllegalMethod.class, stub);
+	factory.register(IllegalMethod.class, stub);
     }
     
     @Test(expected = InvalidTypeException.class)
     public void testIllegalInputType() throws Exception{
-	ManagedPropertiesFactory.register(IllegalInputType.class, stub);
+	factory.register(IllegalInputType.class, stub);
     }
     
     @Test @Ignore
     public void testLegalInputType() throws Exception{
-	ManagedPropertiesFactory.register(LegalInputTypes.class, stub);
+	factory.register(LegalInputTypes.class, stub);
 	String testString = "test";
 	Integer testInteger = 123;
 	Long testLong = 112l;
@@ -387,7 +392,7 @@ public class ManagedPropertiesServiceTest {
 	Boolean testBoolean = true;
 	Character[] testPassword = new Character[]{'t', 'e', 's', 't'};
 	
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("String", Collections.singletonList(testString));
 	newConfig.put("Integer", Collections.singletonList(testInteger));
 	newConfig.put("Long", Collections.singletonList(testLong));
@@ -405,13 +410,13 @@ public class ManagedPropertiesServiceTest {
 
     @Test @Ignore
     public void testRepeatedInterface() throws Exception {
-	TestDoubleInterfaceID1 i1 = ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
+	TestDoubleInterfaceID1 i1 = factory.register(TestDoubleInterfaceID1.class, stub);
 	ManagedPropertiesController i1i2Props = (ManagedPropertiesController) stub.lastRegistered;
-	TestDoubleInterfaceID1 i2 = ManagedPropertiesFactory.register(TestDoubleInterfaceID1.class, stub);
+	TestDoubleInterfaceID1 i2 = factory.register(TestDoubleInterfaceID1.class, stub);
 
-	Dictionary<String, Object> newConfig = new Hashtable<>();
+	Map<String, Object> newConfig = new HashMap<>();
 	newConfig.put("String", Collections.singletonList("Stringval"));
-	i1i2Props.updated(newConfig);
+	i1i2Props.updateConfig(newConfig);
 
 	assertEquals("Stringval", i1.getString());
 	assertEquals(i1.getString(), i2.getString());
