@@ -16,6 +16,7 @@
 
 package dk.netdesign.common.osgi.config.osgi;
 
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.PropertiesProvider;
 import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
@@ -50,64 +51,14 @@ public class OSGiHandlerFactory implements HandlerFactory{
     
     
     @Override
-    public <E> ManagedPropertiesController getController(Class<? super E> configurationType, E defaults) throws InvocationException, DoubleIDException, InvalidTypeException, TypeFilterException, InvalidMethodException {
-	ManagedPropertiesController handler = null;
-	try {
-	    String configurationID = ManagedPropertiesController.getDefinitionID(configurationType);
-	    String configurationName = ManagedPropertiesController.getDefinitionName(configurationType);
-		for(ServiceReference<PropertiesProvider> ref : context.getServiceReferences(PropertiesProvider.class, "("+Constants.SERVICE_PID+"="+configurationID+")")){
-		    if(logger.isDebugEnabled()){
-			logger.debug("Found ServiceReference for Configuration: "+configurationName+"["+configurationID+"]");
-		    }
-		    PropertiesProvider service = context.getService(ref);
-		    if(ManagedPropertiesController.class.isAssignableFrom(service.getClass())){
-			  if(ref.getProperty(ConfigurationAdminProvider.BindingID).equals(configurationType.getCanonicalName())){
-				handler = (ManagedPropertiesController)service;
-			  }else{
-				throw new DoubleIDException("Could not register the interface" + configurationType + ". This id is already in use by " + ref.getProperty(ConfigurationAdminProvider.BindingID));
-			  }
-		    }
-		}
-	  } catch (InvalidSyntaxException ex) {
-		throw new IllegalStateException("Could not register this service. There was an error in the search filter when searching existing mappings.", ex);
-	  } catch(IllegalStateException | NullPointerException ex){
-	        logger.warn("An error occured while attempting to get the current Configuration Proxies.", ex);
-	        handler = null;
-	  }
-	  
-	  if(handler == null){
-	       
-		handler = getInvocationHandler(configurationType, defaults);
-		ConfigurationAdminProvider provider = new ConfigurationAdminProvider(context, handler);
-	    try {
-		provider.start();
-	    } catch (Exception ex) {
-		throw new InvocationException("Could not start provider: "+provider, ex);
-	    }
-		handler.setProvider(provider);
-		logger.info("Registered "+handler);
-	  }
-	  return handler;
+    public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException {
+	ManagedPropertiesProvider provider = new ConfigurationAdminProvider(context, controller, controller);
+	
+	return provider;
     }
     
     
-    /**
-     * Builds the ManagedProperties object for use as an invocation handler in the {@link Proxy proxy}.
-     * @param <E> The return type of the invocation handler.
-     * @param type The interface used to create the ManagedProperties object. This Interface must at least be annotated with the 
-     * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition} and have one method annotated with the 
-     * {@link dk.netdesign.common.osgi.config.annotation.Property Property}. The interface will be parsed in order to build the configuration metadata.
-     * @param defaults The defaults to use for the ManagedProperties object. Can be null. The defaults must implement the same interface as used in
-     * {@code type}.
-     * @return The finished ManagedProperties object
-     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
-     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
-     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
-     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
-     */
-    protected static <E> ManagedPropertiesController getInvocationHandler(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
-	return new ManagedPropertiesController(type, defaults);
-    }
+    
     
     
 }

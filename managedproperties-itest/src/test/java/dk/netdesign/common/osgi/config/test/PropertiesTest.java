@@ -17,7 +17,7 @@
 package dk.netdesign.common.osgi.config.test;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceProvider;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.test.properties.AutoFilteringListTypes;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
@@ -91,7 +91,7 @@ public class PropertiesTest {
         // KarafDistributionOption.debugConfiguration("5005", true),
         karafDistributionConfiguration()
             .frameworkUrl(karafUrl)
-            .unpackDirectory(new File("target/exam"))
+            .unpackDirectory(new File("exam"))
             .useDeployFolder(false),
         keepRuntimeFolder(),
         features(karafStandardRepo, "webconsole"),
@@ -130,7 +130,7 @@ public class PropertiesTest {
     
     @Test
     public void testImmediateAccess() throws Exception {
-	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
+	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
 	
 	WrapperTypes types = null;
 	try{
@@ -151,7 +151,7 @@ public class PropertiesTest {
     
     @Test
     public void testAutomaticFiltering() throws Exception {
-	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
+	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
 	
 	FilteringConfig types = null;
 	try{
@@ -168,7 +168,7 @@ public class PropertiesTest {
     
     @Test 
     public void testListFiltering() throws Exception {
-	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
+	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
 	
 	
 	AutoFilteringListTypes types = null;

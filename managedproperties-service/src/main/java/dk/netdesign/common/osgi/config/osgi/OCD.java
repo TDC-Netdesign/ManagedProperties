@@ -5,6 +5,7 @@
  */
 package dk.netdesign.common.osgi.config.osgi;
 
+import dk.netdesign.common.osgi.config.Attribute;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.ObjectClassDefinition;
 
 /**
@@ -28,17 +28,17 @@ public class OCD implements ObjectClassDefinition {
     private String description;
     private String name;
     // Represents the attributes of this object class
-    private AttributeDefinition[] requiredADs;
+    private MetaTypeAttributeDefinition[] requiredADs;
     private String id;
     private File iconFile;
 
-    protected OCD(String id, AttributeDefinition[] requiredADs) {
+    protected OCD(String id, MetaTypeAttributeDefinition[] requiredADs) {
 	this.id = id;
 	this.requiredADs = requiredADs;
     }
 
     @Override
-    public AttributeDefinition[] getAttributeDefinitions(int filter) {
+    public MetaTypeAttributeDefinition[] getAttributeDefinitions(int filter) {
 	if (filter == ObjectClassDefinition.OPTIONAL) {
 	    return null;
 	}
@@ -108,6 +108,12 @@ public class OCD implements ObjectClassDefinition {
 	}
 	return newImage;
     }
+
+    public MetaTypeAttributeDefinition[] getRequiredADs() {
+	return requiredADs;
+    }
+    
+    
 
     @Override
     public String toString() {

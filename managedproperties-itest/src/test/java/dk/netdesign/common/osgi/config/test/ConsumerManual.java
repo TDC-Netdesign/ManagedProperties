@@ -70,7 +70,7 @@ public class ConsumerManual {
         // KarafDistributionOption.debugConfiguration("5005", true),
         karafDistributionConfiguration()
             .frameworkUrl(karafUrl)
-            .unpackDirectory(new File("target/exam"))
+            .unpackDirectory(new File("exam"))
             .useDeployFolder(false),
         keepRuntimeFolder(),
         features(karafStandardRepo, "webconsole"),

@@ -17,18 +17,18 @@
 package dk.netdesign.common.osgi.config.service;
 
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
+import dk.netdesign.common.osgi.config.exception.ControllerPersistenceException;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
-import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
-import dk.netdesign.common.osgi.config.exception.InvocationException;
-import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 
 /**
  *
  * @author mnn
  */
-public interface HandlerFactory {
+public interface ControllerPersistenceProvider {
     
-    public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException;
+    public ManagedPropertiesController getController(Class typeToRetrieve) throws ControllerPersistenceException, InvalidTypeException;
+    
+    public void persistController(Class configurationType, ManagedPropertiesController controller) throws ControllerPersistenceException, InvalidTypeException;
     
 }

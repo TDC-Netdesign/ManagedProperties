@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.service;
+package dk.netdesign.common.osgi.config.filters;
 
-import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.exception.DoubleIDException;
-import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
-import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
-import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import dk.netdesign.common.osgi.config.service.TypeFilter;
+import java.math.BigDecimal;
 
 /**
  *
  * @author mnn
  */
-public interface HandlerFactory {
+public class StringToBigDecimalFilter extends TypeFilter<String, BigDecimal> {
+
+    @Override
+    public BigDecimal parse(String input) throws TypeFilterException {
+	try{
+	    return new BigDecimal(input);
+	}catch(NumberFormatException ex){
+	    throw new TypeFilterException("Could parse the string "+input+" to a BigDecimal", ex);
+	}
+    }
     
-    public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException;
+    
     
 }

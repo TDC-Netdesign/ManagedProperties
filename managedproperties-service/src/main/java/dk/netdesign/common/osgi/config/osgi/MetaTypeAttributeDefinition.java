@@ -146,5 +146,15 @@ public class MetaTypeAttributeDefinition implements AttributeDefinition{
     public String validate(String arg0) {
 	return null;
     }
+
+    public Attribute getAttribute() {
+	return attribute;
+    }
+
+    public int getInputTypeAsInt() {
+	return inputTypeAsInt;
+    }
+    
+    
     
 }

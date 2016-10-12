@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.service;
+package dk.netdesign.common.osgi.config.filters;
 
-import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.exception.DoubleIDException;
-import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
-import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
-import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import dk.netdesign.common.osgi.config.service.TypeFilter;
 
 /**
  *
  * @author mnn
  */
-public interface HandlerFactory {
+public class StringToCharacterFilter extends TypeFilter<String, Character>{
+
+    @Override
+    public Character parse(String input) throws TypeFilterException {
+	if(input.length() != 1){
+	    throw new TypeFilterException("Could not parse String to Character. Input '"+input+"' did not fit into a single character");
+	}
+	return input.toCharArray()[0];
+    }
     
-    public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException;
     
 }

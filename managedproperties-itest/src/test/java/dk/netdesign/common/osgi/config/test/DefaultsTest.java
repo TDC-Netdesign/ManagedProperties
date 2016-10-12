@@ -17,7 +17,7 @@
 package dk.netdesign.common.osgi.config.test;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceProvider;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
@@ -82,7 +82,7 @@ public class DefaultsTest {
         // KarafDistributionOption.debugConfiguration("5005", true),
         karafDistributionConfiguration()
             .frameworkUrl(karafUrl)
-            .unpackDirectory(new File("target/exam"))
+            .unpackDirectory(new File("exam"))
             .useDeployFolder(false),
         //keepRuntimeFolder(),
         features(karafStandardRepo, "webconsole"),
@@ -114,7 +114,7 @@ public class DefaultsTest {
 
     @Test
     public void testDefaults() throws Exception {
-	ManagedPropertiesServiceProvider factory = new ManagedPropertiesServiceProvider();
+	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
 	WrapperTypes defaults = new WrapperTypesDefaults();
 	
 	WrapperTypes types = null;

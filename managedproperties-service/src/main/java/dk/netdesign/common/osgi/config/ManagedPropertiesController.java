@@ -1,6 +1,6 @@
 package dk.netdesign.common.osgi.config;
 
-import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesProvider;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallback;
 import dk.netdesign.common.osgi.config.annotation.Property;
@@ -92,7 +92,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    public <E> ManagedPropertiesController(Class<? super E> type, E defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+    public <E> ManagedPropertiesController(Class<? super E> type, E defaults, List<Class<? extends TypeFilter>> defaultFiltersList) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
 	PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
 	callbacks = new ArrayList<>();
 	lock = new ReentrantReadWriteLock();
@@ -102,7 +102,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	attributeToMethodMapping = new HashMap<>();
 	requiredIds = new ArrayList<>();
 
-	defaultFilters = getDefaultFilterMap();
+	this.defaultFilters = getDefaultFilterMap(defaultFiltersList);
 
 	for (Method classMethod : type.getMethods()) {
 	    Property methodAnnotation = getMethodAnnotation(classMethod);
@@ -127,6 +127,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
 	allowedMethods.addAll(Arrays.asList(PropertyActions.class.getDeclaredMethods()));
 	allowedMethods.addAll(Arrays.asList(PropertyConfig.class.getDeclaredMethods()));
+	allowedMethods.addAll(Arrays.asList(ConfigurationTarget.class.getDeclaredMethods()));
 	allowedMethods.addAll(Arrays.asList(ConfigurationCallbackHandler.class.getDeclaredMethods()));
 	allowedMethods.addAll(Arrays.asList(Object.class.getDeclaredMethods()));
 	this.type = type;
@@ -148,8 +149,8 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
      * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
      */
-    public ManagedPropertiesController(Class type) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
-	this(type, null);
+    public ManagedPropertiesController(Class type, List<Class<? extends TypeFilter>> defaultFiltersList) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
+	this(type, null, defaultFiltersList);
     }
 
     @Override
@@ -431,9 +432,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
 
 
-    protected final Map<FilterReference, Class<? extends TypeFilter>> getDefaultFilterMap() throws TypeFilterException {
+    protected final Map<FilterReference, Class<? extends TypeFilter>> getDefaultFilterMap(List<Class<? extends TypeFilter>> filters) throws TypeFilterException {
 	Map<FilterReference, Class<? extends TypeFilter>> filterMap = new HashMap<>();
-	for (Class<? extends TypeFilter> filter : getDefaultFilters()) {
+	for (Class<? extends TypeFilter> filter : filters) {
 	    FilterReference reference = getReference(filter);
 	    logger.debug("Checking defaults reference: " + reference);
 	    if (filterMap.containsKey(reference)) {
@@ -456,19 +457,6 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	throw new TypeFilterException("Could not find a parse method on this typefilter: " + filterClass);
     }
 
-    protected List<Class<? extends TypeFilter>> getDefaultFilters() {
-	List<Class<? extends TypeFilter>> toReturn = new ArrayList<>();
-	toReturn.add(StringToBooleanFilter.class);
-	toReturn.add(StringToByteFilter.class);
-	toReturn.add(StringToDoubleFilter.class);
-	toReturn.add(StringToFloatFilter.class);
-	toReturn.add(StringToIntegerFilter.class);
-	toReturn.add(StringToLongFilter.class);
-	toReturn.add(StringToShortFilter.class);
-	toReturn.add(URLFilter.class);
-	toReturn.add(FileFilter.class);
-	return toReturn;
-    }
 
     @Override
     public String toString() {

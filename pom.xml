@@ -279,9 +279,9 @@
 	    </dependency>
 	    
 	    <dependency>
-		<groupId>org.apache.sling</groupId>
-		<artifactId>org.apache.sling.testing.osgi-mock</artifactId>
-		<version>1.6.0</version>
+		<groupId>org.easymock</groupId>
+		<artifactId>easymock</artifactId>
+		<version>3.4</version>
 		<scope>test</scope>
 	    </dependency>
 	</dependencies>

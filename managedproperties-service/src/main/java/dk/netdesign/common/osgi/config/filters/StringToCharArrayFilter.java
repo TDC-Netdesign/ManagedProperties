@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.service;
+package dk.netdesign.common.osgi.config.filters;
 
-import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.exception.DoubleIDException;
-import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
-import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
-import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import dk.netdesign.common.osgi.config.service.TypeFilter;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  *
  * @author mnn
  */
-public interface HandlerFactory {
+public class StringToCharArrayFilter extends TypeFilter<String, Character[]>{
+
+    @Override
+    public Character[] parse(String input) throws TypeFilterException {
+	char[] charArray = input.toCharArray();
+	return ArrayUtils.toObject(charArray);
+    }
     
-    public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException;
+    
     
 }

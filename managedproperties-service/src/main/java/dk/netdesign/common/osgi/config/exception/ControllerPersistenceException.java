@@ -14,28 +14,29 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.osgi;
-
-import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
+package dk.netdesign.common.osgi.config.exception;
 
 /**
  *
  * @author mnn
  */
-public abstract class ManagedPropertiesProvider{
-    private final ConfigurationTarget target;
-    
-    public ManagedPropertiesProvider(ConfigurationTarget target){
-	this.target = target;
+public class ControllerPersistenceException extends Exception{
+
+    public ControllerPersistenceException(String message) {
+	super(message);
     }
-    
-    protected ConfigurationTarget getTarget(){
-	return target;
+
+    public ControllerPersistenceException(String message, Throwable cause) {
+	super(message, cause);
     }
-    
-    public abstract void start() throws Exception;
-    
-    public abstract void stop() throws Exception;
+
+    public ControllerPersistenceException(Throwable cause) {
+	super(cause);
+    }
+
+    public ControllerPersistenceException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	super(message, cause, enableSuppression, writableStackTrace);
+    }
     
     
     

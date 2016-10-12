@@ -19,9 +19,8 @@ package dk.netdesign.common.osgi.config.annotation;
 import dk.netdesign.common.osgi.config.MockContext;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceProvider;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
-import org.apache.sling.testing.mock.osgi.MockOsgi;
 import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
@@ -35,7 +34,7 @@ import org.osgi.framework.BundleContext;
  * @author mnn
  */
 public class AnnotationTest {
-    ManagedPropertiesServiceProvider factory;
+    ManagedPropertiesServiceComponent factory;
     BundleContext context;
     public AnnotationTest() {
     }
@@ -50,8 +49,7 @@ public class AnnotationTest {
     
     @Before
     public void setUp() {
-	context = MockOsgi.newBundleContext();
-	factory = new ManagedPropertiesServiceProvider();
+	factory = new ManagedPropertiesServiceComponent();
 	
     }
     

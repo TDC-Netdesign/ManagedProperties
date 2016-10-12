@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.service;
+package dk.netdesign.common.osgi.config.filters;
 
-import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.exception.DoubleIDException;
-import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
-import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
-import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import dk.netdesign.common.osgi.config.service.TypeFilter;
+import java.math.BigInteger;
 
 /**
  *
  * @author mnn
  */
-public interface HandlerFactory {
+public class StringToBase10BigIntegerFilter extends TypeFilter<String, BigInteger>{
+
+    @Override
+    public BigInteger parse(String input) throws TypeFilterException {
+	try{
+	    return new BigInteger(input, 10);
+	}catch(NumberFormatException ex){
+	    throw new TypeFilterException("Could not parse a biginteger from String", ex);
+	}
+    }
     
-    public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException;
     
 }
