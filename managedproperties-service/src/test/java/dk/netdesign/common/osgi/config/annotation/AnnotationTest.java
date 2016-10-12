@@ -16,9 +16,16 @@
 
 package dk.netdesign.common.osgi.config.annotation;
 
-import dk.netdesign.common.osgi.config.MockContext;
+import dk.netdesign.common.osgi.config.ManagedPropertiesController;
+import dk.netdesign.common.osgi.config.exception.DoubleIDException;
+import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
+import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import dk.netdesign.common.osgi.config.service.HandlerFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesDefaultFiltersComponent;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import org.junit.After;
@@ -34,8 +41,8 @@ import org.osgi.framework.BundleContext;
  * @author mnn
  */
 public class AnnotationTest {
-    ManagedPropertiesServiceComponent factory;
-    BundleContext context;
+    ManagedPropertiesFactory factory;
+    ManagedPropertiesFactory factoryWithFilters;
     public AnnotationTest() {
     }
     
@@ -49,13 +56,39 @@ public class AnnotationTest {
     
     @Before
     public void setUp() {
-	factory = new ManagedPropertiesServiceComponent();
+	HandlerFactory handlerfactory = new HandlerFactory() {
+
+	    @Override
+	    public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException {
+		return new ManagedPropertiesProvider(controller) {
+		    
+		    @Override
+		    public Class getReturnType(String configID) throws UnknownValueException {
+			return String.class;
+		    }
+		    
+		    @Override
+		    public void start() throws Exception {
+			
+		    }
+		    
+		    @Override
+		    public void stop() throws Exception {
+			
+		    }
+		};
+	    }
+	};
+	
+	factory = new ManagedPropertiesFactory(handlerfactory, null, null);
+	factoryWithFilters = new ManagedPropertiesFactory(handlerfactory, null, new ManagedPropertiesDefaultFiltersComponent());
+	
 	
     }
     
     @After
     public void tearDown() {
-	context = null;
+	
     }
 
     /**
@@ -63,14 +96,14 @@ public class AnnotationTest {
      */
     @Test
     public void testInheritance() throws Exception{
-	SuperConfiguration superConfig = factory.register(SuperConfiguration.class, context);
-	SubConfiguration subConfig = factory.register(SubConfiguration.class, context);
+	SuperConfiguration superConfig = factory.register(SuperConfiguration.class);
+	SubConfiguration subConfig = factory.register(SubConfiguration.class);
 	
     }
     
     @Test(expected = InvalidTypeException.class)
     public void testBadInheritance() throws Exception{
-	SuperConfiguration config = factory.register(FaultyConfiguration.class, context);
+	SuperConfiguration config = factory.register(FaultyConfiguration.class);
 
     }
 
