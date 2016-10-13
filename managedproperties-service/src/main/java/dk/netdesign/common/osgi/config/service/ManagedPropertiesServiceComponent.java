@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @author mnn
  */
 @Provides
-@Component(service = ManagedPropertiesService.class)
+@Component(service = ManagedPropertiesService.class, immediate = true)
 public class ManagedPropertiesServiceComponent implements ManagedPropertiesService, DefaultFilterProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagedPropertiesServiceComponent.class);
     
@@ -54,12 +54,14 @@ public class ManagedPropertiesServiceComponent implements ManagedPropertiesServi
     
     @Activate
     public void Activate(BundleContext context) throws Exception{
+	LOGGER.info("Starting "+getClass().getName());
 	tracker = new ServiceTracker<>(context, DefaultFilterProvider.class, null);
+	tracker.open();
     }
     
     @Deactivate
     public void Deactivate(BundleContext context) throws Exception{
-	
+	tracker.close();
     }
     
     
@@ -70,6 +72,7 @@ public class ManagedPropertiesServiceComponent implements ManagedPropertiesServi
 
     @Override
     public <I, T extends I> I register(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
+	LOGGER.info("Registering new configuration: "+type.getName()+" with defaults "+defaults);
 	OSGiHandlerFactory handlerFactory = new OSGiHandlerFactory(context);
 	ServiceBasedPersistenceProvider persistenceProvider = new ServiceBasedPersistenceProvider(context);
 	ManagedPropertiesFactory factory = new ManagedPropertiesFactory(handlerFactory, persistenceProvider, this);
@@ -93,12 +96,16 @@ public class ManagedPropertiesServiceComponent implements ManagedPropertiesServi
     public List<Class<? extends TypeFilter>> getFilters() {
 	List<Class<? extends TypeFilter>> filters = new ArrayList<>();
 	for(DefaultFilterProvider provider : tracker.getServices(new DefaultFilterProvider[tracker.size()])){
+	    LOGGER.debug("Getting defaults provider: "+provider);
 	    try{
 		filters.addAll(provider.getFilters());
 	    }catch(Exception ex){
 		LOGGER.error("Could not add filters from provider: "+provider, ex);
 	    }
 	    
+	}
+	if(LOGGER.isDebugEnabled()){
+	    LOGGER.debug("Found filters: "+filters);
 	}
 	return filters;
     }

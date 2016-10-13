@@ -8,9 +8,11 @@ package dk.netdesign.common.osgi.config.test.consumer;
 
 import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,10 +25,19 @@ public class Consumer implements BundleActivator{
     private InheritedProperties props;
     private Thread printer;
     private boolean run = true;
-
+    private ServiceReference<ManagedPropertiesService> factoryReg;
+    
     @Override
     public void start(BundleContext context) throws Exception {
-	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
+	ManagedPropertiesService factory;
+	factoryReg = context.getServiceReference(ManagedPropertiesService.class);
+	
+	factory = context.getService(factoryReg);
+	
+	if(factory == null){
+	    logger.error("Could not get ManagedPropertiesService");
+	}
+	
 	props = factory.register(InheritedProperties.class, new DefaultProperties(), context);
 	logger.info("Getting properties");
 	logger.info(props.getCharacterProperty()+"");
@@ -44,6 +55,7 @@ public class Consumer implements BundleActivator{
     @Override
     public void stop(BundleContext context) throws Exception {
 	((PropertyActions)props).unregisterProperties();
+	context.ungetService(factoryReg);
 	run = false;
 	
     }
@@ -59,7 +71,7 @@ public class Consumer implements BundleActivator{
 	    while(run){
 		logger.info(props.toString());
 		try {
-		    Thread.sleep(10000);
+		    Thread.sleep(15000);
 		} catch (InterruptedException ex) {
 		    logger.warn("Consumer interrupted", ex);
 		    run = false;

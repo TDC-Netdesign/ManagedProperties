@@ -37,7 +37,7 @@ import org.osgi.service.component.annotations.Component;
  *
  * @author mnn
  */
-@Component(service = DefaultFilterProvider.class)
+@Component(service = DefaultFilterProvider.class, immediate = true)
 public class ManagedPropertiesDefaultFiltersComponent implements DefaultFilterProvider{
 
     @Override

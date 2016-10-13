@@ -76,7 +76,7 @@ public class ConsumerManual {
         features(karafStandardRepo, "webconsole", "scr"),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-service").versionAsInProject(),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-test-resources").versionAsInProject(),	  
-	  //mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-consumer").versionAsInProject(),
+	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-consumer").versionAsInProject().startLevel(100),
 	  mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
 	  replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.logging.cfg").toURI())),
 	  replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.url.mvn.cfg").toURI())),

@@ -31,8 +31,8 @@
 	<cxf.version>3.0.2</cxf.version>
 	<slf4j.version>1.7.12</slf4j.version>
 	<pax.exam.version>4.8.0</pax.exam.version>
-	<karaf.version>4.0.3</karaf.version>
-	<karaf.features.version>4.0.3</karaf.features.version>
+	<karaf.version>4.0.5</karaf.version>
+	<karaf.features.version>4.0.5</karaf.features.version>
 		
 	<maven.compiler.source>1.7</maven.compiler.source>
 	<maven.compiler.target>1.7</maven.compiler.target>
