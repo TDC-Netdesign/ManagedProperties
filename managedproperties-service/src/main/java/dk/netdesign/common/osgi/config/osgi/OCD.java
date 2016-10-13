@@ -5,7 +5,6 @@
  */
 package dk.netdesign.common.osgi.config.osgi;
 
-import dk.netdesign.common.osgi.config.Attribute;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -20,7 +19,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.osgi.service.metatype.ObjectClassDefinition;
 
 /**
- * The OCD is a subtype of ObjectClassDefinition and is responsible for storing both the information needed by ManagedProperties and MetaTypeProvider
+ * The OCD is a subtype of ObjectClassDefinition and is responsible for storing both the information needed by ConfigurationAdmin and MetaTypeProvider
  * @author mnn
  */
 public class OCD implements ObjectClassDefinition {

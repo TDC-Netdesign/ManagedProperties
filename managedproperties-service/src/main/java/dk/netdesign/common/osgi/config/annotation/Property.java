@@ -12,7 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Use this to define a get Method that should be reflected in the MetaDataProvider and ConfigurationAdmin.
+ * Use this to define a get Method that should be treated as a configuration item.
  *
  * @author mnn
  */
@@ -49,10 +49,11 @@ public @interface Property {
     public Cardinality cardinality() default Cardinality.Optional;
 
     /**
-     * The type of the configuration property when saved by the configuration manager. If not defined, will default to the returntype of the method. 
-     * Should only be set to primitive wrappers(Integer, Long...) or String, as these are the only supported types for the ConfigurationAdmin.
+     * The type of the configuration property which should be input into this configuration. This is used by the backing provider to ensure a
+     * propper resolution of the configuration type. If not defined, will default to the returntype of the method. 
+     * If the type differs from the providers output, ManagedProperties will fail to register, unless a default filter exists to bridge the gap.
      *
-     * @return The type of object which should be returned from the ConfigAdmin
+     * @return The type of object which should be returned from the Property provider
      */
     public Class type() default void.class;
 
@@ -66,23 +67,23 @@ public @interface Property {
     public Class<? extends TypeFilter> typeMapper() default TypeFilter.class;
 
     /**
-     * The optional values for the property. Labels and values must match.
+     * The optional values for the property. Labels and values must match. (Optional value)
      *
-     * @return The optional values to use in the Configuration Admin
+     * @return The option values to use in the Configuration provider
      */
     public String[] optionValues() default {};
 
     /**
-     * The optional labels for the property. Labels and values must match.
+     * The optional labels for the property. Labels and values must match. (Optional value)
      *
-     * @return The optional labels to use in the Configuration Admin
+     * @return The optional labels to use in the Configuration provider
      */
     public String[] optionLabels() default {};
 
     /**
-     * The default value for the property.
+     * The default value for the property. (Optional value)
      *
-     * @return The default value to use in the Configuration Admin
+     * @return The default value to use in the Configuration Provider
      */
     public String[] defaultValue() default {};
 

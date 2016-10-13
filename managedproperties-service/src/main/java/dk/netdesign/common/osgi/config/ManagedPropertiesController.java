@@ -15,16 +15,6 @@ import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
-import dk.netdesign.common.osgi.config.filters.FileFilter;
-import dk.netdesign.common.osgi.config.filters.StringToBooleanFilter;
-import dk.netdesign.common.osgi.config.filters.StringToByteFilter;
-import dk.netdesign.common.osgi.config.filters.StringToDoubleFilter;
-import dk.netdesign.common.osgi.config.filters.StringToFloatFilter;
-import dk.netdesign.common.osgi.config.filters.StringToIntegerFilter;
-import dk.netdesign.common.osgi.config.filters.StringToLongFilter;
-import dk.netdesign.common.osgi.config.filters.StringToShortFilter;
-import dk.netdesign.common.osgi.config.filters.URLFilter;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -45,15 +35,12 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The ManagedProperties class is used as a simple setup mechanism for the Felix Configuration Admin and MetaType OSGi services. Using the register method, the
- * ManagedProperties register itself as both a Configuration Admin ManagedService and as a MetaType service MetaTypeProvider. This class acts as the service
- * anchor for the configuration, as well as an InvocationHandler for java.util.Proxy. The class also takes care of creating both the ObjectClassDefinition and
- * AttributeDefinition to reflect the methods in the registered interface.
+ * The ManagedPropertiesController class is used as the central mechanism for the link between the application and the configuration source.
+ * This class is used as an InvocationHandler for the java.util.Proxy which is returned for any registered interface.
  *
  * @author mnn
  */
@@ -82,11 +69,13 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     /**
      * Returns a ManagedProperties object with the defined defaults.
      *
-     * @param <E> The type of object to return.
+     * @param <E> The type of the configuration interface to proxy.
      * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
      * @param defaults The default values to use if a configuration item is not currently in the configuration set. The defaults must be an object of a type
      * that implements the type denoted by @see I.
+     * @param defaultFiltersList An optional list of filters to use for default filtering. This list will be used if an attributes input type does snot
+     * match the output type defined by its output type defined by its methods returntype.
      * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
      * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
@@ -141,9 +130,11 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     /**
      * The same as the other constructor, but does not set defaults.
      *
-     * @see #ManagedProperties(java.lang.Class, java.lang.Object)
+     * @see #ManagedPropertiesController(Class, Object, List)
      * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
+     * @param defaultFiltersList An optional list of filters to use for default filtering. This list will be used if an attributes input type does snot
+     * match the output type defined by its output type defined by its methods returntype.
      * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
      * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
      * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
@@ -230,13 +221,13 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
 
     /**
-     * The updated method is called when the ConfigAdmin detects a change in the configuration bound to this class. When called, the method will parse the
-     * Dictionary of properties and parse the data for each Method/Configuration item. For each Configuration Item, the type of the object is checked against
+     * The updated method is called in order to change the configuration bound to this class. When called, the method will parse the
+     * Map of properties and parse the data for each Method/Configuration item. For each Configuration Item, the type of the object is checked against
      * the return types, the filters are run, and the data parsed. The result is that it is the final, parsed and validated versions of the configuration that
      * is actually returned. The original properties are never stored in this object.
      *
-     * @param properties The properties that are sent from the Configuration Admin
-     * @throws ConfigurationException If the data is invalid, or a filter fails.
+     * @param properties The properties that are sent from the configuration source
+     * @throws ParsingException If the data is invalid, or a filter fails.
      */
     @Override
     public Map<String, Object> updateConfig(Map<String, Object> properties) throws ParsingException{

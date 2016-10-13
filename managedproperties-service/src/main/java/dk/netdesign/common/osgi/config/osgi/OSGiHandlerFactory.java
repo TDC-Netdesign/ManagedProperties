@@ -18,20 +18,12 @@ package dk.netdesign.common.osgi.config.osgi;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.PropertiesProvider;
-import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
-import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.service.HandlerFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import java.util.logging.Level;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

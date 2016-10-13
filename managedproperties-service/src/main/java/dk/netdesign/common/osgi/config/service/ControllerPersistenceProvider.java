@@ -18,7 +18,6 @@ package dk.netdesign.common.osgi.config.service;
 
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.exception.ControllerPersistenceException;
-import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 
 /**

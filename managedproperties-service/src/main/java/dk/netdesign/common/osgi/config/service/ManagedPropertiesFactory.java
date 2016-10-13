@@ -18,9 +18,6 @@ package dk.netdesign.common.osgi.config.service;
 
 import dk.netdesign.common.osgi.config.Attribute;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.PropertiesProvider;
-import dk.netdesign.common.osgi.config.annotation.Property;
-import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
 import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.enhancement.PropertyConfig;
@@ -31,19 +28,10 @@ import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
-import dk.netdesign.common.osgi.config.osgi.ConfigurationAdminProvider;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +56,7 @@ public class ManagedPropertiesFactory {
     
     /**
      * Registers a configuration that is based on the Interface referenced by {@code type}.
-     * Equivalent to {@link #register(Class, Object, BundleContext)}, with a null defaults object.
+     * Equivalent to {@link #register(Class, Object)}, with a null defaults object.
      * @param <T> The return type of the configuration.
      * @param type The type of configuration to create. The type of interface must be be annotated by 
      * {@link dk.netdesign.common.osgi.config.annotation.Property}, and each parameter must be annotated by 

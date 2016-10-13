@@ -10,8 +10,6 @@ import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The URL filter takes a URL as a String object. It then parses the String to a URL object, throwing an exception if the input String is not a valid URL.

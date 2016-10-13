@@ -8,6 +8,7 @@ package dk.netdesign.common.osgi.config.test.consumer;
 
 import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
@@ -25,7 +26,8 @@ public class Consumer implements BundleActivator{
 
     @Override
     public void start(BundleContext context) throws Exception {
-	props = ManagedPropertiesFactory.register(InheritedProperties.class, new DefaultProperties(), context);
+	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
+	props = factory.register(InheritedProperties.class, new DefaultProperties(), context);
 	logger.info("Getting properties");
 	logger.info(props.getCharacterProperty()+"");
 	logger.info(props.getDoubleProperty()+"");

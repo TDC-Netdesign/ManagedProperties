@@ -11,7 +11,6 @@ import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is an implemnetation of AttributeDefinition that has the extra responsibility of tracking the settings for each of the annotated configuration methods.
- * It is the applications one-stop-shop for all information about the parsed Methods, containing both what is sent as MetaDataProvider and what is registered
- * by the ManagedProperties itself.
  * This class is what binds a method to a configuration item.
+ * This is a description of a configuration attribute as well as the settings selected by the method annotations.
+ * It is the applications one-stop-shop for all information about the parsed Methods, including input and output of the method, filters and descriptions.
  * @author mnn
  */
 public class Attribute {
@@ -48,6 +46,8 @@ public class Attribute {
      * In general, if there are any restrictions or missing data in the @Property annotation, or the method itself, it will be caught when
      * creating the AD.
      * @param method The @Property annotated method to create an AD for.
+     * @param defaultFilters If the input and output classes of this attribute are not compatible, and no filter in set, a filter from this
+     * list will be used.
      * @throws TypeFilterException Thrown if there is a problem with the filter defined for this method
      * @throws InvalidTypeException Thrown if there is a problem with the type of the input or output of the method, combined with the @Property
      * @throws InvalidMethodException Thrown if there is a problem with anything but the type, or filter. This could be missing information, invalid combinations,

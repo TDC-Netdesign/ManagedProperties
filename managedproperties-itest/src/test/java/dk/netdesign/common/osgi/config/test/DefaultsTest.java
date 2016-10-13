@@ -55,6 +55,9 @@ public class DefaultsTest {
     @Inject
     private BundleContext context;
     
+    @Inject
+    ManagedPropertiesServiceComponent factory;
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertiesTest.class);
     
         @Configuration
@@ -85,7 +88,7 @@ public class DefaultsTest {
             .unpackDirectory(new File("exam"))
             .useDeployFolder(false),
         //keepRuntimeFolder(),
-        features(karafStandardRepo, "webconsole"),
+        features(karafStandardRepo, "scr"),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-service").versionAsInProject(),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-test-resources").versionAsInProject(),
 	  mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
@@ -114,7 +117,6 @@ public class DefaultsTest {
 
     @Test
     public void testDefaults() throws Exception {
-	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
 	WrapperTypes defaults = new WrapperTypesDefaults();
 	
 	WrapperTypes types = null;

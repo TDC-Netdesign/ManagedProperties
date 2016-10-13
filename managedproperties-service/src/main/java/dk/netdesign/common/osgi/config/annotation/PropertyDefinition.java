@@ -20,25 +20,25 @@ import java.lang.annotation.Target;
 public @interface PropertyDefinition {
 
     /**
-     * The name of the configuration in the Configuration Admin. This is a required value.
+     * The name of the configuration in the Configuration Provider. This is a required value.
      * @return The name of the configuration
      */
     public String name() default "";
 
     /**
-     * The ID of the configuration in the Configuration Admin. This is a required value.
+     * The ID of the configuration in the Configuration Provider. This is a required value.
      * @return The ID of the configuration
      */
     public String id() default "";
 
     /**
-     * The description of the configuration in the Configuration Admin.
+     * The description of the configuration in the Configuration Provider.
      * @return The description of the configuration
      */
     public String description() default "";
 
     /**
-     * The icon for the configuration in the Configuration Admin.
+     * The icon for the configuration in the Configuration Provider.
      * @return The Icon File for the configuration
      */
     public String iconFile() default "";

@@ -63,6 +63,9 @@ public class PropertiesTest {
     
     @Inject 
     private ConfigurationAdmin configAdmin;
+ 
+    @Inject
+    ManagedPropertiesServiceComponent factory;
     
     private static final Logger LOGGER = LoggerFactory.getLogger(PropertiesTest.class);
     
@@ -89,12 +92,12 @@ public class PropertiesTest {
     
     return new Option[] {
         // KarafDistributionOption.debugConfiguration("5005", true),
-        karafDistributionConfiguration()
+          karafDistributionConfiguration()
             .frameworkUrl(karafUrl)
             .unpackDirectory(new File("exam"))
             .useDeployFolder(false),
-        keepRuntimeFolder(),
-        features(karafStandardRepo, "webconsole"),
+          keepRuntimeFolder(),
+          features(karafStandardRepo, "scr"),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-service").versionAsInProject(),
 	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-test-resources").versionAsInProject(),
 	  mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
@@ -130,7 +133,7 @@ public class PropertiesTest {
     
     @Test
     public void testImmediateAccess() throws Exception {
-	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
+	
 	
 	WrapperTypes types = null;
 	try{
@@ -151,7 +154,6 @@ public class PropertiesTest {
     
     @Test
     public void testAutomaticFiltering() throws Exception {
-	ManagedPropertiesServiceComponent factory = new ManagedPropertiesServiceComponent();
 	
 	FilteringConfig types = null;
 	try{

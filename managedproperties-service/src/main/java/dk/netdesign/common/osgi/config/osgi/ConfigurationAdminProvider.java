@@ -19,7 +19,6 @@ package dk.netdesign.common.osgi.config.osgi;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
 import dk.netdesign.common.osgi.config.Attribute;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.PropertiesProvider;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
@@ -48,7 +47,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author mnn
  */
-public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService, PropertiesProvider{
+public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService{
     public static final String BindingID = "ManagedPropertiesBinding";
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationAdminProvider.class);
     private final BundleContext bundleContext;

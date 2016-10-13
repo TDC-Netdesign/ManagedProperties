@@ -16,17 +16,12 @@
 
 package dk.netdesign.common.osgi.config.service;
 
-import dk.netdesign.common.osgi.config.ManagedPropertiesController;
-import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
-import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
-import dk.netdesign.common.osgi.config.enhancement.PropertyConfig;
 import dk.netdesign.common.osgi.config.exception.ControllerPersistenceException;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
-import java.lang.reflect.Proxy;
 import org.osgi.framework.BundleContext;
 
 /**

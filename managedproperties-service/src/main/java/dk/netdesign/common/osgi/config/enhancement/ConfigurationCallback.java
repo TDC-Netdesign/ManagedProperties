@@ -14,8 +14,7 @@ import java.util.Map;
 public interface ConfigurationCallback {
 
     /**
-     * This method is called whenever a managed configuration object that this callback is registered with is called. The method call is single-threaded as long as the
-     * callback is only registered to one configuration.
+     * This method is called whenever a managed configuration object that this callback is registered with is called.
      *
      * @param newProperties The new properties object that has been sent to the ManagedProperties object. This <b>can</b> be used to set the properties for the
      * service, but it is recommended to contact the ManagedProperties object itself and get the configuration from there, as the Dictionary will contain
