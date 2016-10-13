@@ -24,6 +24,7 @@ import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -32,9 +33,12 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.metatype.AttributeDefinition;
@@ -53,6 +57,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     private final BundleContext bundleContext;
     private final OCD ocd;
     private final ManagedPropertiesController controller;
+    private Dictionary<String, ?> lastAppliedProperties;
     
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
@@ -74,7 +79,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 
 
     @Override
-    public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+    public synchronized void updated(Dictionary<String, ?> properties) throws ConfigurationException {
 	Map<String, Object> configurationToReturn = new HashMap<>();
 	Enumeration<String> keys = properties.keys();
 	while (keys.hasMoreElements()) {
@@ -89,9 +94,33 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	try {
 	    //Do actual update
 	    Map<String, Object> remainingConfig = getTarget().updateConfig(configurationToReturn);
+	    
 	    //Add remaining config to context properties as managedservice requests
 	} catch (ParsingException ex) {
+	    try {
+		resetConfiguration();
+	    } catch (IOException ex1) {
+		logger.error("Could not reset the last configuration", ex1);
+	    }
 	    throw new ConfigurationException(ex.getKey(), "Could not update configuration for "+getTarget().getName()+"["+getTarget().getID()+"]", ex);
+	}
+	lastAppliedProperties = properties;
+    }
+    
+    protected synchronized void resetConfiguration() throws IOException{
+	if(lastAppliedProperties == null){
+	    return;
+	}
+	ServiceReference<ConfigurationAdmin> adminRef = null;
+	try{
+	    logger.info("Resetting the configuration of "+ocd.getName()+"["+ocd.getID()+"] to "+ lastAppliedProperties);
+	    adminRef = bundleContext.getServiceReference(ConfigurationAdmin.class);
+	    ConfigurationAdmin admin = bundleContext.getService(adminRef);
+	    admin.getConfiguration(ocd.getID()).update(lastAppliedProperties);
+	}finally{
+	    if(adminRef != null){
+		bundleContext.ungetService(adminRef);
+	    }
 	}
     }
 
@@ -112,7 +141,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
 	selfReg = bundleContext.registerService(ManagedPropertiesController.class, controller, selfRegProps);
-
+	
     }
 
     @Override

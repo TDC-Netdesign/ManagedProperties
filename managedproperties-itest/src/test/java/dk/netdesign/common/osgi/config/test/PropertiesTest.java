@@ -200,6 +200,44 @@ public class PropertiesTest {
 	    }
 	}
     }
+    
+    @Test
+    public void testConfigurationRollback() throws Exception{
+	FilteringConfig types = null;
+	try{
+	    types = factory.register(FilteringConfig.class, context);
+	    String configPid = PropertyAccess.configuration(types).getID();
+	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
+	    
+	    Dictionary newConfig = new Hashtable();
+	    newConfig.put("service.pid", configPid);
+	    String validfile = "tesetfile";
+	    newConfig.put("File", validfile);
+	    String validurl = "http://test1.dk";
+	    newConfig.put("URL", validurl);
+	    
+	    config.update(newConfig);
+	    config.update();
+	    
+	    
+	    assertEquals(new File(validfile), types.getFile());
+	    assertEquals(new URL(validurl), types.getURL());
+	    
+	    newConfig = new Hashtable();
+	    newConfig.put("service.pid", configPid);
+	    newConfig.put("File", "badFile");
+	    newConfig.put("URL", "badURL");
+	    
+	    config.update(newConfig);
+	    config.update();
+	    assertEquals(new File(validfile), types.getFile());
+	    assertEquals(new URL(validurl), types.getURL());
+	}finally{
+	    if(types != null){
+		PropertyAccess.actions(types).unregisterProperties();
+	    }
+	}
+    }
 
 	
     
