@@ -22,10 +22,10 @@
 		<configuration>
 		    <instructions>
 			<Bundle-SymbolicName>ManagedPropertiesService</Bundle-SymbolicName>
-			<Private-Package>dk.netdesign.common.osgi.config,dk.netdesign.common.osgi.config.*</Private-Package>
-			<Export-Package>dk.netdesign.common.osgi.config.service,dk.netdesign.common.osgi.config.annotation,
+<!--			<Private-Package>dk.netdesign.common.osgi.config,dk.netdesign.common.osgi.config.osgi</Private-Package>-->
+<!--			<Export-Package>dk.netdesign.common.osgi.config.service,dk.netdesign.common.osgi.config.annotation,
 			    dk.netdesign.common.osgi.config.enhancement,dk.netdesign.common.osgi.config.filters,dk.netdesign.common.osgi.config.exception
-			</Export-Package>
+			</Export-Package>-->
 			<DynamicImport-Package>*</DynamicImport-Package>
 		    </instructions>
 		</configuration>

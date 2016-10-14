@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.service;
+package dk.netdesign.common.osgi.config.osgi.service;
 
 import dk.netdesign.common.osgi.config.exception.ControllerPersistenceException;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;

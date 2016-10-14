@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.service;
+package dk.netdesign.common.osgi.config.osgi;
 
 import dk.netdesign.common.osgi.config.exception.ControllerPersistenceException;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
@@ -24,6 +24,10 @@ import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.osgi.OSGiHandlerFactory;
 import dk.netdesign.common.osgi.config.osgi.ServiceBasedPersistenceProvider;
+import dk.netdesign.common.osgi.config.service.DefaultFilterProvider;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
+import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
+import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.felix.ipojo.annotations.Provides;

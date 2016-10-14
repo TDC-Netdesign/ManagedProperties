@@ -17,8 +17,8 @@
 package dk.netdesign.common.osgi.config.test;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
+import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
+import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceComponent;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.test.properties.AutoFilteringListTypes;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;

@@ -8,8 +8,8 @@ package dk.netdesign.common.osgi.config.test.consumer;
 
 import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesService;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesServiceComponent;
+import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
+import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceComponent;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;

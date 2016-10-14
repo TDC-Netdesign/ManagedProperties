@@ -20,7 +20,7 @@ import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.filters.FileFilter;
 import dk.netdesign.common.osgi.config.service.HandlerFactory;
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesDefaultFiltersComponent;
+import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesDefaultFiltersComponent;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;

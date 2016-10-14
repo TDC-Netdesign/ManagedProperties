@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dk.netdesign.common.osgi.config.service;
+package dk.netdesign.common.osgi.config.osgi;
 
 import dk.netdesign.common.osgi.config.filters.FileFilter;
 import dk.netdesign.common.osgi.config.filters.StringToBase10BigIntegerFilter;
@@ -29,6 +29,8 @@ import dk.netdesign.common.osgi.config.filters.StringToIntegerFilter;
 import dk.netdesign.common.osgi.config.filters.StringToLongFilter;
 import dk.netdesign.common.osgi.config.filters.StringToShortFilter;
 import dk.netdesign.common.osgi.config.filters.URLFilter;
+import dk.netdesign.common.osgi.config.service.DefaultFilterProvider;
+import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.util.ArrayList;
 import java.util.List;
 import org.osgi.service.component.annotations.Component;
