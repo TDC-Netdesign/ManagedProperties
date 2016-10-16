@@ -9,7 +9,7 @@ package dk.netdesign.common.osgi.config.exception;
  *
  * @author mnn
  */
-public class InvalidTypeException extends Exception {
+public class InvalidTypeException extends ManagedPropertiesException {
 
     public InvalidTypeException(String message) {
 	super(message);

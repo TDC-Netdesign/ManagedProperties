@@ -20,24 +20,23 @@ package dk.netdesign.common.osgi.config.exception;
  *
  * @author mnn
  */
-public class ControllerPersistenceException extends ManagedPropertiesException{
+public class ManagedPropertiesException extends Exception{
 
-    public ControllerPersistenceException(String message) {
+    public ManagedPropertiesException(String message) {
 	super(message);
     }
 
-    public ControllerPersistenceException(String message, Throwable cause) {
+    public ManagedPropertiesException(String message, Throwable cause) {
 	super(message, cause);
     }
 
-    public ControllerPersistenceException(Throwable cause) {
+    public ManagedPropertiesException(Throwable cause) {
 	super(cause);
     }
 
-    public ControllerPersistenceException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ManagedPropertiesException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 	super(message, cause, enableSuppression, writableStackTrace);
     }
-    
     
     
 }

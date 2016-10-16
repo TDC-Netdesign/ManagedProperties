@@ -33,6 +33,8 @@ import java.util.List;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleReference;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -57,15 +59,32 @@ public class ManagedPropertiesServiceComponent implements ManagedPropertiesServi
     }
     
     @Activate
-    public void Activate(BundleContext context) throws Exception{
+    public void activate(BundleContext context){
 	LOGGER.info("Starting "+getClass().getName());
 	tracker = new ServiceTracker<>(context, DefaultFilterProvider.class, null);
 	tracker.open();
     }
     
     @Deactivate
-    public void Deactivate(BundleContext context) throws Exception{
+    public void deactivate(BundleContext context){
 	tracker.close();
+    }
+    
+    public static <T> T registerProperties(Class<T> type, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
+	return registerProperties(type, null, context);
+    }
+
+    public static <I, T extends I> I registerProperties(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
+	LOGGER.info("Registering new configuration: "+type.getName()+" with defaults "+defaults);
+	ManagedPropertiesServiceComponent osgiPropertiesFactory = new ManagedPropertiesServiceComponent();
+	osgiPropertiesFactory.activate(context);
+	
+	try{
+	return osgiPropertiesFactory.register(type, defaults, context);
+
+	}finally{
+	    osgiPropertiesFactory.deactivate(context);
+	}
     }
     
     

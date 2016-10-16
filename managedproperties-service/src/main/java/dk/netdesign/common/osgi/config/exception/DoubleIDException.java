@@ -9,7 +9,7 @@ package dk.netdesign.common.osgi.config.exception;
  *
  * @author mnn
  */
-public class DoubleIDException extends Exception {
+public class DoubleIDException extends ManagedPropertiesException {
 
     public DoubleIDException(String message) {
 	super(message);

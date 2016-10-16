@@ -9,7 +9,7 @@ package dk.netdesign.common.osgi.config.exception;
  *
  * @author mnn
  */
-public class InvocationException extends Exception {
+public class InvocationException extends ManagedPropertiesException {
 
     public InvocationException(String message) {
 	super(message);

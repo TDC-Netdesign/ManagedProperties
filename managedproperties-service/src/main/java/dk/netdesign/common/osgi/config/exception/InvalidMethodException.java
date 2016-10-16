@@ -10,7 +10,7 @@ package dk.netdesign.common.osgi.config.exception;
  *
  * @author mnn
  */
-public class InvalidMethodException extends Exception{
+public class InvalidMethodException extends ManagedPropertiesException{
 
     public InvalidMethodException(String message) {
 	super(message);

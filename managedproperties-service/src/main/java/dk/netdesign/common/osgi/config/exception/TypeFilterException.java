@@ -9,7 +9,7 @@ package dk.netdesign.common.osgi.config.exception;
  *
  * @author mnn
  */
-public class TypeFilterException extends Exception {
+public class TypeFilterException extends ManagedPropertiesException {
 
     public TypeFilterException(String message) {
 	super(message);

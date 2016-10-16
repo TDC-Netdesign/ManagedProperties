@@ -20,7 +20,7 @@ package dk.netdesign.common.osgi.config.exception;
  *
  * @author mnn
  */
-public class ParsingException extends Exception{
+public class ParsingException extends ManagedPropertiesException{
     private String key;
 
     public ParsingException(String key, String message) {
