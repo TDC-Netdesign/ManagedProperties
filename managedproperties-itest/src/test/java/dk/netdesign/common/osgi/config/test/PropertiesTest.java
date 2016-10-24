@@ -18,7 +18,7 @@ package dk.netdesign.common.osgi.config.test;
 
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
-import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceComponent;
+import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceFactory;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.test.properties.AutoFilteringListTypes;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
@@ -243,7 +243,7 @@ public class PropertiesTest {
     public void testFactoryMethodRollback() throws Exception {
 	FilteringConfig types = null;
 	try{
-	    types = ManagedPropertiesServiceComponent.registerProperties(FilteringConfig.class, context);
+	    types = ManagedPropertiesServiceFactory.registerProperties(FilteringConfig.class, context);
 	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
 	    

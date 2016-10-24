@@ -26,7 +26,7 @@ import dk.netdesign.common.osgi.config.service.HandlerFactory;
 import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesDefaultFiltersComponent;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
-import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceComponent;
+import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceFactory;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import org.junit.After;
 import org.junit.AfterClass;

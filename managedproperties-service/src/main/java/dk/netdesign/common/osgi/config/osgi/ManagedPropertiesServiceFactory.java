@@ -48,13 +48,13 @@ import org.slf4j.LoggerFactory;
  */
 @Provides
 @Component(service = ManagedPropertiesService.class, immediate = true)
-public class ManagedPropertiesServiceComponent implements ManagedPropertiesService, DefaultFilterProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManagedPropertiesServiceComponent.class);
+public class ManagedPropertiesServiceFactory implements ManagedPropertiesService, DefaultFilterProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ManagedPropertiesServiceFactory.class);
     
     private ServiceTracker<DefaultFilterProvider, DefaultFilterProvider> tracker;
     
 
-    public ManagedPropertiesServiceComponent() {
+    public ManagedPropertiesServiceFactory() {
     
     }
     
@@ -76,7 +76,7 @@ public class ManagedPropertiesServiceComponent implements ManagedPropertiesServi
 
     public static <I, T extends I> I registerProperties(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
 	LOGGER.info("Registering new configuration: "+type.getName()+" with defaults "+defaults);
-	ManagedPropertiesServiceComponent osgiPropertiesFactory = new ManagedPropertiesServiceComponent();
+	ManagedPropertiesServiceFactory osgiPropertiesFactory = new ManagedPropertiesServiceFactory();
 	osgiPropertiesFactory.activate(context);
 	
 	try{
