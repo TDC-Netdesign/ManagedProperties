@@ -16,6 +16,7 @@
 
 package dk.netdesign.common.osgi.config.service;
 
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationCallbackHandler;
 import dk.netdesign.common.osgi.config.enhancement.PropertyActions;
 import dk.netdesign.common.osgi.config.enhancement.PropertyConfig;
 
@@ -35,6 +36,14 @@ public class PropertyAccess {
     public static PropertyConfig configuration(Object proxy){
 	if(proxy instanceof PropertyConfig){
 	    return (PropertyConfig)proxy;
+	}else{
+	    throw new IllegalArgumentException("Operation not possible, object was not a ManagedProperties object: "+proxy);
+	}
+    }
+    
+    public static ConfigurationCallbackHandler callbacks(Object proxy){
+	if(proxy instanceof ConfigurationCallbackHandler){
+	    return (ConfigurationCallbackHandler)proxy;
 	}else{
 	    throw new IllegalArgumentException("Operation not possible, object was not a ManagedProperties object: "+proxy);
 	}
