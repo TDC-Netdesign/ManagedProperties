@@ -16,11 +16,8 @@
 
 package dk.netdesign.common.osgi.config.test;
 
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
-import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceFactory;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
-import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypesDefaults;
 import java.io.File;
@@ -33,7 +30,6 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.junit.PaxExam;

@@ -16,11 +16,7 @@
 
 package dk.netdesign.common.osgi.config.test;
 
-import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
-import dk.netdesign.common.osgi.config.service.PropertyAccess;
-import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
 import java.io.File;
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
