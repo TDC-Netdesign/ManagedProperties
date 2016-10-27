@@ -179,7 +179,7 @@ public class ManagedPropertiesFactory {
     public static Method getParseMethod(Class<? extends TypeFilter> filterType) throws TypeFilterException{
 	    try {
 		for(Method method : filterType.getDeclaredMethods()){
-		    if(method.getName().equals("parse") && method.getParameters().length == 1){
+		    if(method.getName().equals("parse") && method.getParameterTypes().length == 1){
 			return method;
 		    }
 		}

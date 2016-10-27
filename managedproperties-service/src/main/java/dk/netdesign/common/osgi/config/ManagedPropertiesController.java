@@ -439,7 +439,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     protected final FilterReference getReference(Class<? extends TypeFilter> filterClass) throws TypeFilterException {
 	Method[] methods = filterClass.getDeclaredMethods();
 	for (Method method : methods) {
-	    if (method.getName().equals("parse") && method.getParameters().length == 1) {
+	    if (method.getName().equals("parse") && method.getParameterTypes().length == 1) {
 		Class inputType = method.getParameterTypes()[0];
 		Class outputType = method.getReturnType();
 		return new FilterReference(inputType, outputType);
