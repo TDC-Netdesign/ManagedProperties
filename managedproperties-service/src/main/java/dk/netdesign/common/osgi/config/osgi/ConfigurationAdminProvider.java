@@ -79,6 +79,10 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 
     @Override
     public synchronized void updated(Dictionary<String, ?> properties) throws ConfigurationException {
+	if(properties == null){
+	    logger.info("Update called but the properties dictionary was null. Returning");
+	    return;
+	}
 	Map<String, Object> configurationToReturn = new HashMap<>();
 	Enumeration<String> keys = properties.keys();
 	while (keys.hasMoreElements()) {

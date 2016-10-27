@@ -183,6 +183,8 @@ public class PropertiesTest {
 	    List<String> urls = Arrays.asList(new String[]{"http://test1.dk", "http://test2.dk", "http://test3.dk"});
 	    newConfig.put("URLs", urls);
 	    
+	    Thread.sleep(1000);
+	    
 	    config.update(newConfig);
 	    config.update();
 	    
@@ -211,7 +213,7 @@ public class PropertiesTest {
 	    
 	    Dictionary newConfig = new Hashtable();
 	    newConfig.put("service.pid", configPid);
-	    String validfile = "tesetfile";
+	    String validfile = "testfile";
 	    newConfig.put("File", validfile);
 	    String validurl = "http://test1.dk";
 	    newConfig.put("URL", validurl);
@@ -219,6 +221,7 @@ public class PropertiesTest {
 	    config.update(newConfig);
 	    config.update();
 	    
+	    Thread.sleep(1000);
 	    
 	    assertEquals(new File(validfile), types.getFile());
 	    assertEquals(new URL(validurl), types.getURL());
@@ -257,6 +260,7 @@ public class PropertiesTest {
 	    config.update(newConfig);
 	    config.update();
 	    
+	    Thread.sleep(1000);
 	    
 	    assertEquals(new File(validfile), types.getFile());
 	    assertEquals(new URL(validurl), types.getURL());
