@@ -293,6 +293,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 		throw new ParsingException(required.pollFirst(), "Could not update configuration. Missing required fields: " + new ArrayList<>(required));
 	    }
 	    config = newprops;
+	    for(ConfigurationCallback callback : callbacks){
+		callback.configurationUpdated(properties);
+	    }
 	} finally {
 	    updated.signalAll();
 	    w.unlock();
