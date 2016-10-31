@@ -20,6 +20,7 @@ import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
 import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesServiceFactory;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.test.properties.AutoFilteringListTypes;
+import dk.netdesign.common.osgi.config.test.properties.ChangingConfig;
 import dk.netdesign.common.osgi.config.test.properties.FilteringConfig;
 import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
 import java.io.File;
@@ -34,6 +35,7 @@ import org.junit.AfterClass;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -151,11 +153,27 @@ public class PropertiesTest {
     }
     
     @Test
-    public void testAutomaticFiltering() throws Exception {
+    public void testAutomaticFiltering1() throws Exception {
 	
 	FilteringConfig types = null;
 	try{
 	    types = factory.register(FilteringConfig.class, context);
+	    assertEquals(new URL("http://test.dk"), types.getURL());
+	    assertEquals(new File("some/file"), types.getFile());
+
+	}finally{
+	    if(types != null){
+		PropertyAccess.actions(types).unregisterProperties();
+	    }
+	}
+    }
+    
+    @Test
+    public void testAutomaticFiltering2() throws Exception {
+	
+	FilteringConfig types = null;
+	try{
+	    types = ManagedPropertiesServiceFactory.registerProperties(FilteringConfig.class, context);
 	    assertEquals(new URL("http://test.dk"), types.getURL());
 	    assertEquals(new File("some/file"), types.getFile());
 
@@ -203,11 +221,13 @@ public class PropertiesTest {
     
     @Test
     public void testConfigurationRollback() throws Exception{
-	FilteringConfig types = null;
+	ChangingConfig types = null;
 	try{
-	    types = factory.register(FilteringConfig.class, context);
+	    types = factory.register(ChangingConfig.class, context);
 	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
+	
+	    Dictionary baseConfig = config.getProperties();
 	    
 	    Dictionary newConfig = new Hashtable();
 	    newConfig.put("service.pid", configPid);
@@ -233,20 +253,28 @@ public class PropertiesTest {
 	    config.update();
 	    assertEquals(new File(validfile), types.getFile());
 	    assertEquals(new URL(validurl), types.getURL());
+	
+	
+	    config.update(baseConfig);
+	    config.update();
 	}finally{
 	    if(types != null){
 		PropertyAccess.actions(types).unregisterProperties();
 	    }
+	    
+	    
 	}
     }
     
     @Test
     public void testFactoryMethodRollback() throws Exception {
-	FilteringConfig types = null;
+	ChangingConfig types = null;
 	try{
-	    types = ManagedPropertiesServiceFactory.registerProperties(FilteringConfig.class, context);
+	    types = factory.register(ChangingConfig.class, context);
 	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
+	    
+	    Dictionary baseConfig = config.getProperties();
 	    
 	    Dictionary newConfig = new Hashtable();
 	    newConfig.put("service.pid", configPid);
@@ -272,6 +300,9 @@ public class PropertiesTest {
 	    config.update();
 	    assertEquals(new File(validfile), types.getFile());
 	    assertEquals(new URL(validurl), types.getURL());
+	
+	    config.update(baseConfig);
+	    config.update();
 	}finally{
 	    if(types != null){
 		PropertyAccess.actions(types).unregisterProperties();

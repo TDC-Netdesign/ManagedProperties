@@ -86,6 +86,7 @@ public class Attribute {
 	
 	
 	filter = getFilters(filterFromAnnotation, defaultFilters, method);
+	logger.debug("Determined filter: "+filter);
 	
 	if (filter != null) {
 	    Method parseMethod;
@@ -110,7 +111,7 @@ public class Attribute {
 	description = methodProperty.description();
 	optionalLabels = methodProperty.optionLabels();
 	optionalValues = methodProperty.optionValues();
-
+	logger.info("Built attribute: "+this);
     }
     
     private void checkCardinality(Method method) throws InvalidMethodException{
@@ -125,10 +126,12 @@ public class Attribute {
     }
     
     private Class<? extends TypeFilter> getFilters(Class<? extends TypeFilter> filterFromAnnotation, Map<FilterReference, Class<? extends TypeFilter>> defaultFilters, Method method) throws InvalidMethodException{
+	logger.debug("Getting filter for "+name+"["+id+"]: "+filterFromAnnotation);
 	Class methodReturnType = getMethodReturnType(method);
 	if (filterFromAnnotation == TypeFilter.class) {
 	    if (!cardinalityDef.equals(cardinalityDef.List)) {
 		FilterReference ref = new FilterReference(inputType, methodReturnType);
+		logger.debug("Attempting to get default filter for "+ref+" from "+defaultFilters.keySet());
 		return defaultFilters.get(ref);
 	    }else{
 		return null;
