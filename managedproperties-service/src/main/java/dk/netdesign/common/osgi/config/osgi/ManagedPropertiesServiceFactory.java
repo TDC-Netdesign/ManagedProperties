@@ -28,7 +28,6 @@ import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.felix.ipojo.annotations.Provides;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleReference;
 import org.osgi.service.component.annotations.Activate;
@@ -42,7 +41,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author mnn
  */
-@Provides
 @Component(service = ManagedPropertiesService.class, immediate = true)
 public class ManagedPropertiesServiceFactory implements ManagedPropertiesService, DefaultFilterProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagedPropertiesServiceFactory.class);

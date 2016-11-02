@@ -270,7 +270,7 @@ public class PropertiesTest {
     public void testFactoryMethodRollback() throws Exception {
 	ChangingConfig types = null;
 	try{
-	    types = factory.register(ChangingConfig.class, context);
+	    types = ManagedPropertiesServiceFactory.registerProperties(ChangingConfig.class, context);
 	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
 	    
