@@ -228,11 +228,30 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
      * is actually returned. The original properties are never stored in this object.
      *
      * @param properties The properties that are sent from the configuration source
+     * @return The configuration keys and values that could not be matched to a configuration item
      * @throws ParsingException If the data is invalid, or a filter fails.
      */
     @Override
     public Map<String, Object> updateConfig(Map<String, Object> properties) throws ParsingException{
-	logger.info("Attempting to update properties on " + name + "[" + id + "] with " + properties);
+	if (logger.isInfoEnabled()) {
+	    boolean printKeys = logger.isDebugEnabled();
+	    Set<String> configHiddenKeys = getHiddenKeys();
+	    StringBuilder builder = new StringBuilder();
+	    String delim = "";
+	    for (String key : properties.keySet()) {
+		builder.append(delim).append(key);
+		if (printKeys) {
+		    if (configHiddenKeys.contains(key)) {
+			builder.append("=").append("******");
+		    } else {
+			builder.append("=").append(properties.get(key));
+		    }
+		}
+		delim=", ";
+	    }
+	    logger.info("Attempting to update properties on " + name + "[" + id + "] with " + builder.toString());
+	}
+
 	Map<String, Object> unknownConfigs = new HashMap<>();
 	if (properties == null) {
 	    throw new ParsingException("Could not update configuration. Map was null");
@@ -452,15 +471,19 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	throw new TypeFilterException("Could not find a parse method on this typefilter: " + filterClass);
     }
 
-
-    @Override
-    public String toString() {
+    protected final Set<String> getHiddenKeys(){
 	Set<String> configHiddenKeys = new HashSet<>();
 	for(Attribute attribute : attributeToMethodMapping.values()){
 	    if(attribute.isHidden()){
 		configHiddenKeys.add(attribute.getID());
 	    }
 	}
+	return configHiddenKeys;
+    }
+
+    @Override
+    public String toString() {
+	Set<String> configHiddenKeys = getHiddenKeys();
 	
 	ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
 	builder.append("id", id);
@@ -470,7 +493,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	try {
 	    for (String key : config.keySet()) {
 		if(configHiddenKeys.contains(key)){
-		    builder.append(key, config.get(key).toString().replaceAll(".", "*"));
+		    builder.append(key, "******");
 		}else{
 		    builder.append(key, config.get(key));
 		}
