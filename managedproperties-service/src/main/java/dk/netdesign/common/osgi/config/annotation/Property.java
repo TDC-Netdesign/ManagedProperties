@@ -87,6 +87,13 @@ public @interface Property {
      */
     public String[] defaultValue() default {};
 
+    /**
+     * The default value for the property. (Optional value)
+     *
+     * @return The default value to use in the Configuration Provider
+     */
+    public boolean hidden() default false;
+
     public enum Cardinality {
 
 	Optional, Required, List;

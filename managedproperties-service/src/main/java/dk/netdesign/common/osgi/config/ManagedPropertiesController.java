@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -454,6 +455,13 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
     @Override
     public String toString() {
+	Set<String> configHiddenKeys = new HashSet<>();
+	for(Attribute attribute : attributeToMethodMapping.values()){
+	    if(attribute.isHidden()){
+		configHiddenKeys.add(attribute.getID());
+	    }
+	}
+	
 	ToStringBuilder builder = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
 	builder.append("id", id);
 	builder.append("name", name);
@@ -461,7 +469,11 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	r.lock();
 	try {
 	    for (String key : config.keySet()) {
-		builder.append(key, config.get(key));
+		if(configHiddenKeys.contains(key)){
+		    builder.append(key, config.get(key).toString().replaceAll(".", "*"));
+		}else{
+		    builder.append(key, config.get(key));
+		}
 	    }
 	} finally {
 	    r.unlock();

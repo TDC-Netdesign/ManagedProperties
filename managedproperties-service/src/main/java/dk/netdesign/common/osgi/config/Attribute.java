@@ -38,6 +38,7 @@ public class Attribute {
     //private Class outputType;
     private Class<? extends TypeFilter> filter;
     Property.Cardinality cardinalityDef;
+    private boolean hidden;
 
     /**
      * Default Constructor. This is the only non-deprecated constructor. It will create an AD from a method.
@@ -111,6 +112,7 @@ public class Attribute {
 	description = methodProperty.description();
 	optionalLabels = methodProperty.optionLabels();
 	optionalValues = methodProperty.optionValues();
+	hidden = methodProperty.hidden();
 	logger.info("Built attribute: "+this);
     }
     
@@ -241,6 +243,12 @@ public class Attribute {
     protected void setInputType(Class inputType) {
 	this.inputType = inputType;
     }
+
+    public boolean isHidden() {
+	return hidden;
+    }
+    
+    
     
     
 
