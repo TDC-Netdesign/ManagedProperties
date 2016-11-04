@@ -91,19 +91,27 @@ public class Attribute {
 	
 	if (filter != null) {
 	    Method parseMethod;
+	    
 	    try {
 		parseMethod = filter.getDeclaredMethod("parse", new Class[]{inputType});
 	    } catch (NoSuchMethodException | SecurityException ex) {
-		throw new TypeFilterException("Could not add filter. An exception occured while examining the parse method", ex);
+		throw new TypeFilterException("Could not add filter. An exception occured while examining the parse method. Make sure that the filters parse "
+			+ "method and the input type are the same type", ex);
 	    }
 
 	    if (!cardinalityDef.equals(cardinalityDef.List) && !methodReturnType.isAssignableFrom(parseMethod.getReturnType())) {
 		throw new TypeFilterException("Could not use Filter type " + filter.getName() + " with the method " + parseMethod.getName()
 			+ " The output of the configuration method '" + methodReturnType + "' must be assignable to the return of the filter parse method '" + parseMethod.getReturnType() + "'");
 	    }
+	    
 
 	}
-	    
+	if(filter == null && !method.getReturnType().isAssignableFrom(inputType)){
+	    throw new InvalidTypeException("Could not create attribute "+name+"["+id+"] because the methods returntype "+method.getReturnType().getCanonicalName()
+		    + "is not compatible with the inputtype "+inputType.getCanonicalName()+" and no filter was defined. If no filter is defined, the inputtype "
+		    + "must be a subclass, or the same class as the methods returntype");
+	}
+	
 	
 	if (logger.isTraceEnabled()) {
 	    logger.trace("Building AttributeDefinition with attributeID '" + id + "' inputType '" + inputType + "' cardinality '" + cardinalityDef + "'");
@@ -130,7 +138,7 @@ public class Attribute {
     private Class<? extends TypeFilter> getFilters(Class<? extends TypeFilter> filterFromAnnotation, Map<FilterReference, Class<? extends TypeFilter>> defaultFilters, Method method) throws InvalidMethodException{
 	logger.debug("Getting filter for "+name+"["+id+"]: "+filterFromAnnotation);
 	Class methodReturnType = getMethodReturnType(method);
-	if (filterFromAnnotation == TypeFilter.class) {
+	if (!isFilterSetByUser(filterFromAnnotation)) {
 	    if (!cardinalityDef.equals(cardinalityDef.List)) {
 		FilterReference ref = new FilterReference(inputType, methodReturnType);
 		logger.debug("Attempting to get default filter for "+ref+" from "+defaultFilters.keySet());
@@ -142,6 +150,10 @@ public class Attribute {
 	}else{
 	    return filterFromAnnotation;
 	}
+    }
+    
+    private boolean isFilterSetByUser(Class<? extends TypeFilter> filterFromAnnotation){
+	return filterFromAnnotation != TypeFilter.class;
     }
 
     private static String getAttributeName(Method classMethod) {
