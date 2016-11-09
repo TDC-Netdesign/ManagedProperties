@@ -105,12 +105,15 @@ public class Attribute {
 	    }
 	    
 
+	} else {
+	    if (!cardinalityDef.equals(cardinalityDef.List) && !method.getReturnType().isAssignableFrom(inputType)){
+		    throw new InvalidTypeException("Could not create attribute " + name + "[" + id + "] because the methods returntype " + method.getReturnType().getCanonicalName()
+			+ " is not compatible with the inputtype " + inputType.getCanonicalName() + " and no filter was defined. If no filter is defined, the inputtype "
+			+ "must be a subclass, or the same class as the methods returntype");
+		}
+		
 	}
-	if(filter == null && !method.getReturnType().isAssignableFrom(inputType)){
-	    throw new InvalidTypeException("Could not create attribute "+name+"["+id+"] because the methods returntype "+method.getReturnType().getCanonicalName()
-		    + "is not compatible with the inputtype "+inputType.getCanonicalName()+" and no filter was defined. If no filter is defined, the inputtype "
-		    + "must be a subclass, or the same class as the methods returntype");
-	}
+	
 	
 	
 	if (logger.isTraceEnabled()) {
