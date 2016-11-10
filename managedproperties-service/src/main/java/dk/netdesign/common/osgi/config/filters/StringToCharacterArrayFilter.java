@@ -24,11 +24,14 @@ import org.apache.commons.lang3.ArrayUtils;
  *
  * @author mnn
  */
-public class StringToCharArrayFilter extends TypeFilter<String, char[]> {
-    
+public class StringToCharacterArrayFilter extends TypeFilter<String, Character[]>{
+
     @Override
-    public char[] parse(String input) throws TypeFilterException {
-	return input.toCharArray();
+    public Character[] parse(String input) throws TypeFilterException {
+	char[] charArray = input.toCharArray();
+	return ArrayUtils.toObject(charArray);
     }
+    
+    
     
 }

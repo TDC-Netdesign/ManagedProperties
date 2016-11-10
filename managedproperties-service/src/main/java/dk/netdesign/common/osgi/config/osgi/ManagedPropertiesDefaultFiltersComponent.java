@@ -22,6 +22,7 @@ import dk.netdesign.common.osgi.config.filters.StringToBigDecimalFilter;
 import dk.netdesign.common.osgi.config.filters.StringToBooleanFilter;
 import dk.netdesign.common.osgi.config.filters.StringToByteFilter;
 import dk.netdesign.common.osgi.config.filters.StringToCharArrayFilter;
+import dk.netdesign.common.osgi.config.filters.StringToCharacterArrayFilter;
 import dk.netdesign.common.osgi.config.filters.StringToCharacterFilter;
 import dk.netdesign.common.osgi.config.filters.StringToDoubleFilter;
 import dk.netdesign.common.osgi.config.filters.StringToFloatFilter;
@@ -56,6 +57,7 @@ public class ManagedPropertiesDefaultFiltersComponent implements DefaultFilterPr
 	toReturn.add(FileFilter.class);
 	toReturn.add(StringToBase10BigIntegerFilter.class);
 	toReturn.add(StringToBigDecimalFilter.class);
+	toReturn.add(StringToCharacterArrayFilter.class);
 	toReturn.add(StringToCharArrayFilter.class);
 	toReturn.add(StringToCharacterFilter.class);
 	return toReturn;
