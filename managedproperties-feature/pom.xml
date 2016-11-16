@@ -22,12 +22,12 @@
     <parent>
 	<groupId>dk.netdesign</groupId>
 	<artifactId>managedproperties</artifactId>
-	<version>0.3-SNAPSHOT</version>
+	<version>0.7-SNAPSHOT</version>
     </parent>
     <groupId>dk.netdesign</groupId>
     <artifactId>managedproperties-feature</artifactId>
-    <version>0.3-SNAPSHOT</version>
-    <packaging>feature</packaging>
+    <version>0.7-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <name>managedproperties feature</name>
     <description>Managedproperties is a handler that uses ConfigurationAdmin and Metadata service to simplify centralized configuration</description>
@@ -38,42 +38,67 @@
 	    <artifactId>managedproperties-service</artifactId>
 	</dependency>
 	<dependency>
-	    <groupId>org.apache.felix</groupId>
-	    <artifactId>org.apache.felix.metatype</artifactId>
-	    <version>1.1.2</version>
-	</dependency>
-	
-	<dependency>
-	    <groupId>org.apache.karaf.features</groupId>
-	    <artifactId>standard</artifactId>
-	    <version>3.0.3</version>
-	    <classifier>features</classifier>
-	    <type>xml</type>
+	    <groupId>org.apache.commons</groupId>
+	    <artifactId>commons-lang3</artifactId>
 	</dependency>
     </dependencies>
     
     
 
-    <build>
-	<pluginManagement>
-	    <plugins>
-		<plugin>
-		    <groupId>org.apache.karaf.tooling</groupId>
-		    <artifactId>karaf-maven-plugin</artifactId>
-		    <version>3.0.3</version>
-		    <extensions>true</extensions>
-		</plugin>
-	    </plugins>
-	</pluginManagement>
+    <build> 
+	<resources>
+	    <resource>
+		<directory>src/main/feature</directory>
+		<filtering>true</filtering>
+		<targetPath>${project.build.directory}/feature</targetPath>
+	    </resource>
+	</resources>
 	<plugins>
 	    <plugin>
-		<groupId>org.apache.karaf.tooling</groupId>
-		<artifactId>karaf-maven-plugin</artifactId>
-		<configuration>
-		    <startLevel>80</startLevel>
-		    <includeTransitiveDependency>true</includeTransitiveDependency>
-		    <aggregateFeatures>false</aggregateFeatures>
-		</configuration>
+		<artifactId>maven-resources-plugin</artifactId>
+		<version>2.7</version>
+		<executions>
+		    <execution>
+			<id>copy-resources</id>
+			<!-- here the phase you need -->
+			<phase>process-resources</phase>
+			<goals>
+			    <goal>copy-resources</goal>
+			</goals>
+			<configuration>
+			    <outputDirectory>${project.build.directory}</outputDirectory>
+			    <resources>          
+				<resource>
+				    <directory>src/main/feature</directory>
+				    <filtering>true</filtering>
+				</resource>
+			    </resources>              
+			</configuration>            
+		    </execution>
+		</executions>
+	    </plugin>
+	    <plugin>
+		<groupId>org.codehaus.mojo</groupId>
+		<artifactId>build-helper-maven-plugin</artifactId>
+		<version>1.10</version>
+		<executions>
+		    <execution>
+			<id>attach-artifacts</id>
+			<phase>package</phase>
+			<goals>
+			    <goal>attach-artifact</goal>
+			</goals>
+			<configuration>
+			    <artifacts>
+				<artifact>
+				    <file>${project.build.directory}/feature.xml</file>
+				    <type>xml</type>
+				    <classifier>features</classifier>
+				</artifact>
+			    </artifacts>
+			</configuration>
+		    </execution>
+		</executions>
 	    </plugin>
 	</plugins>
     </build>

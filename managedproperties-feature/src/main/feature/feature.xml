@@ -16,10 +16,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 -->
-<features name="${project.artifactId}-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+<features xlmns="http://karaf.apache.org/xmlns/features/v1.4.0"
+	  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.4.0" 
+	  name="ManagedProperties">
+  
 
-    <feature name="${project.artifactId}" description="${project.description}" version="${project.version}" resolver="(obr)">
-        <details>${project.description}</details>
-	<feature>standard</feature>
-    </feature>
+  <feature name="ManagedProperties" version="${project.version}">
+      <bundle>mvn:org.apache.commons/commons-lang3/${commons.version}</bundle>
+      <bundle>mvn:${project.groupId}/managedproperties-service/${project.version}</bundle>
+  </feature>
+  
+  <feature name="ManagedPropertiesTestResources" version="${project.version}">
+      <feature>ManagedProperties</feature>
+      <bundle>mvn:${project.groupId}/managedproperties-test-resources/${project.version}</bundle>
+  </feature>
+
 </features>

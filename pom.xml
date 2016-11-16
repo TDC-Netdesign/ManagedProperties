@@ -31,9 +31,10 @@
 	<cxf.version>3.0.2</cxf.version>
 	<slf4j.version>1.7.12</slf4j.version>
 	<pax.exam.version>4.8.0</pax.exam.version>
+	<osgi.framework.version>5.0.0</osgi.framework.version>
 	<karaf.version>4.0.5</karaf.version>
 	<karaf.features.version>4.0.5</karaf.features.version>
-		
+	<commons.version>3.5</commons.version>
 	<maven.compiler.source>1.7</maven.compiler.source>
 	<maven.compiler.target>1.7</maven.compiler.target>
     </properties>
@@ -90,7 +91,7 @@
     
     <modules>
 	<module>managedproperties-service</module>
-	<!--<module>managedproperties-feature</module>-->
+	<module>managedproperties-feature</module>
 	<module>managedproperties-consumer</module>
 	<module>managedproperties-test-resources</module>
 	<module>managedproperties-itest</module>
@@ -155,7 +156,9 @@
 	    </dependency>
 	    <dependency>
 		<groupId>dk.netdesign</groupId>
-		<artifactId>managedproperties-features</artifactId>
+		<artifactId>managedproperties-feature</artifactId>
+		<classifier>features</classifier>
+		<type>xml</type>
 		<version>0.7-SNAPSHOT</version>
 		<scope>provided</scope>
 	    </dependency>
@@ -208,7 +211,7 @@
 	    <dependency>
 		<groupId>org.apache.commons</groupId>
 		<artifactId>commons-lang3</artifactId>
-		<version>3.3.2</version>
+		<version>${commons.version}</version>
 		<scope>provided</scope>
 	    </dependency>
 	    <dependency>
@@ -230,13 +233,6 @@
 	    <artifactId>apache-karaf</artifactId>
 	    <type>tar.gz</type>
 	    <version>${karaf.version}</version>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.activemq</groupId>
-	    <artifactId>activemq-karaf</artifactId>
-	    <classifier>features</classifier>
-	    <type>xml</type>
-	    <version>5.13.0</version>
 	</dependency>
 
 	

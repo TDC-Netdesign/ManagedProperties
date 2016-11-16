@@ -48,6 +48,12 @@
 	  </dependency>
 	  <dependency>
 		<groupId>dk.netdesign</groupId>
+		<artifactId>managedproperties-feature</artifactId>
+		<classifier>features</classifier>
+		<type>xml</type>
+	  </dependency>
+	  <dependency>
+		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-consumer</artifactId>
 	  </dependency>
 	  <dependency>
@@ -101,12 +107,6 @@
 	    <groupId>org.apache.karaf</groupId>
 	    <artifactId>apache-karaf</artifactId>
 	    <type>tar.gz</type>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.activemq</groupId>
-	    <artifactId>activemq-karaf</artifactId>
-	    <classifier>features</classifier>
-	    <type>xml</type>
 	</dependency>
 
 	
