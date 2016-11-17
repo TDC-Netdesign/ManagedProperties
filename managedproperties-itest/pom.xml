@@ -9,7 +9,6 @@
     <groupId>dk.netdesign</groupId>
     <artifactId>managedproperties-itest</artifactId>
     <version>0.7-SNAPSHOT</version>
-    <packaging>bundle</packaging>
     <name>ManagedProperties Integration Test</name>
 	
     <build>
