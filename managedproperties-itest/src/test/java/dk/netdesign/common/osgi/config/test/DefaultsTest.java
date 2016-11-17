@@ -59,6 +59,8 @@ public class DefaultsTest {
     
         @Configuration
 	public Option[] config() throws Exception{
+	    File baseDir = new File(System.getProperty("java.io.tmpdir"));
+	    LOGGER.info("Base directory for CONFIG: "+baseDir);
     MavenArtifactUrlReference karafUrl = maven()
         .groupId("org.apache.karaf")
         .artifactId("apache-karaf")
@@ -112,6 +114,8 @@ public class DefaultsTest {
     
     @Test
     public void testDefaults() throws Exception {
+	File baseDir = new File(System.getProperty("java.io.tmpdir"));
+	LOGGER.info("Base directory for TEST: "+baseDir);
 	WrapperTypes defaults = new WrapperTypesDefaults();
 	
 	WrapperTypes types = null;
