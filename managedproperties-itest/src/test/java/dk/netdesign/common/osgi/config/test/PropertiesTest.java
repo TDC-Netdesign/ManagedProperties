@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -137,6 +138,7 @@ public class PropertiesTest {
 	WrapperTypes types = null;
 	try{
 	    types = factory.register(WrapperTypes.class, context);
+	    PropertyAccess.configuration(types).setPropertyWriteDelay(30, TimeUnit.SECONDS);
 	    assertEquals(new Double(55.12), types.getDouble());
 	    assertEquals(new Float(22.22), types.getFloat());
 	    assertEquals(new Integer(42), types.getInt());
@@ -157,6 +159,7 @@ public class PropertiesTest {
 	FilteringConfig types = null;
 	try{
 	    types = factory.register(FilteringConfig.class, context);
+	    PropertyAccess.configuration(types).setPropertyWriteDelay(30, TimeUnit.SECONDS);
 	    assertEquals(new URL("http://test.dk"), types.getURL());
 	    assertEquals(new File("some/file"), types.getFile());
 
@@ -173,6 +176,7 @@ public class PropertiesTest {
 	FilteringConfig types = null;
 	try{
 	    types = ManagedPropertiesServiceFactory.registerProperties(FilteringConfig.class, context);
+	    PropertyAccess.configuration(types).setPropertyWriteDelay(30, TimeUnit.SECONDS);
 	    assertEquals(new URL("http://test.dk"), types.getURL());
 	    assertEquals(new File("some/file"), types.getFile());
 
@@ -188,6 +192,7 @@ public class PropertiesTest {
 	AutoFilteringListTypes types = null;
 	try{
 	    types = factory.register(AutoFilteringListTypes.class, context);
+	    PropertyAccess.configuration(types).setPropertyWriteDelay(30, TimeUnit.SECONDS);
 	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
 	    
@@ -223,6 +228,7 @@ public class PropertiesTest {
 	ChangingConfig types = null;
 	try{
 	    types = factory.register(ChangingConfig.class, context);
+	    PropertyAccess.configuration(types).setPropertyWriteDelay(30, TimeUnit.SECONDS);
 	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
 	
@@ -270,6 +276,7 @@ public class PropertiesTest {
 	ChangingConfig types = null;
 	try{
 	    types = ManagedPropertiesServiceFactory.registerProperties(ChangingConfig.class, context);
+	    PropertyAccess.configuration(types).setPropertyWriteDelay(30, TimeUnit.SECONDS);
 	    String configPid = PropertyAccess.configuration(types).getID();
 	    org.osgi.service.cm.Configuration config = configAdmin.getConfiguration(configPid);
 	    

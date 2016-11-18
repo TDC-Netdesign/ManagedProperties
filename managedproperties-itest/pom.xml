@@ -31,6 +31,7 @@
 		<configuration>
 		    <trimStackTrace>false</trimStackTrace>
 		    <workingDirectory>${project.build.directory}</workingDirectory>
+		    <argLine>${env.MAVEN_OPTS}</argLine>
 		</configuration>
             </plugin>
 	    <plugin>
