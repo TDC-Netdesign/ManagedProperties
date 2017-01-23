@@ -25,9 +25,11 @@ import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.service.DefaultFilterProvider;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.osgi.service.ManagedPropertiesService;
+import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleReference;
 import org.osgi.service.component.annotations.Activate;
@@ -46,23 +48,47 @@ public class ManagedPropertiesServiceFactory implements ManagedPropertiesService
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagedPropertiesServiceFactory.class);
     
     private ServiceTracker<DefaultFilterProvider, DefaultFilterProvider> tracker;
+    private ManagedPropertiesConfig config;
     
 
     public ManagedPropertiesServiceFactory() {
-    
+	
     }
     
     @Activate
-    public void activate(BundleContext context){
+    public void activate(BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
 	LOGGER.info("Starting "+getClass().getName());
 	tracker = new ServiceTracker<>(context, DefaultFilterProvider.class, null);
 	tracker.open();
+	config = registerProperties(ManagedPropertiesConfig.class, new ManagedPropertiesConfigDefaults(), context);
     }
     
     @Deactivate
-    public void deactivate(BundleContext context){
-	tracker.close();
+    public void deactivate(BundleContext context) throws Exception{
+	try{
+	    PropertyAccess.actions(config).unregisterProperties();
+	}finally{
+	    tracker.close();
+	}
     }
+
+    protected ServiceTracker<DefaultFilterProvider, DefaultFilterProvider> getTracker() {
+	return tracker;
+    }
+
+    protected void setTracker(ServiceTracker<DefaultFilterProvider, DefaultFilterProvider> tracker) {
+	this.tracker = tracker;
+    }
+
+    protected ManagedPropertiesConfig getConfig() {
+	return config;
+    }
+
+    protected void setConfig(ManagedPropertiesConfig config) {
+	this.config = config;
+    }
+    
+    
     
     public static <T> T registerProperties(Class<T> type, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
 	return registerProperties(type, null, context);
@@ -70,14 +96,16 @@ public class ManagedPropertiesServiceFactory implements ManagedPropertiesService
 
     public static <I, T extends I> I registerProperties(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
 	LOGGER.info("Registering new configuration: "+type.getName()+" with defaults "+defaults);
+	ServiceTracker registerTracker = new ServiceTracker<>(context, DefaultFilterProvider.class, null);
+	registerTracker.open();
 	ManagedPropertiesServiceFactory osgiPropertiesFactory = new ManagedPropertiesServiceFactory();
-	osgiPropertiesFactory.activate(context);
-	
+	osgiPropertiesFactory.setTracker(registerTracker);
+	osgiPropertiesFactory.setConfig(new ManagedPropertiesConfigDefaults());
 	try{
 	return osgiPropertiesFactory.register(type, defaults, context);
 
 	}finally{
-	    osgiPropertiesFactory.deactivate(context);
+	    registerTracker.close();
 	}
     }
     
@@ -94,7 +122,9 @@ public class ManagedPropertiesServiceFactory implements ManagedPropertiesService
 	ServiceBasedPersistenceProvider persistenceProvider = new ServiceBasedPersistenceProvider(context);
 	ManagedPropertiesFactory factory = new ManagedPropertiesFactory(handlerFactory, persistenceProvider, this);
 	
-	return factory.register(type, defaults);
+	I properties = factory.register(type, defaults);
+	PropertyAccess.configuration(properties).setPropertyWriteDelay((int)(config.secondsToWaitForValue()*1000), TimeUnit.MILLISECONDS);
+	return properties;
     }
 
     @Override
