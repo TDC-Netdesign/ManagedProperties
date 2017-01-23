@@ -152,20 +152,22 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 	    Object returnValue = getConfigItem(propertyDefinition.getID());
 	    if (returnValue == null) {
 		returnValue = getDefaultItem(method);
-		if (returnValue == null) {
+		if (returnValue == null && propertyDefinition.isRecentlyUpdated()) {
 		    w.lock();
 		    try {
 			logger.debug("Value was null. Awaiting update");
 			updated.awaitNanos(nanosToWait);
 			returnValue = getConfigItem(propertyDefinition.getID());
 			logger.debug("Waited for value: " + returnValue);
+			propertyDefinition.setRecentlyUpdated(false);
 		    } finally {
 			w.unlock();
 		    }
-		    if(returnValue == null){
-			throw new UnknownValueException("Could not return the value for method " + method.getName() + ". The value did not exist in the config set.");
-		    }
 		    
+		    
+		}
+		if(returnValue == null){
+		    throw new UnknownValueException("Could not return the value for method " + method.getName() + ". The value did not exist in the config set.");
 		}
 	    }
 	    if (!method.getReturnType().isAssignableFrom(returnValue.getClass())) {
@@ -313,6 +315,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 		throw new ParsingException(required.pollFirst(), "Could not update configuration. Missing required fields: " + new ArrayList<>(required));
 	    }
 	    config = newprops;
+	    for(Attribute attribute : attributeToMethodMapping.values()){
+		attribute.setRecentlyUpdated(true);
+	    }
 	    for(ConfigurationCallback callback : callbacks){
 		callback.configurationUpdated(properties);
 	    }

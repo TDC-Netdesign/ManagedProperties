@@ -39,6 +39,7 @@ public class Attribute {
     private Class<? extends TypeFilter> filter;
     Property.Cardinality cardinalityDef;
     private boolean hidden;
+    private boolean recentlyUpdated = true;
 
     /**
      * Default Constructor. This is the only non-deprecated constructor. It will create an AD from a method.
@@ -290,6 +291,16 @@ public class Attribute {
     public void setCardinalityDef(Property.Cardinality cardinalityDef) {
 	this.cardinalityDef = cardinalityDef;
     }
+
+    public boolean isRecentlyUpdated() {
+	return recentlyUpdated;
+    }
+
+    public void setRecentlyUpdated(boolean newlyRequested) {
+	this.recentlyUpdated = newlyRequested;
+    }
+    
+    
     
     
 
