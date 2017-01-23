@@ -50,7 +50,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     private static final Logger logger = LoggerFactory.getLogger(ManagedPropertiesController.class);
     
     private Map<String, Object> config = new HashMap<>();
-    private long nanosToWait = TimeUnit.SECONDS.toNanos(5);
+    private long nanosToWait = TimeUnit.SECONDS.toNanos(1);
     private final String id;
     private final String name;
     private final String description;
