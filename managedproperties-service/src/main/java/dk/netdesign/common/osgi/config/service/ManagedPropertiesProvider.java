@@ -17,7 +17,9 @@
 package dk.netdesign.common.osgi.config.service;
 
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
+import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import java.util.Map;
 
 /**
  *
@@ -33,6 +35,8 @@ public abstract class ManagedPropertiesProvider{
     protected ConfigurationTarget getTarget(){
 	return target;
     }
+    
+    public abstract void persistConfiguration(Map<String, Object> newConfiguration) throws InvocationException;
     
     public abstract Class getReturnType(String configID) throws UnknownValueException;
     

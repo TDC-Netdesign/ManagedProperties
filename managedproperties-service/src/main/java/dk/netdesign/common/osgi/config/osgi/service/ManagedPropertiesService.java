@@ -16,6 +16,7 @@
 
 package dk.netdesign.common.osgi.config.osgi.service;
 
+import dk.netdesign.common.osgi.config.enhancement.ConfigurationChangeSet;
 import dk.netdesign.common.osgi.config.exception.ControllerPersistenceException;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
@@ -38,4 +39,5 @@ public interface ManagedPropertiesService {
     
     public <I, T extends I> I register(Class<I> type, T defaults) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException;
     
+    public <T> ConfigurationChangeSet<T> getChangeSet(T configuration) throws InvalidTypeException; 
 }

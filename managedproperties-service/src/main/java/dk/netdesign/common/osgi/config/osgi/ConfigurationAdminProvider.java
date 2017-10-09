@@ -21,6 +21,7 @@ import dk.netdesign.common.osgi.config.Attribute;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
+import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import java.io.File;
@@ -33,16 +34,19 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.MetaTypeProvider;
 import org.osgi.service.metatype.ObjectClassDefinition;
+import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +62,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     private final ManagedPropertiesController controller;
     private Dictionary<String, ?> lastAppliedProperties;
     
+    private ServiceTracker<ConfigurationAdmin, ConfigurationAdmin> configurationAdminTracker;
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
     private ServiceRegistration<ManagedPropertiesController> selfReg;
@@ -72,9 +77,27 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	    attributes.add(new MetaTypeAttributeDefinition(attribute));
 	}
 	ocd = buildOCD(target.getID(), target.getName(), target.getDescription(), target.getIconFile(), attributes);
+        
+        
     }
-    
-    
+
+    @Override
+    public void persistConfiguration(Map<String, Object> newConfiguration) throws InvocationException {
+        Dictionary<String, Object> newConfigDictionary = new Hashtable<>();
+        for(String key : newConfiguration.keySet()){
+            newConfigDictionary.put(key, newConfiguration.get(key));
+        }
+        
+        ConfigurationAdmin admin = configurationAdminTracker.getService();
+        
+        
+        try {
+            Configuration config = admin.getConfiguration(ocd.getID());
+            config.update(newConfigDictionary);
+        } catch (IOException ex) {
+            throw new InvocationException("Failed to update configuration", ex);
+        }
+    }
 
 
     @Override
@@ -144,6 +167,9 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
 	selfReg = bundleContext.registerService(ManagedPropertiesController.class, controller, selfRegProps);
+        
+        configurationAdminTracker = new ServiceTracker<>(bundleContext, ConfigurationAdmin.class, null);
+        configurationAdminTracker.open();
 	
     }
 
@@ -152,6 +178,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	selfReg.unregister();
 	metatypeServiceReg.unregister();
 	managedServiceReg.unregister();
+        configurationAdminTracker.close();
     }
     
     

@@ -8,7 +8,7 @@ package dk.netdesign.common.osgi.config.service;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 
 /**
- * This is the supertype for all TypeFilters that can be used for the ManagedProperties service.
+ * This is the super type for all TypeFilters that can be used for the ManagedProperties service.
  * A TypeFilter is used to do post-update validations and build advanced objects from the Configuration Admin basic types. The TypeFilter class is a fairly
  * powerful function that is simple to use. TypeFilters can use used for many things, but here are a few examples:
  * Creating advanced types, such as File or URL objects, from the basic types you can use in ConfigurationAdmin.
@@ -23,5 +23,7 @@ public abstract class TypeFilter<I extends Object, O extends Object> {
     }
 
     public abstract O parse(I input) throws TypeFilterException;
+    
+    public abstract I revert(O input) throws TypeFilterException;
 
 }

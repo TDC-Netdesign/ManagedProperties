@@ -40,6 +40,8 @@ public class Attribute {
     Property.Cardinality cardinalityDef;
     private boolean hidden;
     private boolean recentlyUpdated = true;
+    private String setterName;
+    private String getterName;
 
     /**
      * Default Constructor. This is the only non-deprecated constructor. It will create an AD from a method.
@@ -125,6 +127,16 @@ public class Attribute {
 	optionalLabels = methodProperty.optionLabels();
 	optionalValues = methodProperty.optionValues();
 	hidden = methodProperty.hidden();
+        
+        getterName = method.getName();
+        if(!methodProperty.setMethodName().equals(Property.SetterName)){
+            setterName = methodProperty.setMethodName();
+        }else if(getterName.startsWith("get")){
+            setterName = getterName.replaceAll("^get", "set");
+        }else{
+            setterName = null;
+        }
+        
 	logger.info("Built attribute: "+this);
     }
     
@@ -299,6 +311,16 @@ public class Attribute {
     public void setRecentlyUpdated(boolean newlyRequested) {
 	this.recentlyUpdated = newlyRequested;
     }
+
+    public String getSetterName() {
+        return setterName;
+    }
+
+    public String getGetterName() {
+        return getterName;
+    }
+    
+    
     
     
     
@@ -308,7 +330,8 @@ public class Attribute {
     public String toString() {
 	ToStringBuilder builder = new ToStringBuilder(this);
 	builder.append("id", id).append("name", name).append("description", description)
-		.append("defValue", defValue).append("optionalLabels", optionalLabels).append("optionalValues", optionalValues).append("filter", filter);
+		.append("defValue", defValue).append("optionalLabels", optionalLabels).append("optionalValues", optionalValues).append("filter", filter)
+                .append("getterName", getterName).append("setterName", setterName);
 	return builder.toString();
     }
 
