@@ -76,6 +76,7 @@ public class ConsumerManual {
 	  mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
 	  replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.logging.cfg").toURI())),
 	  replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.url.mvn.cfg").toURI())),
+	  replaceConfigurationFile("etc/BracketConfig.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/BracketConfig.cfg").toURI())),
 	    	
 	
    };

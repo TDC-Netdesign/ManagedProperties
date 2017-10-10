@@ -33,6 +33,9 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
@@ -52,6 +55,9 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService{
     public static final String BindingID = "ManagedPropertiesBinding";
+    
+    private static final String VALUE= "value";
+    
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationAdminProvider.class);
     private final BundleContext bundleContext;
     private final OCD ocd;
@@ -61,6 +67,17 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
     private ServiceRegistration<ManagedPropertiesController> selfReg;
+    
+    private final Pattern listPattern = Pattern.compile("\\(\\ ((\\w\\\".+?\\\"),\\s*)*\\)");  
+    private final Pattern listElementPattern = Pattern.compile("(\\w\\\".+?\\\")");
+    private final Pattern doublePattern = Pattern.compile("D\"(?<"+VALUE+">.+)\"");
+    private final Pattern floatPattern = Pattern.compile("F\"(?<"+VALUE+">.+)\"");
+    private final Pattern integerPattern = Pattern.compile("I\"(?<"+VALUE+">.+)\"");
+    private final Pattern longPattern = Pattern.compile("L\"(?<"+VALUE+">.+)\"");
+    private final Pattern booleanPattern = Pattern.compile("B\"(?<"+VALUE+">.+)\"");
+    private final Pattern bytePattern = Pattern.compile("X\"(?<"+VALUE+">.+)\"");
+    private final Pattern charPattern = Pattern.compile("C\"(?<"+VALUE+">.+)\"");
+    private final Pattern shortPattern = Pattern.compile("S\"(?<"+VALUE+">.+)\"");
 
     public ConfigurationAdminProvider(BundleContext bundleContext, ManagedPropertiesController controller, ConfigurationTarget target) throws InvalidTypeException {
 	super(target);
@@ -75,8 +92,8 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     }
     
     
-
-
+    
+    
     @Override
     public synchronized void updated(Dictionary<String, ?> properties) throws ConfigurationException {
 	if(properties == null){
@@ -91,14 +108,35 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 		if (key.equals("service.pid") || key.equals("felix.fileinstall.filename")) {
 		    continue;
 		}
-		configurationToReturn.put(key, properties.get(key));
+                //D"(?<value>.+)"
+                
+                Object value = properties.get(key);
+                if(value instanceof List){
+                    List valueAsList = (List)value;
+                    for(int i = 0 ; i<valueAsList.size() ; i++){
+                        Object valueFromList = valueAsList.get(i);
+                        if(valueFromList instanceof String){
+                            valueAsList.set(i, parseStringValue((String)valueFromList));
+                        }
+                        
+                    }
+                    
+                }else if(value instanceof String){
+                    value = parseStringValue((String)value);
+                }
+                
+                
+                
+		configurationToReturn.put(key, value);
 
 	    }
 	try {
 	    //Do actual update
 	    Map<String, Object> remainingConfig = getTarget().updateConfig(configurationToReturn);
 	    
-	    //Add remaining config to context properties as managedservice requests
+            if(!remainingConfig.isEmpty()){
+                logger.info("Couldn't add the following configurations: "+remainingConfig);
+            }	    
 	} catch (ParsingException ex) {
 	    try {
 		resetConfiguration();
@@ -108,6 +146,53 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	    throw new ConfigurationException(ex.getKey(), "Could not update configuration for "+getTarget().getName()+"["+getTarget().getID()+"]", ex);
 	}
 	lastAppliedProperties = properties;
+    }
+    
+    protected Object parseStringValue(String value){
+        Matcher listMatcher = listPattern.matcher(value);
+        if(listMatcher.find()){
+            List<Object> elements = new ArrayList<>();
+            Matcher listElementPatcher = listElementPattern.matcher(value);
+            while(listElementPatcher.find()){
+                elements.add(parseStringValue(listElementPatcher.group()));
+            }
+            return elements;
+        }
+        
+        Matcher doubleMatcher = doublePattern.matcher(value);
+        if(doubleMatcher.find()){
+            return Double.parseDouble(doubleMatcher.group(VALUE));
+        }
+        Matcher floatMatcher = floatPattern.matcher(value);
+        if(floatMatcher.find()){
+            return Float.parseFloat(floatMatcher.group(VALUE));
+        }
+        Matcher integerMatcher = integerPattern.matcher(value);
+        if(integerMatcher.find()){
+            return Integer.parseInt(integerMatcher.group(VALUE));
+        }
+        Matcher longMatcher = longPattern.matcher(value);
+        if(longMatcher.find()){
+            return Long.parseLong(longMatcher.group(VALUE));
+        }
+        Matcher shortMatcher = shortPattern.matcher(value);
+        if(shortMatcher.find()){
+            return Short.parseShort(shortMatcher.group(VALUE));
+        }
+        Matcher byteMatcher = bytePattern.matcher(value);
+        if(byteMatcher.find()){
+            return Byte.parseByte(byteMatcher.group(VALUE));
+        }
+        Matcher booleanMatcher = booleanPattern.matcher(value);
+        if(booleanMatcher.find()){
+            return Boolean.parseBoolean(booleanMatcher.group(VALUE));
+        }
+        Matcher charMatcher = charPattern.matcher(value);
+        if(charMatcher.find()){
+            return charMatcher.group(VALUE).charAt(0);
+        }
+        
+        return value;
     }
     
     protected synchronized void resetConfiguration() throws IOException{
@@ -177,7 +262,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     public Class getReturnType(String configID) throws UnknownValueException {
 	for(MetaTypeAttributeDefinition definition : ocd.getRequiredADs()){
 	    if(definition.getID().equals(configID)){
-		return String.class; //The configadmin/felix file install only supports String
+		return definition.getAttribute().getInputType();
 	    }
 	}
 	throw new UnknownValueException("No type found in OCD for configID: "+configID);
