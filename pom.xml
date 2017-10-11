@@ -6,7 +6,7 @@
     <groupId>dk.netdesign</groupId>
     <artifactId>managedproperties</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.3</version>
+    <version>1.0.4-SNAPSHOT</version>
     <name>Netdesign Managed Properties</name>
     <description>
 	This project is meant to simplyfy the usage of the excelent Configuration Admin and MetaType services for Felix OSGi. The bundle will create a service
@@ -151,7 +151,7 @@
 	    <dependency>
 		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-service</artifactId>
-		<version>1.0.3</version>
+		<version>1.0.4-SNAPSHOT</version>
 		<scope>provided</scope>
 	    </dependency>
 	    <dependency>
@@ -159,19 +159,19 @@
 		<artifactId>managedproperties-feature</artifactId>
 		<classifier>features</classifier>
 		<type>xml</type>
-		<version>1.0.3</version>
+		<version>1.0.4-SNAPSHOT</version>
 		<scope>provided</scope>
 	    </dependency>
 	    <dependency>
 		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-consumer</artifactId>
-		<version>1.0.3</version>
+		<version>1.0.4-SNAPSHOT</version>
 		<scope>test</scope>
 	    </dependency>
 	    <dependency>
 		<groupId>dk.netdesign</groupId>
 		<artifactId>managedproperties-test-resources</artifactId>
-		<version>1.0.3</version>
+		<version>1.0.4-SNAPSHOT</version>
 		<scope>provided</scope>
 	    </dependency>
 	    <dependency>
@@ -303,7 +303,7 @@
 		<connection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</connection>
 		<developerConnection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</developerConnection>
 		<url>git@github.com:TDC-Netdesign/ManagedProperties.git</url>
-		<tag>managedproperties-1.0.3</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 </project>
