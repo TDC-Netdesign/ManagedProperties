@@ -9,140 +9,146 @@
     <version>1.0.4-SNAPSHOT</version>
     <name>Netdesign Managed Properties</name>
     <description>
-	This project is meant to simplyfy the usage of the excelent Configuration Admin and MetaType services for Felix OSGi. The bundle will create a service
-	that allows other bundles to register an annotated interface. The ManagedProperties service will then create all the Metatype information, as well
-	as ensuring that objects are cast to their right types.
-	ManagedProperties also has a feature called Filters. A Filter is used to create an object, say a File, directly from a primitive Configuration Admin 
-	type. It can also contain logic, to allow the configuration to fail if, for example, a File doesn't exist.
+        This project is meant to simplyfy the usage of the excelent Configuration Admin and MetaType services for Felix OSGi. The bundle will create a service
+        that allows other bundles to register an annotated interface. The ManagedProperties service will then create all the Metatype information, as well
+        as ensuring that objects are cast to their right types.
+        ManagedProperties also has a feature called Filters. A Filter is used to create an object, say a File, directly from a primitive Configuration Admin 
+        type. It can also contain logic, to allow the configuration to fail if, for example, a File doesn't exist.
     </description>
     <url>https://github.com/TDC-Netdesign/ManagedProperties</url>
     
     <licenses>
-	<license>
-	    <name>The Apache License, Version 2.0</name>
-	    <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-	</license>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
     </licenses>
 		
     <properties>
-	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	<resource.encoding>UTF-8</resource.encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <resource.encoding>UTF-8</resource.encoding>
 
-	<cxf.version>3.0.2</cxf.version>
-	<slf4j.version>1.7.12</slf4j.version>
-	<pax.exam.version>4.8.0</pax.exam.version>
-	<osgi.framework.version>5.0.0</osgi.framework.version>
-	<karaf.version>4.0.5</karaf.version>
-	<karaf.features.version>4.0.5</karaf.features.version>
-	<commons.version>3.5</commons.version>
-	<maven.compiler.source>1.7</maven.compiler.source>
-	<maven.compiler.target>1.7</maven.compiler.target>
+        <cxf.version>3.0.2</cxf.version>
+        <slf4j.version>1.7.12</slf4j.version>
+        <pax.exam.version>4.8.0</pax.exam.version>
+        <osgi.framework.version>5.0.0</osgi.framework.version>
+        <karaf.version>4.1.2</karaf.version>
+        <karaf.features.version>4.0.5</karaf.features.version>
+        <commons.version>3.5</commons.version>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
     
     <distributionManagement>  
-	<repository>
-	    <uniqueVersion>false</uniqueVersion>
-	    <id>ossrhStage</id>  
-	    <name>Release stage repository</name> 
-	    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-	    <layout>default</layout>
-	</repository>
-	<snapshotRepository>
-	    <uniqueVersion>true</uniqueVersion>
-	    <id>ossrhSnapshot</id>  
-	    <name>Snapshot repository</name> 
-	    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-	    <layout>default</layout>
-	</snapshotRepository>
+        <repository>
+            <uniqueVersion>false</uniqueVersion>
+            <id>ossrhStage</id>  
+            <name>Release stage repository</name> 
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+            <layout>default</layout>
+        </repository>
+        <snapshotRepository>
+            <uniqueVersion>true</uniqueVersion>
+            <id>ossrhSnapshot</id>  
+            <name>Snapshot repository</name> 
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <layout>default</layout>
+        </snapshotRepository>
     </distributionManagement>
     
     <profiles>
-	<profile>
-	    <id>release-sign-artifacts</id>
-	    <activation>
-		<property>
-		    <name>env.BUILD_NUMBER</name>
-		</property>
-	    </activation>
-	    <build>
-		<plugins>
-		    <plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-gpg-plugin</artifactId>
-			<version>1.6</version>
-			<executions>
-			    <execution>
-				<id>sign-artifacts</id>
-				<phase>verify</phase>
-				<goals>
-				    <goal>sign</goal>
-				</goals>
-				<configuration>
-				    <keyname>${gpg.keyname}</keyname>
-				    <passphraseServerId>${gpg.keyname}</passphraseServerId>
-				</configuration>
-			    </execution>
-			</executions>
-		    </plugin>
-		</plugins>
-	    </build>
-	</profile>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>env.BUILD_NUMBER</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <keyname>${gpg.keyname}</keyname>
+                                    <passphraseServerId>${gpg.keyname}</passphraseServerId>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
     
     <modules>
-	<module>managedproperties-service</module>
-	<module>managedproperties-feature</module>
-	<module>managedproperties-consumer</module>
-	<module>managedproperties-test-resources</module>
-	<module>managedproperties-itest</module>
+        <module>managedproperties-service</module>
+        <module>managedproperties-feature</module>
+        <module>managedproperties-consumer</module>
+        <module>managedproperties-test-resources</module>
+        <module>managedproperties-itest</module>
     </modules>
     
     <build>
-	<plugins>
-	    <plugin>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-source-plugin</artifactId>
-		<version>2.4</version>
-		<executions>
-		    <execution>
-			<id>attach-sources</id>
-			<goals>
-			    <goal>jar</goal>
-			</goals>
-		    </execution>
-		</executions>
-	    </plugin>
-	    <plugin>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-javadoc-plugin</artifactId>
-		<version>2.10.3</version>
-		<executions>
-		    <execution>
-			<id>attach-javadocs</id>
-			<goals>
-			    <goal>jar</goal>
-			</goals>
-		    </execution>
-		</executions>
-	    </plugin>
-	</plugins>
-	<pluginManagement>
-	    <plugins>
-		<plugin>
-		    <groupId>org.apache.servicemix.tooling</groupId>
-		    <artifactId>depends-maven-plugin</artifactId>
-		    <version>1.3.1</version>
-		    <executions>
-			<execution>
-			    <id>generate-depends-file</id>
-			    <goals>
-				<goal>generate-depends-file</goal>
-			    </goals>
-			</execution>
-		    </executions>
-		</plugin>
-	    </plugins>
-	</pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.3</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>3.3.0</version>
+                    <extensions>true</extensions>                    
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.servicemix.tooling</groupId>
+                    <artifactId>depends-maven-plugin</artifactId>
+                    <version>1.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>generate-depends-file</id>
+                            <goals>
+                                <goal>generate-depends-file</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
     
     <dependencyManagement>
@@ -236,74 +242,74 @@
 	</dependency>
 
 	
-	<!--Test dependency start-->
-	<dependency>
-	    <groupId>org.ops4j.pax.exam</groupId>
-	    <artifactId>pax-exam-container-karaf</artifactId>
-	    <version>${pax.exam.version}</version>
-	    <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>org.ops4j.pax.exam</groupId>
-	    <artifactId>pax-exam-junit4</artifactId>
-	    <version>${pax.exam.version}</version>
-	    <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>org.ops4j.pax.exam</groupId>
-	    <artifactId>pax-exam</artifactId>
-	    <version>${pax.exam.version}</version>
-	    <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>org.ops4j.pax.url</groupId>
-	    <artifactId>pax-url-aether</artifactId>
-	    <version>2.4.1</version><!--<version>1.6.0</version>-->
-	    <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>javax.inject</groupId>
-	    <artifactId>javax.inject</artifactId>
-	    <version>1</version>
-	    <scope>test</scope>
-	</dependency>
-	    <dependency>
-		<groupId>junit</groupId>
-		<artifactId>junit</artifactId>
-		<version>4.12</version>
-		<scope>test</scope>
-	    </dependency>
+            <!--Test dependency start-->
+            <dependency>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>pax-exam-container-karaf</artifactId>
+                <version>${pax.exam.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>pax-exam-junit4</artifactId>
+                <version>${pax.exam.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.ops4j.pax.exam</groupId>
+                <artifactId>pax-exam</artifactId>
+                <version>${pax.exam.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.ops4j.pax.url</groupId>
+                <artifactId>pax-url-aether</artifactId>
+                <version>2.4.1</version><!--<version>1.6.0</version>-->
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>1</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+                <scope>test</scope>
+            </dependency>
 	    
-	    <dependency>
-		<groupId>org.easymock</groupId>
-		<artifactId>easymock</artifactId>
-		<version>3.4</version>
-		<scope>test</scope>
-	    </dependency>
-	</dependencies>
+            <dependency>
+                <groupId>org.easymock</groupId>
+                <artifactId>easymock</artifactId>
+                <version>3.4</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
 
 
     <developers>
-	<developer>
-	    <roles>
-		<role>Architect</role>
-		<role>Developer</role>
-	    </roles>
-	    <id>mnn</id>
-	    <name>Martin Nybo Nielsen</name>
-	    <email>mnn@netdesign.dk</email>
-	    <timezone>+1</timezone>
-	    <organization>netdesign.dk</organization>
-	    <organizationUrl>http://www.netdesign.dk</organizationUrl>
-	</developer>
+        <developer>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+            <id>mnn</id>
+            <name>Martin Nybo Nielsen</name>
+            <email>mnn@netdesign.dk</email>
+            <timezone>+1</timezone>
+            <organization>netdesign.dk</organization>
+            <organizationUrl>http://www.netdesign.dk</organizationUrl>
+        </developer>
     </developers>
     
     <scm>
-		<connection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</connection>
-		<developerConnection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</developerConnection>
-		<url>git@github.com:TDC-Netdesign/ManagedProperties.git</url>
-		<tag>HEAD</tag>
-	</scm>
+        <connection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</connection>
+        <developerConnection>scm:git:git@github.com:TDC-Netdesign/ManagedProperties.git</developerConnection>
+        <url>git@github.com:TDC-Netdesign/ManagedProperties.git</url>
+        <tag>HEAD</tag>
+    </scm>
 
 </project>

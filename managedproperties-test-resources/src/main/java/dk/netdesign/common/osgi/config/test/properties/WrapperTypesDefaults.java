@@ -56,4 +56,16 @@ public class WrapperTypesDefaults implements WrapperTypes {
 	return true;
     }
 
+    @Override
+    public Character getChar() {
+        return 'A';
+    }
+
+    @Override
+    public Character[] getPassword() {
+        return new Character[]{'1','2','3','4'};
+    }
+    
+    
+
 }

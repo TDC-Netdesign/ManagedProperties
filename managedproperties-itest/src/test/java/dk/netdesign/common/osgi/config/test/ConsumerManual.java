@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package dk.netdesign.common.osgi.config.test;
 
+import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import dk.netdesign.common.osgi.config.test.properties.WrapperTypes;
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import javax.inject.Inject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -40,49 +44,98 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
 public class ConsumerManual {
-    
-            @Configuration
-	public Option[] config() throws Exception{
-    MavenArtifactUrlReference karafUrl = maven()
-        .groupId("org.apache.karaf")
-        .artifactId("apache-karaf")
-        .versionAsInProject()
-        .type("tar.gz");
-    MavenUrlReference karafStandardRepo = maven()
-        .groupId("org.apache.karaf.features")
-        .artifactId("standard")
-        .classifier("features")
-        .type("xml")
-        .versionAsInProject();
-    MavenUrlReference karafEnterpriseRepo = maven()
-        .groupId("org.apache.karaf.features")
-        .artifactId("enterprise")
-        .classifier("features")
-        .type("xml")
-        .versionAsInProject();
-    
-    
-    return new Option[] {
-        // KarafDistributionOption.debugConfiguration("5005", true),
-        karafDistributionConfiguration()
+
+    @Inject
+    private WrapperTypes configComponent;
+
+    @Configuration
+    public Option[] config() throws Exception {
+        MavenArtifactUrlReference karafUrl = maven()
+                .groupId("org.apache.karaf")
+                .artifactId("apache-karaf")
+                .versionAsInProject()
+                .type("tar.gz");
+        MavenUrlReference karafStandardRepo = maven()
+                .groupId("org.apache.karaf.features")
+                .artifactId("standard")
+                .classifier("features")
+                .type("xml")
+                .versionAsInProject();
+        MavenUrlReference karafEnterpriseRepo = maven()
+                .groupId("org.apache.karaf.features")
+                .artifactId("enterprise")
+                .classifier("features")
+                .type("xml")
+                .versionAsInProject();
+
+        return new Option[]{
+            // KarafDistributionOption.debugConfiguration("5005", true),
+            karafDistributionConfiguration()
             .frameworkUrl(karafUrl)
             .unpackDirectory(new File("exam"))
             .useDeployFolder(false),
-        keepRuntimeFolder(),
-        features(karafStandardRepo, "webconsole", "scr"),
-	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-service").versionAsInProject(),
-	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-test-resources").versionAsInProject(),	  
-	  mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-consumer").versionAsInProject().startLevel(100),
-	  mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
-	  replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.logging.cfg").toURI())),
-	  replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.url.mvn.cfg").toURI())),
-	  replaceConfigurationFile("etc/BracketConfig.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/BracketConfig.cfg").toURI())),
-	    	
-	
-   };
-}
+            keepRuntimeFolder(),
+            features(karafStandardRepo, "webconsole", "scr"),
+            mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-service").versionAsInProject(),
+            mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-test-resources").versionAsInProject(),
+            //mavenBundle().groupId("dk.netdesign").artifactId("managedproperties-consumer").versionAsInProject().startLevel(100),
+            mavenBundle().groupId("org.apache.commons").artifactId("commons-lang3").versionAsInProject(),
+            replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.logging.cfg").toURI())),
+            replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.url.mvn.cfg").toURI())),
+            replaceConfigurationFile("etc/BracketConfig.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/BracketConfig.cfg").toURI())),
+            replaceConfigurationFile("etc/WrapperTypes.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/WrapperTypes.cfg").toURI())),
+        
+        };
+        
+    }
+
     @Test
-    public void testImmediateAccess() throws Exception {
-	System.in.read();
+    public void testImmediateAccess() throws IOException {
+        try{
+            System.out.println(configComponent.getBoolean());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(configComponent.getByte());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(configComponent.getChar());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(configComponent.getDouble());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(configComponent.getFloat());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(configComponent.getShort());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(configComponent.getInt());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(configComponent.getLong());
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        try{
+            System.out.println(Arrays.asList(configComponent.getPassword()));
+        }catch(UnknownValueException ex){
+            System.out.println(ex.getMessage());
+        }
+        System.in.read();
     }
 }
