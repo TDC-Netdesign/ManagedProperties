@@ -33,7 +33,6 @@
         <pax.exam.version>4.8.0</pax.exam.version>
         <osgi.framework.version>5.0.0</osgi.framework.version>
         <karaf.version>4.1.2</karaf.version>
-        <karaf.features.version>4.0.5</karaf.features.version>
         <commons.version>3.5</commons.version>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
@@ -225,14 +224,14 @@
 	    <artifactId>standard</artifactId>
 	    <classifier>features</classifier>
 	    <type>xml</type>
-	    <version>${karaf.features.version}</version>
+	    <version>${karaf.version}</version>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.karaf.features</groupId>
 	    <artifactId>enterprise</artifactId>
 	    <classifier>features</classifier>
 	    <type>xml</type>
-	    <version>${karaf.features.version}</version>
+	    <version>${karaf.version}</version>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.karaf</groupId>
