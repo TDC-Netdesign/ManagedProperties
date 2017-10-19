@@ -5,6 +5,7 @@
  */
 package dk.netdesign.common.osgi.config.enhancement;
 
+import dk.netdesign.common.osgi.config.exception.InvocationException;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -24,6 +25,8 @@ public interface PropertyActions {
      * @return The lock to release when the properties can update again.
      */
     public Lock lockPropertiesUpdate();
+    
+    public void commitProperties() throws InvocationException;
 
     /**
      * Calling this method will unregister the properties object so it will no longer receive new updated configurations. Only call this method as cleanup,

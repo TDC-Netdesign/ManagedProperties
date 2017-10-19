@@ -9,6 +9,8 @@ import dk.netdesign.common.osgi.config.service.TypeFilter;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The file filter parses a String into a File. The filter takes a String as input, and produces a File. The input is a String denoting a path to the
@@ -28,5 +30,16 @@ public class FileFilter extends TypeFilter<String, File> {
 	}
 	return f;
     }
+
+    @Override
+    public String revert(File input) throws TypeFilterException {
+        try {
+            return input.getCanonicalPath();
+        } catch (IOException ex) {
+            throw new TypeFilterException("Could not parse file", ex);
+        }
+    }
+    
+    
 
 }

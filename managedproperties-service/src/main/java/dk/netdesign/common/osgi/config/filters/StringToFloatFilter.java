@@ -36,6 +36,11 @@ public class StringToFloatFilter extends TypeFilter<String, Float> {
 	    throw new TypeFilterException("Could not parse Float from string: "+input,ex);
 	}
     }
+
+    @Override
+    public String revert(Float input) throws TypeFilterException {
+        return input.toString();
+    }
     
     
     

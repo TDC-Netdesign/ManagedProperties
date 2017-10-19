@@ -36,6 +36,11 @@ public class StringToIntegerFilter extends TypeFilter<String, Integer> {
 	    throw new TypeFilterException("Could not parse Integer from string: "+input,ex);
 	}
     }
+
+    @Override
+    public String revert(Integer input) throws TypeFilterException {
+        return input.toString();
+    }
     
     
     

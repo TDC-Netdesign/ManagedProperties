@@ -31,6 +31,13 @@ public class StringToCharacterArrayFilter extends TypeFilter<String, Character[]
 	char[] charArray = input.toCharArray();
 	return ArrayUtils.toObject(charArray);
     }
+
+    @Override
+    public String revert(Character[] input) throws TypeFilterException {
+        return new String(ArrayUtils.toPrimitive(input));
+    }
+    
+    
     
     
     

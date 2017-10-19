@@ -32,6 +32,12 @@ public class StringToCharacterFilter extends TypeFilter<String, Character>{
 	}
 	return input.toCharArray()[0];
     }
+
+    @Override
+    public String revert(Character input) throws TypeFilterException {
+        return input.toString();
+    }
+    
     
     
 }

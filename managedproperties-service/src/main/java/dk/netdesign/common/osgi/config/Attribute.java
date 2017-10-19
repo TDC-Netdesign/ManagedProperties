@@ -29,6 +29,7 @@ public class Attribute {
     private static final Logger logger = LoggerFactory.getLogger(Attribute.class);
 
     private String id;
+    private Class methodReturnType;
     private Class inputType;
     private String name;
     private String description;
@@ -62,7 +63,7 @@ public class Attribute {
 	name = getAttributeName(method);
 	id = name;
 
-	Class methodReturnType = getMethodReturnType(method);
+	methodReturnType = getMethodReturnType(method);
 	
 	cardinalityDef = methodProperty.cardinality();
 	
@@ -271,6 +272,16 @@ public class Attribute {
     protected void setInputType(Class inputType) {
 	this.inputType = inputType;
     }
+
+    public Class getMethodReturnType() {
+        return methodReturnType;
+    }
+
+    protected void setMethodReturnType(Class methodReturnType) {
+        this.methodReturnType = methodReturnType;
+    }
+    
+    
 
     public boolean isHidden() {
 	return hidden;

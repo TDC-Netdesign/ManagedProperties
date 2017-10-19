@@ -26,6 +26,7 @@ import dk.netdesign.common.osgi.config.service.HandlerFactory;
 import dk.netdesign.common.osgi.config.osgi.ManagedPropertiesDefaultFiltersComponent;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
+import java.util.Map;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -72,6 +73,13 @@ public class AnnotationTest {
 		    public void stop() throws Exception {
 			
 		    }
+
+                    @Override
+                    public void persistConfiguration(Map<String, Object> newConfiguration) throws InvocationException {
+                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                    }
+                    
+                    
 		};
 	    }
 	};

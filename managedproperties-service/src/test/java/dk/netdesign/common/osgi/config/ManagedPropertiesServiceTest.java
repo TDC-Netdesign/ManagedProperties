@@ -87,6 +87,13 @@ public class ManagedPropertiesServiceTest {
 		    public void stop() throws Exception {
 			
 		    }
+
+                    @Override
+                    public void persistConfiguration(Map<String, Object> newConfiguration) throws InvocationException {
+                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                    }
+                    
+                    
 		};
 	    }
 	};
@@ -754,6 +761,13 @@ public class ManagedPropertiesServiceTest {
 	public UninitializableClass parse(String input) throws TypeFilterException {
 	    return null;
 	}
+
+        @Override
+        public String revert(UninitializableClass input) throws TypeFilterException {
+            return null;
+        }
+        
+        
     }
 
     private static class StringFilter extends TypeFilter<Integer, String> {
@@ -765,6 +779,13 @@ public class ManagedPropertiesServiceTest {
 	public String parse(Integer input) throws TypeFilterException {
 	    return input.toString();
 	}
+
+        @Override
+        public Integer revert(String input) throws TypeFilterException {
+            return Integer.parseInt(input);
+        }
+        
+        
 
     }
     

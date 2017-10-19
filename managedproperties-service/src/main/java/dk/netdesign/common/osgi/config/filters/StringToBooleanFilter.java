@@ -38,4 +38,11 @@ public class StringToBooleanFilter extends TypeFilter<String, Boolean> {
 	}
     }
 
+    @Override
+    public String revert(Boolean input) throws TypeFilterException {
+        return input.toString();
+    }
+    
+    
+
 }

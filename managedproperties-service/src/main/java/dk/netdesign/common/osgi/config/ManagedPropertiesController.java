@@ -33,15 +33,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Level;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The ManagedPropertiesController class is used as the central mechanism for the link between the application and the configuration source. This class is used
- * as an InvocationHandler for the java.util.Proxy which is returned for any registered interface.
+ * The ManagedPropertiesController class is used as the central mechanism for
+ * the link between the application and the configuration source. This class is
+ * used as an InvocationHandler for the java.util.Proxy which is returned for
+ * any registered interface.
  *
  * @author mnn
  */
@@ -66,21 +70,30 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     private final List<String> requiredIds;
     private final Map<FilterReference, Class<? extends TypeFilter>> defaultFilters;
     private ManagedPropertiesProvider provider;
+    private boolean settingConfiguration = false;
 
     /**
      * Returns a ManagedProperties object with the defined defaults.
      *
      * @param <E> The type of the configuration interface to proxy.
-     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with
+     * @param type The type of configuration to create. This MUST be an
+     * interface and the interface must be annotated with
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
-     * @param defaults The default values to use if a configuration item is not currently in the configuration set. The defaults must be an object of a type
-     * that implements the type denoted by @see I.
-     * @param defaultFiltersList An optional list of filters to use for default filtering. This list will be used if an attributes input type does snot match
-     * the output type defined by its output type defined by its methods returntype.
-     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
-     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
-     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
-     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
+     * @param defaults The default values to use if a configuration item is not
+     * currently in the configuration set. The defaults must be an object of a
+     * type that implements the type denoted by @see I.
+     * @param defaultFiltersList An optional list of filters to use for default
+     * filtering. This list will be used if an attributes input type does snot
+     * match the output type defined by its output type defined by its methods
+     * returntype.
+     * @throws InvalidTypeException If a method/configuration item mapping uses
+     * an invalid type.
+     * @throws TypeFilterException If a method/configuration item mapping uses
+     * an invalid TypeMapper.
+     * @throws DoubleIDException If a method/configuration item mapping uses an
+     * ID that is already defined.
+     * @throws InvalidMethodException If a method/configuration violates any
+     * restriction not defined in the other exceptions.
      */
     public <E> ManagedPropertiesController(Class<? super E> type, E defaults, List<Class<? extends TypeFilter>> defaultFiltersList) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
         PropertyDefinition typeDefinition = getDefinitionAnnotation(type);
@@ -107,6 +120,17 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 }
                 logger.debug("Adding method to mapping: " + methodDefinition);
                 attributeToMethodMapping.put(classMethod.getName(), methodDefinition);
+                if (methodAnnotation.setMethodName() != null) {
+                    Method setterMethod = null;
+                    try {
+                        setterMethod = type.getMethod(methodAnnotation.setMethodName(), methodDefinition.getMethodReturnType());
+                    } catch (NoSuchMethodException | SecurityException ex) {
+                        //No setter method. Don't do anything.
+                    }
+                    if (setterMethod != null) {
+                        attributeToMethodMapping.put(methodDefinition.getSetterName(), methodDefinition);
+                    }
+                }
             }
         }
 
@@ -131,47 +155,44 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
      * The same as the other constructor, but does not set defaults.
      *
      * @see #ManagedPropertiesController(Class, Object, List)
-     * @param type The type of configuration to create. This MUST be an interface and the interface must be annotated with
+     * @param type The type of configuration to create. This MUST be an
+     * interface and the interface must be annotated with
      * {@link dk.netdesign.common.osgi.config.annotation.PropertyDefinition PropertyDefinition}.
-     * @param defaultFiltersList An optional list of filters to use for default filtering. This list will be used if an attributes input type does snot match
-     * the output type defined by its output type defined by its methods returntype.
-     * @throws InvalidTypeException If a method/configuration item mapping uses an invalid type.
-     * @throws TypeFilterException If a method/configuration item mapping uses an invalid TypeMapper.
-     * @throws DoubleIDException If a method/configuration item mapping uses an ID that is already defined.
-     * @throws InvalidMethodException If a method/configuration violates any restriction not defined in the other exceptions.
+     * @param defaultFiltersList An optional list of filters to use for default
+     * filtering. This list will be used if an attributes input type does snot
+     * match the output type defined by its output type defined by its methods
+     * returntype.
+     * @throws InvalidTypeException If a method/configuration item mapping uses
+     * an invalid type.
+     * @throws TypeFilterException If a method/configuration item mapping uses
+     * an invalid TypeMapper.
+     * @throws DoubleIDException If a method/configuration item mapping uses an
+     * ID that is already defined.
+     * @throws InvalidMethodException If a method/configuration violates any
+     * restriction not defined in the other exceptions.
      */
     public ManagedPropertiesController(Class type, List<Class<? extends TypeFilter>> defaultFiltersList) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException {
         this(type, null, defaultFiltersList);
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException {
+    public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException, ParsingException {
         if (method.isAnnotationPresent(Property.class)) {
-            Attribute propertyDefinition = attributeToMethodMapping.get(method.getName());
-            Object returnValue = getConfigItem(propertyDefinition.getID());
-            if (returnValue == null) {
-                returnValue = getDefaultItem(method);
-                if (returnValue == null && propertyDefinition.isRecentlyUpdated()) {
-                    w.lock();
-                    try {
-                        logger.debug("Value was null. Awaiting update");
-                        updated.awaitNanos(nanosToWait);
-                        returnValue = getConfigItem(propertyDefinition.getID());
-                        logger.debug("Waited for value: " + returnValue);
-                        propertyDefinition.setRecentlyUpdated(false);
-                    } finally {
-                        w.unlock();
-                    }
-
+            String methodName = method.getName();
+            Attribute propertyDefinition = attributeToMethodMapping.get(methodName);
+            if (methodName.equals(propertyDefinition.getGetterName())) {
+                return getConfigItem(method, propertyDefinition);
+            } else if (methodName.equals(propertyDefinition.getSetterName()) && args.length == 0) {
+                Class methodArgumentClass = args[0].getClass();
+                if(propertyDefinition.getMethodReturnType().isAssignableFrom(methodArgumentClass)){
+                    setFilteredItem(propertyDefinition, args[0]);
+                }else if(propertyDefinition.getInputType().isAssignableFrom(methodArgumentClass)){
+                    setItem(propertyDefinition.getID(), args[0]);
+                }else if(List.class.isAssignableFrom(methodArgumentClass)){
+                    setListOfItems(propertyDefinition, (List)args[0]);
                 }
-                if (returnValue == null) {
-                    throw new UnknownValueException("Could not return the value for method " + method.getName() + ". The value did not exist in the config set.");
-                }
+                
             }
-            if (!method.getReturnType().isAssignableFrom(returnValue.getClass())) {
-                throw new InvalidTypeException("Could not return the value for method " + method.getName() + ". The value " + returnValue + " had Type " + returnValue.getClass() + " expected " + method.getReturnType());
-            }
-            return returnValue;
         } else if (allowedMethods.contains(method)) {
             try {
                 return method.invoke(this, args);
@@ -181,6 +202,80 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         }
 
         throw new UnsupportedOperationException("The method " + method + " was not recognized and was not annotated with the annotation " + Property.class.getName() + " allowed methods: " + allowedMethods);
+    }
+    
+    private void setListOfItems(Attribute attribute, List<Object> items) throws ParsingException{
+        List<Object> toSet = new ArrayList<>();
+        for(Object item : items){
+            if(attribute.getMethodReturnType().isAssignableFrom(item.getClass())){
+                toSet.add(parseToInputType(attribute.getID(), item, attribute.getInputType()));
+            }else{
+                toSet.add(item);
+            }
+        }
+        setItem(attribute.getID(), toSet);
+    }
+    
+    private void setFilteredItem(Attribute attribute, Object item) throws ParsingException{
+        Object inputTypedItem = parseToInputType(attribute.getID(), item, attribute.getInputType());
+        setItem(attribute.getID(), inputTypedItem);
+    }
+
+    private void setItem(String key, Object item) {
+        w.lock();
+        try {
+
+            config.put(key, item);
+
+            if (settingConfiguration) {
+                w.unlock();
+            }
+        } finally {
+            settingConfiguration = true;
+        }
+    }
+
+    @Override
+    public void commitProperties() throws InvocationException {
+        try {
+            if (!settingConfiguration) {
+                throw new InvocationException("Could not commit properties, not currently setting configuration");
+            }
+
+            provider.persistConfiguration(config);
+            
+        }finally{
+            settingConfiguration = false;
+            w.unlock();
+        }
+
+    }
+
+    private Object getConfigItem(Method method, Attribute propertyDefinition) throws InvocationException, InvalidTypeException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException {
+        Object returnValue = getConfigItem(propertyDefinition.getID());
+        if (returnValue == null) {
+            returnValue = getDefaultItem(method);
+            if (returnValue == null && propertyDefinition.isRecentlyUpdated()) {
+                w.lock();
+                try {
+                    logger.debug("Value was null. Awaiting update");
+                    updated.awaitNanos(nanosToWait);
+                    returnValue = getConfigItem(propertyDefinition.getID());
+                    logger.debug("Waited for value: " + returnValue);
+                    propertyDefinition.setRecentlyUpdated(false);
+                } finally {
+                    w.unlock();
+                }
+
+            }
+            if (returnValue == null) {
+                throw new UnknownValueException("Could not return the value for method " + method.getName() + ". The value did not exist in the config set.");
+            }
+        }
+        if (!method.getReturnType().isAssignableFrom(returnValue.getClass())) {
+            throw new InvalidTypeException("Could not return the value for method " + method.getName() + ". The value " + returnValue + " had Type " + returnValue.getClass() + " expected " + method.getReturnType());
+        }
+        return returnValue;
     }
 
     private Object getConfigItem(String id) {
@@ -221,13 +316,19 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
 
     /**
-     * The updated method is called in order to change the configuration bound to this class. When called, the method will parse the Map of properties and parse
-     * the data for each Method/Configuration item. For each Configuration Item, the type of the object is checked against the return types, the filters are
-     * run, and the data parsed. The result is that it is the final, parsed and validated versions of the configuration that is actually returned. The original
-     * properties are never stored in this object.
+     * The updated method is called in order to change the configuration bound
+     * to this class. When called, the method will parse the Map of properties
+     * and parse the data for each Method/Configuration item. For each
+     * Configuration Item, the type of the object is checked against the return
+     * types, the filters are run, and the data parsed. The result is that it is
+     * the final, parsed and validated versions of the configuration that is
+     * actually returned. The original properties are never stored in this
+     * object.
      *
-     * @param properties The properties that are sent from the configuration source
-     * @return The configuration keys and values that could not be matched to a configuration item
+     * @param properties The properties that are sent from the configuration
+     * source
+     * @return The configuration keys and values that could not be matched to a
+     * configuration item
      * @throws ParsingException If the data is invalid, or a filter fails.
      */
     @Override
@@ -318,7 +419,6 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         logger.info("updated configuration\n" + this);
         return unknownConfigs;
     }
-    
 
     public Object parseObject(String key, Object configurationValue, Class inputType, Attribute definition) throws ParsingException {
         Object toReturn = parseToInputType(key, configurationValue, inputType);
@@ -499,7 +599,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
             FilterReference reference = getReference(filter);
             logger.debug("Checking defaults reference: " + reference);
             if (filterMap.containsKey(reference)) {
-                throw new TypeFilterException("Could not create defaults. Only two filters must have the same combination of input and output types");
+                throw new TypeFilterException("Could not create defaults. Only one filter must have the same combination of input and output types");
             }
             filterMap.put(reference, filter);
         }
@@ -509,7 +609,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     protected final FilterReference getReference(Class<? extends TypeFilter> filterClass) throws TypeFilterException {
         Method[] methods = filterClass.getDeclaredMethods();
         for (Method method : methods) {
-            if (method.getName().equals("parse") && method.getParameterTypes().length == 1) {
+            if (method.getName().equals("parse") && method.getParameterTypes().length == 1 && !method.isBridge()) {
                 Class inputType = method.getParameterTypes()[0];
                 Class outputType = method.getReturnType();
                 return new FilterReference(inputType, outputType);
@@ -580,8 +680,8 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     public List<Attribute> getAttributes() {
         return new ArrayList<>(attributeToMethodMapping.values());
     }
-    
-    public Attribute getAttributeByName(String methodName){
+
+    public Attribute getAttributeByName(String methodName) {
         return attributeToMethodMapping.get(methodName);
     }
 

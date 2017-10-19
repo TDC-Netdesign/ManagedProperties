@@ -36,6 +36,11 @@ public class StringToByteFilter extends TypeFilter<String, Byte> {
 	    throw new TypeFilterException("Could not parse Byte from string: "+input,ex);
 	}
     }
+
+    @Override
+    public String revert(Byte input) throws TypeFilterException {
+        return input.toString();
+    }
     
     
     

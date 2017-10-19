@@ -36,6 +36,12 @@ public class StringToDoubleFilter extends TypeFilter<String, Double> {
 	    throw new TypeFilterException("Could not parse Double from string: "+input,ex);
 	}
     }
+
+    @Override
+    public String revert(Double input) throws TypeFilterException {
+        return input.toString();
+    }
+    
     
     
 }

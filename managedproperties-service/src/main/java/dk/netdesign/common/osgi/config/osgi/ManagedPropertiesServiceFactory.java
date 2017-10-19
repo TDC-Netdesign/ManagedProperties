@@ -16,7 +16,6 @@
 
 package dk.netdesign.common.osgi.config.osgi;
 
-import dk.netdesign.common.osgi.config.enhancement.ConfigurationChangeSet;
 import dk.netdesign.common.osgi.config.exception.ControllerPersistenceException;
 import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
@@ -158,9 +157,6 @@ public class ManagedPropertiesServiceFactory implements ManagedPropertiesService
 	return filters;
     }
 
-    @Override
-    public <T> ConfigurationChangeSet<T> getChangeSet(T configuration) throws InvalidTypeException {
-        return new ConfigurationChangeSet<>(configuration);
-    }
+
      
 }
