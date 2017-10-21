@@ -22,11 +22,11 @@
     <parent>
 	<groupId>dk.netdesign</groupId>
 	<artifactId>managedproperties</artifactId>
-	<version>1.0.3-SNAPSHOT</version>
+	<version>1.0.4-SNAPSHOT</version>
     </parent>
     <groupId>dk.netdesign</groupId>
     <artifactId>managedproperties-feature</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>managedproperties feature</name>

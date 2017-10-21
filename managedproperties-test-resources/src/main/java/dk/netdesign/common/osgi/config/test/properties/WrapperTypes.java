@@ -18,6 +18,7 @@ package dk.netdesign.common.osgi.config.test.properties;
 
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
+import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 
 /**
  *
@@ -26,20 +27,21 @@ import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 @PropertyDefinition(name = "WrapperTypes", id = "WrapperTypes")
 public interface WrapperTypes {
     @Property
-    public Long getLong();
+    public Long getLong() throws UnknownValueException;
     @Property
-    public Integer getInt();
+    public Integer getInt() throws UnknownValueException;
     @Property
-    public Short getShort();
+    public Short getShort() throws UnknownValueException;
     @Property
-    public Double getDouble();
+    public Double getDouble() throws UnknownValueException;
     @Property
-    public Float getFloat();
+    public Float getFloat() throws UnknownValueException;
     @Property
-    public Byte getByte();
+    public Byte getByte() throws UnknownValueException;
     @Property
-    public Boolean getBoolean();
-
-    
-    
+    public Boolean getBoolean() throws UnknownValueException;
+    @Property
+    public Character getChar() throws UnknownValueException;
+    @Property
+    public Character[] getPassword() throws UnknownValueException;
 }
