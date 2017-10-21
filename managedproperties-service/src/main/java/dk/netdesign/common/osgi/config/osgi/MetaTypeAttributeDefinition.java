@@ -83,7 +83,7 @@ public class MetaTypeAttributeDefinition implements AttributeDefinition{
 		adCardinality = 0;
 		break;
 	    case Optional:
-		adCardinality = -1;
+		adCardinality = 0;
 		break;
 	    case List:
 		adCardinality = Integer.MIN_VALUE;
