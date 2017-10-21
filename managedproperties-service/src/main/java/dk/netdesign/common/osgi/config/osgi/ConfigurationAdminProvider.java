@@ -24,6 +24,7 @@ import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,6 +57,9 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService{
     public static final String BindingID = "ManagedPropertiesBinding";
+    public static final String ConfigID = "ManagedPropertiesID";
+    public static final String ConfigName = "ManagedPropertiesName";
+    
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationAdminProvider.class);
     private final BundleContext bundleContext;
     private final OCD ocd;
@@ -66,6 +70,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
     private ServiceRegistration<ManagedPropertiesController> selfReg;
+    private ServiceRegistration proxyRegistration;
 
     public ConfigurationAdminProvider(BundleContext bundleContext, ManagedPropertiesController controller, ConfigurationTarget target) throws InvalidTypeException {
 	super(target);
@@ -168,6 +173,11 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
 	selfReg = bundleContext.registerService(ManagedPropertiesController.class, controller, selfRegProps);
         
+        Hashtable<String, Object> proxyRegistrationProps = new Hashtable<>();
+        proxyRegistrationProps.put(ConfigID, controller.getID());
+        proxyRegistrationProps.put(ConfigName, controller.getName());
+        proxyRegistration = bundleContext.registerService(controller.getConfigurationType(), ManagedPropertiesFactory.castToProxy(controller.getConfigurationType(), controller), proxyRegistrationProps);
+        
         configurationAdminTracker = new ServiceTracker<>(bundleContext, ConfigurationAdmin.class, null);
         configurationAdminTracker.open();
 	
@@ -178,6 +188,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	selfReg.unregister();
 	metatypeServiceReg.unregister();
 	managedServiceReg.unregister();
+        proxyRegistration.unregister();
         configurationAdminTracker.close();
     }
     

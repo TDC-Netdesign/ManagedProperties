@@ -125,7 +125,11 @@ public class ManagedPropertiesFactory {
 		logger.info("Registered "+controller);
 	  }
 	  
-	return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, PropertyActions.class, PropertyConfig.class, ConfigurationCallbackHandler.class}, controller));
+	return castToProxy(type, controller);
+    }
+    
+    public static <I, T extends I> I castToProxy(Class<I> type, ManagedPropertiesController controller){
+        return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, PropertyActions.class, PropertyConfig.class, ConfigurationCallbackHandler.class}, controller));
     }
     
     /**

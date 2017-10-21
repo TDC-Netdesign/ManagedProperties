@@ -90,7 +90,7 @@ public class ManagedPropertiesServiceTest {
 
                     @Override
                     public void persistConfiguration(Map<String, Object> newConfiguration) throws InvocationException {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                        
                     }
                     
                     
