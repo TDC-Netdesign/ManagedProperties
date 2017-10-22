@@ -110,10 +110,6 @@ public class ManagedPropertiesServiceTest {
 	testfile.delete();
     }
     
-    @Test
-    public void testArray(){
-        System.out.println(Array.get(new String[0], 0));
-    }
 
     @Test
     public void testValidTypes() throws Exception {
@@ -131,18 +127,18 @@ public class ManagedPropertiesServiceTest {
 	BigDecimal testBigDecimal = BigDecimal.valueOf(22.2);
 	Boolean testBoolean = true;
 	Character[] testPassword = new Character[]{'t', 'e', 's', 't'};
-	newConfig.put("String", Collections.singletonList(testString));
-	newConfig.put("Integer", Collections.singletonList(testInteger));
-	newConfig.put("Long", Collections.singletonList(testLong));
-	newConfig.put("Short", Collections.singletonList(testShort));
-	newConfig.put("Character", Collections.singletonList(testCharacter));
-	newConfig.put("Byte", Collections.singletonList(testByte));
-	newConfig.put("Double", Collections.singletonList(testDouble));
-	newConfig.put("Float", Collections.singletonList(testFloat));
-	newConfig.put("BigInteger", Collections.singletonList(testBigInteger));
-	newConfig.put("BigDecimal", Collections.singletonList(testBigDecimal));
-	newConfig.put("Boolean", Collections.singletonList(testBoolean));
-	newConfig.put("Password", Collections.singletonList(testPassword));
+	newConfig.put("String", testString);
+	newConfig.put("Integer", testInteger);
+	newConfig.put("Long", testLong);
+	newConfig.put("Short", testShort);
+	newConfig.put("Character", testCharacter);
+	newConfig.put("Byte", testByte);
+	newConfig.put("Double", testDouble);
+	newConfig.put("Float", testFloat);
+	newConfig.put("BigInteger", testBigInteger);
+	newConfig.put("BigDecimal", testBigDecimal);
+	newConfig.put("Boolean", testBoolean);
+	newConfig.put("Password", testPassword);
 	PropertyAccess.configuration(testi).updateConfig(newConfig);
 
 	assertEquals(testString, testi.getString());
@@ -217,7 +213,7 @@ public class ManagedPropertiesServiceTest {
     public void testTestDirectType() throws Exception {
 	TestInterface testi = factoryWithFilters.register(TestInterface.class, new TestInterfaceDefaults());
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("String", Collections.singletonList("Stringval"));
+	newConfig.put("String", "Stringval");
 
 	PropertyAccess.configuration(testi).updateConfig(newConfig);
 	assertEquals("Stringval", testi.getString());
@@ -227,7 +223,7 @@ public class ManagedPropertiesServiceTest {
     public void testTestFilteredType() throws Exception {
 	TestInterface testi = factoryWithFilters.register(TestInterface.class, new TestInterfaceDefaults());
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("StringInteger", Collections.singletonList(12));
+	newConfig.put("StringInteger", 12);
 
 	PropertyAccess.configuration(testi).updateConfig(newConfig);
 	assertEquals("12", testi.getStringInteger());
@@ -237,7 +233,7 @@ public class ManagedPropertiesServiceTest {
     public void testNonExistant() throws Exception {
 	TestInterface testi = factoryWithFilters.register(TestInterface.class, new TestInterfaceDefaults());
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("StringInteger", Collections.singletonList(12));
+	newConfig.put("StringInteger", 12);
 
 	PropertyAccess.configuration(testi).updateConfig(newConfig);
 	testi.getString();
@@ -258,7 +254,7 @@ public class ManagedPropertiesServiceTest {
     public void testFileFilter() throws Exception {
 	TestInterface testi = factoryWithFilters.register(TestInterface.class, new TestInterfaceDefaults());
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("File", Collections.singletonList(testfile.getName()));
+	newConfig.put("File", testfile.getName());
 
 	PropertyAccess.configuration(testi).updateConfig(newConfig);
 	assertEquals(testfile, testi.getFile());
@@ -269,9 +265,9 @@ public class ManagedPropertiesServiceTest {
 	TestNarrowing narrowing = factoryWithFilters.register(TestNarrowing.class);
 
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("Number", Collections.singletonList(10));
-	newConfig.put("NumberDouble", Collections.singletonList(11d));
-	newConfig.put("NumberFloat", Collections.singletonList(12f));
+	newConfig.put("Number", 10);
+	newConfig.put("NumberDouble", 11d);
+	newConfig.put("NumberFloat", 12f);
 	PropertyAccess.configuration(narrowing).updateConfig(newConfig);
 
 	assertEquals(10, narrowing.getNumber());
@@ -296,7 +292,7 @@ public class ManagedPropertiesServiceTest {
 	ManagedPropertiesController mprops = (ManagedPropertiesController) Proxy.getInvocationHandler(cardinality);
 	
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("Optional", Collections.singletonList(10));
+	newConfig.put("Optional", 10);
 	newConfig.put("List", Arrays.asList(new String[]{"Test", "Fest"}));
 	newConfig.put("Required", 500l);
 	mprops.updateConfig(newConfig);
@@ -345,7 +341,7 @@ public class ManagedPropertiesServiceTest {
 	ManagedPropertiesController mprops = (ManagedPropertiesController) Proxy.getInvocationHandler(narrowing);
 
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("Number", Collections.singletonList(10));
+	newConfig.put("Number", 10);
 	mprops.updateConfig(newConfig);
 	assertEquals(10, narrowing.getNumber());
 	assertEquals(new NarrowingDefaults().getNumberDouble(), narrowing.getNumberDouble());
@@ -362,7 +358,7 @@ public class ManagedPropertiesServiceTest {
     public void testLock() throws Exception {
 	TestInterface testi = factoryWithFilters.register(TestInterface.class, new TestInterfaceDefaults());
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("String", Collections.singletonList("Stringval"));
+	newConfig.put("String", "Stringval");
 	PropertyAccess.configuration(testi).updateConfig(newConfig);
 
 	Lock lock = ((PropertyActions)testi).lockPropertiesUpdate();
@@ -380,7 +376,7 @@ public class ManagedPropertiesServiceTest {
 	TestInterface testi = factory.register(TestInterface.class, new TestInterfaceDefaults());
 	
 	Map<String, Object> newConfig = new HashMap<>();
-	newConfig.put("String", Collections.singletonList("Stringval"));
+	newConfig.put("String", "Stringval");
 	PropertyAccess.configuration(testi).updateConfig(newConfig);
 
 	((ConfigurationCallbackHandler)testi).addConfigurationCallback(null);
