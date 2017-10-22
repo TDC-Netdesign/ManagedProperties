@@ -26,6 +26,7 @@ import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
 import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.io.File;
+import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -107,6 +108,11 @@ public class ManagedPropertiesServiceTest {
     @After
     public void tearDown() {
 	testfile.delete();
+    }
+    
+    @Test
+    public void testArray(){
+        System.out.println(Array.get(new String[0], 0));
     }
 
     @Test

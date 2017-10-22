@@ -514,8 +514,8 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         }
 
     }
-    /*
-    private Object retrieveOptionalObject(String key, Object configItemObject) throws ParsingException {
+    
+    private Object retrieveObjectFromCollection(String key, Object configItemObject) throws ParsingException {
         if (Collection.class.isAssignableFrom(configItemObject.getClass())) {
             List configItemList = new ArrayList<>((Collection) configItemObject);
             if (configItemList.isEmpty()) {
@@ -529,7 +529,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
             return configItemObject;
         }
 
-    }*/
+    }
 
     private List retrieveList(String key, Object configItemObject) throws ParsingException {
         if (!List.class.isAssignableFrom(configItemObject.getClass())) {

@@ -29,8 +29,8 @@ import org.osgi.service.metatype.AttributeDefinition;
  */
 public class MetaTypeAttributeDefinition implements AttributeDefinition{
     private final Attribute attribute; 
-    private int inputTypeAsInt;
-    private int cardinality;
+    private final int inputTypeAsInt;
+    private final int cardinality;
 
     public MetaTypeAttributeDefinition(Attribute attribute) throws InvalidTypeException {
 	this.attribute = attribute;

@@ -123,7 +123,13 @@ public class Attribute {
 	if (logger.isTraceEnabled()) {
 	    logger.trace("Building AttributeDefinition with attributeID '" + id + "' inputType '" + inputType + "' cardinality '" + cardinalityDef + "'");
 	}
-	defValue = methodProperty.defaultValue();
+        
+        if(methodProperty.defaultValue().length == 0){
+            defValue = null;
+        }else{
+            defValue = methodProperty.defaultValue();
+        }
+	
 	description = methodProperty.description();
 	optionalLabels = methodProperty.optionLabels();
 	optionalValues = methodProperty.optionValues();
