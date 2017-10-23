@@ -10,6 +10,7 @@ import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * It is the applications one-stop-shop for all information about the parsed Methods, including input and output of the method, filters and descriptions.
  * @author mnn
  */
-public class Attribute {
+public class Attribute implements Serializable{
 
     private static final Logger logger = LoggerFactory.getLogger(Attribute.class);
 
