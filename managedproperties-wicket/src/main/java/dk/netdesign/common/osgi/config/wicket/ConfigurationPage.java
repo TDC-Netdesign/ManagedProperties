@@ -81,7 +81,7 @@ public abstract class ConfigurationPage <E> extends WebPage{
         };
         
         
-        Form form = new Form("attrib½½ute-panel"){
+        Form form = new Form("configForm"){
             @Override
             protected void onSubmit() {
                 try {
