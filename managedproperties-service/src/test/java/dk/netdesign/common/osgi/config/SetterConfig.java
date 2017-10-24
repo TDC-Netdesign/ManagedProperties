@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dk.netdesign.common.osgi.config.test.properties;
+package dk.netdesign.common.osgi.config;
 
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
+import dk.netdesign.common.osgi.config.filters.FileFilter;
 import java.io.File;
 
 /**
@@ -31,7 +32,7 @@ public interface SetterConfig {
     
     public void setString(String string);
     
-    @Property
+    @Property(type = String.class, typeMapper = FileFilter.class)
     public File getFile();
     
     public void setFile(String fileAsString);

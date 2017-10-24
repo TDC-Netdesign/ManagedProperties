@@ -115,7 +115,7 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
         try {
             Configuration config = admin.getConfiguration(ocd.getID());
             config.update(newConfigDictionary);
-        } catch (IOException ex) {
+        } catch (IOException | IllegalArgumentException | IllegalStateException ex) {
             throw new InvocationException("Failed to update configuration", ex);
         }
     }

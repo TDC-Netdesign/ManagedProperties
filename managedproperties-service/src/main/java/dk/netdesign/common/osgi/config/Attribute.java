@@ -84,7 +84,7 @@ public class Attribute implements Serializable{
 	if (!methodProperty.id().isEmpty()) {
 	    id = methodProperty.id();
 	}
-
+        
 	
 	Class<? extends TypeFilter> filterFromAnnotation = methodProperty.typeMapper();
 
@@ -140,7 +140,7 @@ public class Attribute implements Serializable{
         if(!methodProperty.setMethodName().equals(Property.SetterName)){
             setterName = methodProperty.setMethodName();
         }else if(getterName.startsWith("get")){
-            setterName = getterName.replaceAll("^get", "set");
+            setterName = getterName.replaceFirst("get", "set");
         }else{
             setterName = null;
         }

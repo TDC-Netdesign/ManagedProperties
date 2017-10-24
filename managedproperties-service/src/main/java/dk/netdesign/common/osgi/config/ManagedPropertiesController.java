@@ -63,7 +63,8 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     private final ReadWriteLock lock;
     private final Lock r, w;
     private final Condition updated;
-    private final Map<String, Attribute> attributeToMethodMapping;
+    private final Map<String, Attribute> attributeToGetterMapping;
+    private final Map<String, Attribute> attributeToSetterMapping;
     private final List<Method> allowedMethods;
     private final Class type;
     private final Object defaults;
@@ -102,7 +103,8 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         r = lock.readLock();
         w = lock.writeLock();
         updated = w.newCondition();
-        attributeToMethodMapping = new HashMap<>();
+        attributeToGetterMapping = new HashMap<>();
+        attributeToSetterMapping = new HashMap<>();
         requiredIds = new ArrayList<>();
 
         this.defaultFilters = getDefaultFilterMap(defaultFiltersList);
@@ -119,22 +121,32 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                     requiredIds.add(methodDefinition.getID());
                 }
                 logger.debug("Adding method to mapping: " + methodDefinition);
-                attributeToMethodMapping.put(classMethod.getName(), methodDefinition);
-                if (methodAnnotation.setMethodName() != null) {
+                attributeToGetterMapping.put(classMethod.getName(), methodDefinition);
+                
+                if (methodDefinition.getSetterName() != null) {
                     Method setterMethod = null;
                     try {
-                        setterMethod = type.getMethod(methodAnnotation.setMethodName(), methodDefinition.getMethodReturnType());
+                        setterMethod = type.getDeclaredMethod(methodDefinition.getSetterName(), methodDefinition.getMethodReturnType());
                     } catch (NoSuchMethodException | SecurityException ex) {
                         //No setter method. Don't do anything.
                     }
+                    if(setterMethod == null){
+                        try {
+                        setterMethod = type.getDeclaredMethod(methodDefinition.getSetterName(), methodDefinition.getInputType());
+                    } catch (NoSuchMethodException | SecurityException ex) {
+                        //No setter method. Don't do anything.
+                    }
+                    }
+                    
                     if (setterMethod != null) {
-                        attributeToMethodMapping.put(methodDefinition.getSetterName(), methodDefinition);
+                        logger.debug("Adding setter method to mapping: " + methodDefinition.getSetterName());
+                        attributeToSetterMapping.put(methodDefinition.getSetterName(), methodDefinition);
                     }
                 }
             }
         }
 
-        ensureUniqueIDs(attributeToMethodMapping.values());
+        ensureUniqueIDs(attributeToGetterMapping.values());
 
         allowedMethods = new ArrayList<>();
 
@@ -177,23 +189,17 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException, ParsingException {
-        if (method.isAnnotationPresent(Property.class)) {
-            String methodName = method.getName();
-            Attribute propertyDefinition = attributeToMethodMapping.get(methodName);
-            if (methodName.equals(propertyDefinition.getGetterName())) {
-                return getConfigItem(method, propertyDefinition);
-            } else if (methodName.equals(propertyDefinition.getSetterName()) && args.length == 0) {
-                Class methodArgumentClass = args[0].getClass();
-                if(propertyDefinition.getMethodReturnType().isAssignableFrom(methodArgumentClass)){
-                    setFilteredItem(propertyDefinition, args[0]);
-                }else if(propertyDefinition.getInputType().isAssignableFrom(methodArgumentClass)){
-                    setItem(propertyDefinition.getID(), args[0]);
-                }else if(List.class.isAssignableFrom(methodArgumentClass)){
-                    setListOfItems(propertyDefinition, (List)args[0]);
-                }
-                
+        String methodName = method.getName();
+        Attribute getterPropertyDefinition = attributeToGetterMapping.get(methodName);
+        Attribute setterPropertyDefinition = attributeToSetterMapping.get(methodName);
+        if (method.isAnnotationPresent(Property.class)) {             
+            if (methodName.equals(getterPropertyDefinition.getGetterName())) {
+                return getConfigItem(method, getterPropertyDefinition);
             }
-        } else if (allowedMethods.contains(method)) {
+        }else if (setterPropertyDefinition != null && setterPropertyDefinition.getSetterName().equals(methodName) && args.length == 1){
+            setItem(setterPropertyDefinition, args[0]);
+            return null;
+        }else if (allowedMethods.contains(method)) {
             try {
                 return method.invoke(this, args);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
@@ -204,11 +210,25 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         throw new UnsupportedOperationException("The method " + method + " was not recognized and was not annotated with the annotation " + Property.class.getName() + " allowed methods: " + allowedMethods);
     }
     
+    public void setItem(Attribute propertyDefinition, Object item) throws ParsingException{
+        Class methodArgumentClass = item.getClass();
+                if(propertyDefinition.getMethodReturnType().isAssignableFrom(methodArgumentClass)){
+                    setFilteredItem(propertyDefinition, item);
+                }else if(propertyDefinition.getInputType().isAssignableFrom(methodArgumentClass)){
+                    setItem(propertyDefinition.getID(), item);
+                }else if(List.class.isAssignableFrom(methodArgumentClass)){
+                    setListOfItems(propertyDefinition, (List)item);
+                }else{
+                    throw new ParsingException("Could ot assign "+propertyDefinition.getName()+"["+propertyDefinition.getID()+"] with "+item+". Item was an unknown type. Expected "
+                            + propertyDefinition.getInputType()+" or "+propertyDefinition.getMethodReturnType());
+                }
+    }
+    
     private void setListOfItems(Attribute attribute, List<Object> items) throws ParsingException{
         List<Object> toSet = new ArrayList<>();
         for(Object item : items){
             if(attribute.getMethodReturnType().isAssignableFrom(item.getClass())){
-                toSet.add(parseToInputType(attribute.getID(), item, attribute.getInputType()));
+                toSet.add(parseToConfig(attribute, item));
             }else{
                 toSet.add(item);
             }
@@ -217,8 +237,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
     
     private void setFilteredItem(Attribute attribute, Object item) throws ParsingException{
-        Object inputTypedItem = parseToInputType(attribute.getID(), item, attribute.getInputType());
-        setItem(attribute.getID(), inputTypedItem);
+        parseToConfig(attribute, item);/*Test that we can actually parse the object before saving it, but save the unparsed item.*/
+                //parseToInputType(attribute.getID(), item, attribute.getInputType());
+        setItem(attribute.getID(), item);
     }
 
     private void setItem(String key, Object item) {
@@ -237,13 +258,34 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
     @Override
     public void commitProperties() throws InvocationException {
-        try {
+        w.lock();
+        try{
             if (!settingConfiguration) {
                 throw new InvocationException("Could not commit properties, not currently setting configuration");
             }
-
-            provider.persistConfiguration(config);
+        }finally{
+            w.unlock();
+        }
+        
+        try {
             
+            
+            HashMap<String, Object> parsedConfig = new HashMap<>();
+            for(Attribute attribute : getAttributes()){
+                Object value = getConfigItem(attribute.getID());
+                if(value != null){
+                    if(attribute.getFilter() != null){
+                        value = parseToConfig(attribute, value);
+                    }
+                    
+                    parsedConfig.put(attribute.getID(), value);
+                }
+            }
+
+            provider.persistConfiguration(parsedConfig);
+            
+        } catch (ParsingException ex) {
+            logger.error("Could not parse configuration", ex);
         }finally{
             settingConfiguration = false;
             w.unlock();
@@ -278,7 +320,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         return returnValue;
     }
 
-    private Object getConfigItem(String id) {
+    public Object getConfigItem(String id) {
         r.lock();
         try {
             return config.get(id);
@@ -366,14 +408,14 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
             for (String key : keys) {
 
                 Attribute definition = null;
-                for (Attribute possibleDefinition : attributeToMethodMapping.values()) {
+                for (Attribute possibleDefinition : attributeToGetterMapping.values()) {
                     if (possibleDefinition.getID().equals(key)) {
                         definition = possibleDefinition;
                         break;
                     }
                 }
                 if (definition == null) {
-                    logger.debug(key, "Could not load property. The property " + key + " is not known to this configuration. Supported methods: " + attributeToMethodMapping.keySet());
+                    logger.debug(key, "Could not load property. The property " + key + " is not known to this configuration. Supported methods: " + attributeToGetterMapping.keySet());
                     unknownConfigs.put(key, properties.get(key));
                 }
                 Object configValue = null;
@@ -404,7 +446,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 throw new ParsingException(required.pollFirst(), "Could not update configuration. Missing required fields: " + new ArrayList<>(required));
             }
             config = newprops;
-            for (Attribute attribute : attributeToMethodMapping.values()) {
+            for (Attribute attribute : attributeToGetterMapping.values()) {
                 attribute.setRecentlyUpdated(true);
             }
             for (ConfigurationCallback callback : callbacks) {
@@ -419,83 +461,42 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         logger.info("updated configuration\n" + this);
         return unknownConfigs;
     }
+    
+    
 
     public Object parseObject(String key, Object configurationValue, Class inputType, Attribute definition) throws ParsingException {
-        Object toReturn = parseToInputType(key, configurationValue, inputType);
+        if (!inputType.isAssignableFrom(configurationValue.getClass())) {
+            throw new ParsingException(key, "Could not assign " + configurationValue.getClass() + " to " + inputType.getClass() + ". Value of key "+key+" must be of type "+inputType);
+        }
+        
+        
+        Object toReturn = configurationValue;
+        
+        
         if (definition.getFilter() != null) {
-            toReturn = filterObject(key, toReturn, definition.getFilter(), definition.getInputType());
+            toReturn = filterObject(key, toReturn, definition.getFilter(), definition);
         }
 
         return toReturn;
 
     }
 
-    private Object parseToInputType(String key, Object configurationValue, Class inputType) throws ParsingException {
-        Object toParse = configurationValue;
-        if (!inputType.isAssignableFrom(toParse.getClass())) {
-            logger.debug("Could not assign " + toParse.getClass() + " to " + inputType.getClass() + ". Attempting intermediate filtering from default filters.");
-            FilterReference ref = new FilterReference(toParse.getClass(), inputType);
-            if (!defaultFilters.containsKey(ref)) {
-                throw new ParsingException(key, "Could not assign " + configurationValue + " to " + key + ". It did not match the expected type: " + inputType);
-            }
-            try {
-                Class<? extends TypeFilter> intermediateFilterClass = defaultFilters.get(ref);
-                logger.debug("Performing intermediate filtering of " + toParse + "[" + toParse.getClass() + "] with " + intermediateFilterClass);
-                TypeFilter filterinstance = intermediateFilterClass.newInstance();
-                toParse = filterinstance.parse(toParse);
-            } catch (InstantiationException | IllegalAccessException ex) {
-                throw new ParsingException(key, "Could not load properties. Could not instantiate intermediate filter.", ex);
-            } catch (TypeFilterException ex) {
-                throw new ParsingException(key, "Could not load properties. Could not perform intermediate filtering on value.", ex);
-            }
-        }
+    
 
-        return toParse;
-    }
-
-    public Object parseToConfig(String key, Object typedObject) throws ParsingException {
-        Attribute definition = null;
-        for (Attribute possibleDefinition : attributeToMethodMapping.values()) {
-            if (possibleDefinition.getID().equals(key)) {
-                definition = possibleDefinition;
-                break;
-            }
-        }
-
+    public Object parseToConfig(Attribute definition, Object typedObject) throws ParsingException {
         if (definition == null) {
-            throw new ParsingException(key, "Could not load property. The property " + key + " is not known to this configuration. Supported methods: " + attributeToMethodMapping.keySet());
-
+            throw new ParsingException(definition.getID(), "Could not load property. The property " + definition.getID() + " is not known to this configuration. Supported methods: " + attributeToGetterMapping.keySet());
         }
 
         Object toReturn = typedObject;
         if (definition.getFilter() != null) {
-            toReturn = filterObject(key, toReturn, definition.getFilter(), definition.getInputType());
+            toReturn = filterReversedObject(definition.getID(), toReturn, definition.getFilter(), definition);
         }
-        Class configTargetType = provider.getReturnType(key);
-        //Find the target type needed by the configuration provider and parse to that. Return after.
-        return parseFromInputType(key, toReturn, configTargetType);
+
+        return toReturn;
     }
 
-    public Object parseFromInputType(String key, Object inputTypedObject, Class configTargetType) throws ParsingException {
-
-        //The classes seems reversed, but we are reverting so this is correct
-        FilterReference ref = new FilterReference(configTargetType, inputTypedObject.getClass());
-        if (!defaultFilters.containsKey(ref)) {
-            throw new ParsingException(key, "Could not assign " + inputTypedObject + " to " + key + ". No fefault Filter for : " + configTargetType.getCanonicalName() + "->" + inputTypedObject.getClass().getCanonicalName());
-        }
-
-        Class<? extends TypeFilter> intermediateFilterClass = defaultFilters.get(ref);
-
-        try {
-            TypeFilter filterinstance = intermediateFilterClass.newInstance();
-            return filterinstance.parse(inputTypedObject);
-        } catch (InstantiationException | IllegalAccessException ex) {
-            throw new ParsingException(key, "Could not parse properties. Instantiation of the filter failed.", ex);
-        } catch (TypeFilterException ex) {
-            throw new ParsingException(key, "Could not parse properties. Parsing of properties failed.", ex);
-        }
-
-    }
+    
 
     private void ensureUniqueIDs(Collection<Attribute> attributeDefinitions) throws DoubleIDException {
         TreeSet<Attribute> adSet = new TreeSet<>(new Comparator<Attribute>() {
@@ -540,13 +541,28 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         return configItemList;
     }
 
-    private Object filterObject(String key, Object input, Class<? extends TypeFilter> filterType, Class expectedType) throws ParsingException {
-        if (!expectedType.isAssignableFrom(input.getClass())) {
-            throw new ParsingException(key, "Could not filter this object. The input type was incorrect. Expected " + expectedType + " found " + input.getClass());
+    private Object filterObject(String key, Object input, Class<? extends TypeFilter> filterType, Attribute attribute) throws ParsingException {
+        if (!attribute.getInputType().isAssignableFrom(input.getClass())) {
+            throw new ParsingException(key, "Could not filter this object. The input type was incorrect. Expected " + attribute.getInputType() + " found " + input.getClass());
         }
         try {
             TypeFilter filterinstance = filterType.newInstance();
             Object filterValue = filterinstance.parse(input);
+            return filterValue;
+        } catch (InstantiationException | IllegalAccessException ex) {
+            throw new ParsingException(key, "Could not load properties. Could not instantiate filter.", ex);
+        } catch (TypeFilterException ex) {
+            throw new ParsingException(key, "Could not load properties. Could not filter value.", ex);
+        }
+    }
+    
+        private Object filterReversedObject(String key, Object input, Class<? extends TypeFilter> filterType, Attribute attribute) throws ParsingException {
+        if (!attribute.getMethodReturnType().isAssignableFrom(input.getClass())) {
+            throw new ParsingException(key, "Could not filter this object. The input type was incorrect. Expected " + attribute.getMethodReturnType() + " found " + input.getClass());
+        }
+        try {
+            TypeFilter filterinstance = filterType.newInstance();
+            Object filterValue = filterinstance.revert(input);
             return filterValue;
         } catch (InstantiationException | IllegalAccessException ex) {
             throw new ParsingException(key, "Could not load properties. Could not instantiate filter.", ex);
@@ -620,7 +636,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
     protected final Set<String> getHiddenKeys() {
         Set<String> configHiddenKeys = new HashSet<>();
-        for (Attribute attribute : attributeToMethodMapping.values()) {
+        for (Attribute attribute : attributeToGetterMapping.values()) {
             if (attribute.isHidden()) {
                 configHiddenKeys.add(attribute.getID());
             }
@@ -678,11 +694,11 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
     @Override
     public List<Attribute> getAttributes() {
-        return new ArrayList<>(attributeToMethodMapping.values());
+        return new ArrayList<>(attributeToGetterMapping.values());
     }
 
     public Attribute getAttributeByName(String methodName) {
-        return attributeToMethodMapping.get(methodName);
+        return attributeToGetterMapping.get(methodName);
     }
 
     public ManagedPropertiesProvider getProvider() {
