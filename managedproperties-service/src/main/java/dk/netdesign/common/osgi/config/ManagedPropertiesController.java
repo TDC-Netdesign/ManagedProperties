@@ -215,7 +215,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 if(propertyDefinition.getMethodReturnType().isAssignableFrom(methodArgumentClass)){
                     setFilteredItem(propertyDefinition, item);
                 }else if(propertyDefinition.getInputType().isAssignableFrom(methodArgumentClass)){
-                    setItem(propertyDefinition.getID(), item);
+                    setUnfilteredItem(propertyDefinition, item);
                 }else if(List.class.isAssignableFrom(methodArgumentClass)){
                     setListOfItems(propertyDefinition, (List)item);
                 }else{
@@ -238,8 +238,18 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     
     private void setFilteredItem(Attribute attribute, Object item) throws ParsingException{
         parseToConfig(attribute, item);/*Test that we can actually parse the object before saving it, but save the unparsed item.*/
-                //parseToInputType(attribute.getID(), item, attribute.getInputType());
+
         setItem(attribute.getID(), item);
+    }
+    
+    private void setUnfilteredItem(Attribute attribute, Object item) throws ParsingException{
+        Object toSave = item;
+        if(attribute.getFilter() != null){
+            toSave = parseObject(item, attribute);
+        }
+
+
+        setItem(attribute.getID(), toSave);
     }
 
     private void setItem(String key, Object item) {
@@ -422,18 +432,18 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 switch (definition.cardinalityDef) {
                     case Optional:
                         configValue = properties.get(key);
-                        configValue = parseObject(key, configValue, definition.getInputType(), definition);
+                        configValue = parseObject(configValue, definition);
                         break;
                     case Required:
                         required.remove(definition.getID());
                         configValue = properties.get(key);
-                        configValue = parseObject(key, configValue, definition.getInputType(), definition);
+                        configValue = parseObject(configValue, definition);
                         break;
                     case List:
                         List<Object> valueAsList = retrieveList(key, properties.get(key));
                         List<Object> outputList = new ArrayList<>();
                         for (Object value : valueAsList) {
-                            Object listValue = parseObject(key, value, definition.getInputType(), definition);
+                            Object listValue = parseObject(value, definition);
                             outputList.add(listValue);
                         }
                         configValue = outputList;
@@ -464,9 +474,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     
     
 
-    public Object parseObject(String key, Object configurationValue, Class inputType, Attribute definition) throws ParsingException {
-        if (!inputType.isAssignableFrom(configurationValue.getClass())) {
-            throw new ParsingException(key, "Could not assign " + configurationValue.getClass() + " to " + inputType.getClass() + ". Value of key "+key+" must be of type "+inputType);
+    public Object parseObject(Object configurationValue, Attribute definition) throws ParsingException {
+        if (!definition.getInputType().isAssignableFrom(configurationValue.getClass())) {
+            throw new ParsingException(definition.getID(), "Could not assign " + configurationValue.getClass() + " to " + definition.getInputType() + ". Value of key "+definition.getID()+" must be of type "+definition.getInputType());
         }
         
         
@@ -474,7 +484,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         
         
         if (definition.getFilter() != null) {
-            toReturn = filterObject(key, toReturn, definition.getFilter(), definition);
+            toReturn = filterObject(definition.getID(), toReturn, definition.getFilter(), definition);
         }
 
         return toReturn;

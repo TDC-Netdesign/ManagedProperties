@@ -77,6 +77,46 @@ public class ManagedPropertiesServiceMockTest {
     }
     
     @Test
+    public void TestUpdateFilteredProperties() throws Exception{
+        String beginningString = "testmigenfest";
+        String setString = "newString";
+        
+        
+        Map<String, Object> expectedSetConfig = new HashMap<>();
+        expectedSetConfig.put("String", setString);
+        expectedSetConfig.put("File", testFile2.getCanonicalPath());
+        
+        expect(provider.getReturnType("String")).andReturn(String.class);
+        expect(provider.getReturnType("File")).andReturn(String.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.persistConfiguration(expectedSetConfig);
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+        
+        
+        
+        Map<String, Object> newConfig = new HashMap<>();
+        newConfig.put("String", beginningString);
+        newConfig.put("File", testFile1.getCanonicalPath());
+        
+        PropertyAccess.configuration(config).updateConfig(newConfig);
+        
+        assertEquals(beginningString, config.getString());
+        assertEquals(testFile1.getCanonicalFile(), config.getFile());
+        
+        config.setString(setString);
+        config.setFile(testFile2);
+        PropertyAccess.actions(config).commitProperties();
+        
+        assertEquals(setString, config.getString());
+        assertEquals(testFile2, config.getFile());
+        
+        
+    }
+    
+    @Test
     public void TestUpdateProperties() throws Exception{
         String beginningString = "testmigenfest";
         String setString = "newString";
@@ -107,7 +147,7 @@ public class ManagedPropertiesServiceMockTest {
         assertEquals(testFile1.getCanonicalFile(), config.getFile());
         
         config.setString(setString);
-        config.setFile(testFile2.getCanonicalFile());
+        config.setFile(testFile2.getCanonicalPath());
         PropertyAccess.actions(config).commitProperties();
         
         assertEquals(setString, config.getString());
