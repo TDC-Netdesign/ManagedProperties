@@ -90,6 +90,7 @@
     
     <modules>
         <module>managedproperties-service</module>
+        <module>managedproperties-wicket</module>
         <module>managedproperties-feature</module>
         <module>managedproperties-consumer</module>
         <module>managedproperties-test-resources</module>
