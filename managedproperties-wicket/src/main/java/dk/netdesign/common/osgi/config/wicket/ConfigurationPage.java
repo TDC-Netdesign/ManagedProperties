@@ -15,6 +15,7 @@
  */
 package dk.netdesign.common.osgi.config.wicket;
 
+import dk.netdesign.common.osgi.config.wicket.panel.ConfigurationItemPanel;
 import dk.netdesign.common.osgi.config.Attribute;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
@@ -248,6 +249,8 @@ public abstract class ConfigurationPage <E> extends WebPage{
                     throw new ParsingException(attribute.getID(), "Could not parse value "+attribute.getName()+" unknown type not supported: "+attribute.getInputType());
                 }
             }else if(attribute.getInputType() == Boolean.class && attribute.getInputType().isAssignableFrom(currentObject.getClass())){
+                return getObject();
+            }else if(attribute.getInputType() == Character[].class && attribute.getInputType().isAssignableFrom(currentObject.getClass())){
                 return getObject();
             }else{
                 throw new ParsingException(attribute.getID(), "Could not parse configuration. Unsupported type: "+currentObject.getClass());
