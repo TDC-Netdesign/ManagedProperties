@@ -114,7 +114,6 @@ public class ConfigurationItemPanel extends Panel {
 //            }
 //        }));
            
-            
         fragment.getFormInput().add(AttributeModifier.append("class", new LoadableDetachableModel<String>() {
             @Override
             protected String load() {

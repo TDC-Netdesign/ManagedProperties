@@ -37,6 +37,7 @@ import org.apache.wicket.Page;
 import org.apache.wicket.application.IComponentInstantiationListener;
 import org.apache.wicket.protocol.http.WebApplication;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
+import org.apache.wicket.util.tester.FormTester;
 import org.apache.wicket.util.tester.WicketTester;
 import org.easymock.Mock;
 import static org.easymock.EasyMock.*;
@@ -66,10 +67,8 @@ public class ConfigurationPageTest {
     
     WicketTester tester;
     
-    File testFile1;
-    File testFile2;
+    File testFile;
     
-    SetterConfig config;
     
     public ConfigurationPageTest() {
     }
@@ -84,32 +83,7 @@ public class ConfigurationPageTest {
     
     @Before
     public void setUp() throws Exception{
-        testFile1 = new File("testFile.test");
-	testFile1.createNewFile();
         
-        testFile2 = new File("testFile.test");
-	testFile2.createNewFile();
-        
-        String beginningString = "testmigenfest";
-        String setString = "newString";
-        
-        Map<String, Object> expectedSetConfig = new HashMap<>();
-        expectedSetConfig.put("String", setString);
-        expectedSetConfig.put("File", testFile2.getCanonicalPath());
-        
-        /*Expect*/provider.start();
-        expectLastCall().times(1);
-        /*Expect*/provider.persistConfiguration(expectedSetConfig);
-        expectLastCall().times(1);
-        /*Expect*/provider.stop();
-        expectLastCall().times(1);
-        
-        expect(provider.getReturnType("String")).andReturn(String.class).atLeastOnce();
-        expect(provider.getReturnType("File")).andReturn(String.class).atLeastOnce();
-
-        
-        
-        replay(provider);
         
         configFactory = new TestConfigurationItemFactory();
        
@@ -126,7 +100,7 @@ public class ConfigurationPageTest {
         
         factory = new ManagedPropertiesFactory(handlerfactory, null, null);
         
-        config = factory.register(SetterConfig.class);
+        
         
         tester = new WicketTester(new WebApplication(){
             @Override
@@ -159,9 +133,9 @@ public class ConfigurationPageTest {
     
     @After
     public void tearDown() throws Exception{
-        testFile1.delete();
-        testFile2.delete();
-        PropertyAccess.actions(config).unregisterProperties();
+        verify(provider);
+        testFile.delete();
+        
     }
 
     /**
@@ -169,10 +143,57 @@ public class ConfigurationPageTest {
      */
     @Test
     public void testSetUpPage() throws Exception{
+        
+        testFile = new File("testFile.test");
+	testFile.createNewFile();
+        
+        String setString = "newString";
+        
+        Map<String, Object> expectedSetConfig = new HashMap<>();
+        expectedSetConfig.put("String", setString);
+        expectedSetConfig.put("File", testFile.getCanonicalPath());
+        
+        /*Expect*/provider.start();
+        expectLastCall().once();
+        /*Expect*/provider.persistConfiguration(expectedSetConfig);
+        expectLastCall().once();
+        /*Expect*/provider.stop();
+        expectLastCall().once();
+        
+        expect(provider.getReturnType("String")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("File")).andReturn(String.class).atLeastOnce();
+
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+        
+        
+        try{
+            config.getString();
+            fail("Exception exceptions when getting String configuration");
+        }catch(UnknownValueException ex){}
+        try{
+            config.getFile();
+            fail("Exception exceptions when getting File configuration");
+        }catch(UnknownValueException ex){}
+        
         PageParameters params = new PageParameters();
         params.add(ConfigurationPage.CONFIGID, ManagedPropertiesController.getDefinitionID(SetterConfig.class));
         tester.startPage(InjectingConfigurationPage.class, params);
         tester.assertRenderedPage(InjectingConfigurationPage.class);
+        
+        FormTester formTester = tester.newFormTester("configForm", false);
+        
+        
+        formTester.setValue("attribute-panels:0:attribute-panel:inputArea:input", testFile.getCanonicalPath());
+        formTester.setValue("attribute-panels:1:attribute-panel:inputArea:input", setString);
+        
+        formTester.submit();
+        PropertyAccess.actions(config).unregisterProperties();
+        
+        assertEquals(setString, config.getString());
+        assertEquals(testFile.getCanonicalFile(), config.getFile());
+        
     }
     
     protected class TestConfigurationItemFactory extends ConfigurationItemFactory{

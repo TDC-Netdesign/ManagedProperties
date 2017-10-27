@@ -17,6 +17,7 @@ package dk.netdesign.common.osgi.config.wicket;
 
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
+import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.filters.FileFilter;
 import java.io.File;
 
@@ -28,12 +29,12 @@ import java.io.File;
 public interface SetterConfig {
     
     @Property
-    public String getString();
+    public String getString() throws UnknownValueException;
     
     public void setString(String string);
     
     @Property(type = String.class, typeMapper = FileFilter.class)
-    public File getFile();
+    public File getFile() throws UnknownValueException;
     
     public void setFile(String fileAsString);
     public void setFile(File file);

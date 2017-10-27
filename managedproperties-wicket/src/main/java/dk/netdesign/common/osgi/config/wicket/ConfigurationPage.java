@@ -25,9 +25,11 @@ import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.wicket.markup.html.WebPage;   
 import org.apache.wicket.markup.html.form.Form;
@@ -52,12 +54,14 @@ public abstract class ConfigurationPage <E> extends WebPage{
     
     private final AttributeModel<E> attributeModel;
     private final ManagedPropertiesControllerModel controllerModel;
+    private List<AttributeValue> attributes;
     
     
 
     public ConfigurationPage(Class configurationInterface, ConfigurationItemFactory factory) {
         controllerModel = new ManagedPropertiesControllerModel(factory, configurationInterface);
         attributeModel = new AttributeModel<>(controllerModel);
+        attributes = attributeModel.getObject();
         setUpPage();
     }
     
@@ -68,11 +72,12 @@ public abstract class ConfigurationPage <E> extends WebPage{
         
         controllerModel = new ManagedPropertiesControllerModel(getFactory(), configurationIDValue.toString());
         attributeModel = new AttributeModel<>(controllerModel);
+        attributes = attributeModel.getObject();
         setUpPage();
     }
     
     public final void setUpPage(){
-        final ListView<AttributeValue> attributePanels = new ListView<AttributeValue>("attribute-panels", attributeModel) {
+        final ListView<AttributeValue> attributePanels = new ListView<AttributeValue>("attribute-panels", attributes) {
             
             @Override
             protected void populateItem(ListItem<AttributeValue> item) {
@@ -86,13 +91,23 @@ public abstract class ConfigurationPage <E> extends WebPage{
             @Override
             protected void onSubmit() {
                 try {
+                    LOGGER.info("Attempting to persist new configuration");
                     ManagedPropertiesController controller = controllerModel.getObject();
                     
-                    for(AttributeValue value : attributePanels.getList()){
-                        controller.setItem(value.getAttribute(), value.getValue().getObject());
+                    for(AttributeValue value : attributeModel.getObject()){
+                        
+                        if(LOGGER.isDebugEnabled()){
+                            LOGGER.debug("Parsing "+value.getValue().getObject());
+                        }
+                        Object castObject = value.getValue().getCastObject();
+                        LOGGER.debug("Parsed object: "+castObject);
+                        
+                        controller.setItem(value.getAttribute(), castObject);
                     }
-                    
+                    LOGGER.debug("Committing configuration: "+controller);
                     controller.commitProperties();
+                    
+                    attributes = attributeModel.getObject();
                 } catch (InvocationException | ParsingException ex) {
                     LOGGER.error("Could not save the configuration. ",ex);
                 }
@@ -130,11 +145,13 @@ public abstract class ConfigurationPage <E> extends WebPage{
                 if(value != null && value instanceof Serializable){
                     valueModel.setObject((Serializable)value);
                 }else{
-                    LOGGER.warn("Could not retrieve value for "+attribute.getName()+"["+attribute.getID()+"]. Value was not serializable");
+                    LOGGER.warn("Could not retrieve value for "+attribute.getName()+"["+attribute.getID()+"]. Value was not serializable: "+ value);
                 }
                 
                 values.add(new AttributeValue(attribute, valueModel));
             }
+            
+            Collections.sort(values);
             
             return values;
         }
@@ -183,7 +200,7 @@ public abstract class ConfigurationPage <E> extends WebPage{
         
     }
     
-    protected class AttributeValue implements Serializable{
+    protected class AttributeValue implements Serializable, Comparable<AttributeValue>{
         private final Attribute attribute;
         private final AttributeCastingModel<Serializable> value;
 
@@ -199,12 +216,20 @@ public abstract class ConfigurationPage <E> extends WebPage{
         public AttributeCastingModel<Serializable> getValue() {
             return value;
         }
+
+        @Override
+        public int compareTo(AttributeValue o) {
+            return attribute.getName().toUpperCase().compareTo(o.getAttribute().getName().toUpperCase());
+        }
+        
+        
         
 
     }
     
     protected class AttributeCastingModel<E extends Serializable> extends Model<E>{
         private final Attribute attribute;
+        private String ID = UUID.randomUUID().toString();
 
         public AttributeCastingModel(Attribute attribute) {
             this.attribute = attribute;
@@ -214,9 +239,28 @@ public abstract class ConfigurationPage <E> extends WebPage{
             super(object);
             this.attribute = attribute;
         }
+
+        @Override
+        public void setObject(E object) {
+            LOGGER.debug("Setting configuration for "+attribute.getID()+": "+object);
+            if(LOGGER.isDebugEnabled()){
+                LOGGER.debug("Before: "+getObject());
+            }
+            
+            super.setObject(object);
+            
+            if(LOGGER.isDebugEnabled()){
+                LOGGER.debug("After: "+getObject());
+            }
+        }
+        
+        
         
         public Object getCastObject() throws ParsingException{
             E currentObject = getObject();
+            if(currentObject == null){
+                return null;
+            }
             Class inputType = attribute.getInputType();
             if(currentObject instanceof String){
 
