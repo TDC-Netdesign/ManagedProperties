@@ -28,7 +28,7 @@ import java.io.File;
 @PropertyDefinition(id="SetterConfig", name="SetterConfig")
 public interface SetterConfig {
     
-    @Property
+    @Property(cardinality = Property.Cardinality.Required)
     public String getString() throws UnknownValueException;
     
     public void setString(String string);

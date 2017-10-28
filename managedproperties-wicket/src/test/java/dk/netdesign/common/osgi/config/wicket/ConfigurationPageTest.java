@@ -83,7 +83,8 @@ public class ConfigurationPageTest {
     
     @Before
     public void setUp() throws Exception{
-        
+        testFile = new File("testFile.test");
+	testFile.createNewFile();
         
         configFactory = new TestConfigurationItemFactory();
        
@@ -111,8 +112,12 @@ public class ConfigurationPageTest {
             public void onInstantiation(Component component) {
                 if(component instanceof InjectingConfigurationPage){
                     InjectingConfigurationPage icp = (InjectingConfigurationPage) component;
-                    System.out.println("Injecting "+configFactory);
+                    System.out.println("Injecting "+configFactory+"\ninto\n"+component);
                     icp.setFactory(configFactory);
+                } else if(component instanceof ConfiguredPage){
+                    ConfiguredPage cp = (ConfiguredPage) component;
+                    System.out.println("Injecting "+configFactory+"\ninto\n"+component);
+                    cp.setFactory(configFactory);
                 }
                 
                 
@@ -137,15 +142,71 @@ public class ConfigurationPageTest {
         testFile.delete();
         
     }
+    
+    @Test
+    public void testRedirectBehavior() throws Exception{
+        
+        expect(provider.getReturnType("String")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("File")).andReturn(String.class).atLeastOnce();
+
+        /*Expect*/provider.start();
+        expectLastCall().once();
+        /*Expect*/provider.stop();
+        expectLastCall().once();
+        
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+        
+        tester.startPage(ConfiguredPage.class);
+        tester.assertRenderedPage(InjectingConfigurationPage.class);
+        
+        
+        PropertyAccess.actions(config).unregisterProperties();
+        
+    }
+    
+    @Test
+    public void testFulfilledRedirectBehavior() throws Exception{
+        
+        String setString = "someString";
+        
+        Map<String, Object> expectedSetConfig = new HashMap<>();
+        expectedSetConfig.put("String", setString);
+        
+        
+        expect(provider.getReturnType("String")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("File")).andReturn(String.class).atLeastOnce();
+
+        /*Expect*/provider.start();
+        expectLastCall().once();
+        /*Expect*/provider.persistConfiguration(expectedSetConfig);
+        expectLastCall().once();
+        /*Expect*/provider.stop();
+        expectLastCall().once();
+        
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+        
+        config.setString(setString);
+        PropertyAccess.actions(config).commitProperties();
+        
+        tester.startPage(ConfiguredPage.class);
+        tester.assertRenderedPage(ConfiguredPage.class);
+        
+        
+        PropertyAccess.actions(config).unregisterProperties();
+        
+    }
 
     /**
      * Test of setUpPage method, of class ConfigurationPage.
      */
     @Test
-    public void testSetUpPage() throws Exception{
+    public void testConfigPageSubmit() throws Exception{
         
-        testFile = new File("testFile.test");
-	testFile.createNewFile();
+        
         
         String setString = "newString";
         

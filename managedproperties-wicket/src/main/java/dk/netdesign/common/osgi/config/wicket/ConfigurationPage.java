@@ -180,6 +180,8 @@ public abstract class ConfigurationPage <E> extends WebPage{
 
         @Override
         protected ManagedPropertiesController load() {
+            LOGGER.debug("Loading ManagedPropertiesController for "+
+                    (configurationType != null ? configurationType : "")+" "+(configurationID != null ? configurationID : ""));
             Object configInstance;
             
             if(configurationType != null){
