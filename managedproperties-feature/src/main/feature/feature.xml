@@ -27,6 +27,11 @@
       <bundle>mvn:${project.groupId}/managedproperties-service/${project.version}</bundle>
   </feature>
   
+  <feature name="ManagedProperties-Wicket" version="${project.version}">
+      <feature>ManagedProperties</feature>
+      <bundle>mvn:${project.groupId}/managedproperties-wicket/${project.version}</bundle>
+  </feature>
+  
   <feature name="ManagedPropertiesTestResources" version="${project.version}">
       <feature>ManagedProperties</feature>
       <bundle>mvn:${project.groupId}/managedproperties-test-resources/${project.version}</bundle>
