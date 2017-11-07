@@ -17,21 +17,28 @@ package dk.netdesign.common.osgi.config.wicket;
 
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import java.io.Serializable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author mnn
  */
 public abstract class ConfigurationItemFactory implements Serializable{
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationItemFactory.class);
+    
+    
     public <E> E getConfigurationItem(Class<E> configurationItemClass) {
+        LOGGER.debug("Getting configuration item from "+configurationItemClass);
         if (!configurationItemClass.isInterface() || !configurationItemClass.isAnnotationPresent(PropertyDefinition.class)) {
             throw new RuntimeException("Could not create ConfigurationItemModel from " + configurationItemClass + ". Must be Interface and must be annotated with " + PropertyDefinition.class);
         }
+        
         return retrieveConfigurationItem(configurationItemClass);
     }
     
     public Object getConfigurationItem(String configurationID) {
+        LOGGER.debug("Getting configuration item from ID "+configurationID);
         Object configuration = retrieveConfigurationItem(configurationID);
         
         return configuration;

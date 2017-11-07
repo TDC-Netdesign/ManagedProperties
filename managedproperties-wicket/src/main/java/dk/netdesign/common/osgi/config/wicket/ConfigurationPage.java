@@ -38,6 +38,7 @@ import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.Model;
+import org.apache.wicket.model.util.ListModel;
 import org.apache.wicket.request.mapper.parameter.PageParameters;
 import org.apache.wicket.util.string.StringValue;
 import org.slf4j.Logger;
@@ -52,16 +53,14 @@ public abstract class ConfigurationPage <E> extends WebPage{
     
     public static final String CONFIGID = "configID";
     
-    private final AttributeModel<E> attributeModel;
+    private final AttributeModel attributeModel;
     private final ManagedPropertiesControllerModel controllerModel;
-    private List<AttributeValue> attributes;
     
     
 
     public ConfigurationPage(Class configurationInterface, ConfigurationItemFactory factory) {
-        controllerModel = new ManagedPropertiesControllerModel(factory, configurationInterface);
-        attributeModel = new AttributeModel<>(controllerModel);
-        attributes = attributeModel.getObject();
+        controllerModel = new ManagedPropertiesControllerModel(configurationInterface);
+        attributeModel = new AttributeModel(controllerModel);
         setUpPage();
     }
     
@@ -70,14 +69,13 @@ public abstract class ConfigurationPage <E> extends WebPage{
         StringValue configurationIDValue = parameters.get(CONFIGID);
         
         
-        controllerModel = new ManagedPropertiesControllerModel(getFactory(), configurationIDValue.toString());
-        attributeModel = new AttributeModel<>(controllerModel);
-        attributes = attributeModel.getObject();
+        controllerModel = new ManagedPropertiesControllerModel(configurationIDValue.toString());
+        attributeModel = new AttributeModel(controllerModel);
         setUpPage();
     }
     
     public final void setUpPage(){
-        final ListView<AttributeValue> attributePanels = new ListView<AttributeValue>("attribute-panels", attributes) {
+        final ListView<AttributeValue> attributePanels = new ListView<AttributeValue>("attribute-panels", attributeModel) {
             
             @Override
             protected void populateItem(ListItem<AttributeValue> item) {
@@ -107,7 +105,7 @@ public abstract class ConfigurationPage <E> extends WebPage{
                     LOGGER.debug("Committing configuration: "+controller);
                     controller.commitProperties();
                     
-                    attributes = attributeModel.getObject();
+                    
                 } catch (InvocationException | ParsingException ex) {
                     LOGGER.error("Could not save the configuration. ",ex);
                 }
@@ -124,16 +122,26 @@ public abstract class ConfigurationPage <E> extends WebPage{
     
     protected abstract ConfigurationItemFactory getFactory();
     
-    private class AttributeModel <E> extends LoadableDetachableModel<List<AttributeValue>>{
+    private class AttributeModel extends ListModel<AttributeValue>{
         private final ManagedPropertiesControllerModel controllerModel;
 
         public AttributeModel(ManagedPropertiesControllerModel controllerModel) {
             this.controllerModel = controllerModel;
         }
-        
 
         @Override
-        protected List<AttributeValue> load() {
+        public List<AttributeValue> getObject() {
+            List<AttributeValue> values = super.getObject();
+            if(values == null){
+                values = retrieve();
+                super.setObject(values);
+            }
+            return values;
+        }
+
+        
+
+        protected List<AttributeValue> retrieve() {
             ManagedPropertiesController controller = controllerModel.getObject();
             List<AttributeValue> values = new ArrayList<>();
             
@@ -141,7 +149,7 @@ public abstract class ConfigurationPage <E> extends WebPage{
             for(Attribute attribute : controller.getAttributes()){
                 Object value = controller.getConfigItem(attribute.getID());
                 
-                AttributeCastingModel<Serializable> valueModel = new AttributeCastingModel<Serializable>(attribute);
+                AttributeCastingModel<Serializable> valueModel = new AttributeCastingModel<>(attribute);
                 if(value != null && value instanceof Serializable){
                     valueModel.setObject((Serializable)value);
                 }else{
@@ -162,26 +170,25 @@ public abstract class ConfigurationPage <E> extends WebPage{
     }
     
     private class ManagedPropertiesControllerModel extends LoadableDetachableModel<ManagedPropertiesController>{
-        private final ConfigurationItemFactory factory;
         private final Class configurationType;
         private final String configurationID;
         
-        public ManagedPropertiesControllerModel(ConfigurationItemFactory factory, Class<E> configurationType) {
-            this.factory = factory;
+        public ManagedPropertiesControllerModel(Class<E> configurationType) {
             this.configurationType = configurationType;
             configurationID = null;
         }
 
-        public ManagedPropertiesControllerModel(ConfigurationItemFactory factory, String configurationID) {
-            this.factory = factory;
+        public ManagedPropertiesControllerModel(String configurationID) {
             this.configurationType = null;
             this.configurationID = configurationID;
         }
 
         @Override
         protected ManagedPropertiesController load() {
+            ConfigurationItemFactory factory = getFactory();
             LOGGER.debug("Loading ManagedPropertiesController for "+
-                    (configurationType != null ? configurationType : "")+" "+(configurationID != null ? configurationID : ""));
+                    (configurationType != null ? configurationType : "")+" "+(configurationID != null ? configurationID : "")+
+                    " using "+factory);
             Object configInstance;
             
             if(configurationType != null){
