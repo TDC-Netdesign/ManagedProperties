@@ -298,6 +298,9 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     public Class getReturnType(String configID) throws UnknownValueException {
 	for(MetaTypeAttributeDefinition definition : ocd.getRequiredADs()){
 	    if(definition.getID().equals(configID)){
+                if(logger.isDebugEnabled()){
+                    logger.debug(definition.getID()+" type:"+definition.getAttribute().getInputType());
+                }              
 		return definition.getAttribute().getInputType();
 	    }
 	}

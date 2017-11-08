@@ -253,7 +253,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
 
     private void setItem(String key, Object item) {
-        w.lock();
+        w.lock();/*<- This is not a hanging lock. It unlocks in commitProperties*/
         try {
 
             config.put(key, item);
@@ -298,7 +298,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
             logger.error("Could not parse configuration", ex);
         }finally{
             settingConfiguration = false;
-            w.unlock();
+            w.unlock();/*<- This is not a hanging lock. It locks in setItem*/
         }
 
     }
@@ -391,7 +391,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
             StringBuilder builder = new StringBuilder();
             String delim = "";
             for (String key : properties.keySet()) {
-                builder.append(delim).append(key);
+                builder.append(delim).append(key).append("[").append(properties.get(key).getClass().getSimpleName()).append("]");
                 if (printKeys) {
                     if (configHiddenKeys.contains(key)) {
                         builder.append("=").append("******");
@@ -410,10 +410,11 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         }
 
         w.lock();
+        try {
         TreeSet<String> required = new TreeSet<String>();
         required.addAll(requiredIds);
         Map<String, Object> newprops = new HashMap<>();
-        try {
+        
             Set<String> keys = properties.keySet();
             for (String key : keys) {
 
@@ -463,6 +464,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 callback.configurationUpdated(properties);
             }
         } finally {
+            logger.debug("Finished updating configuration. Signalling all");
             updated.signalAll();
             w.unlock();
 
