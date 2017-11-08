@@ -27,6 +27,8 @@ import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -142,13 +144,13 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
                     for(int i = 0 ; i<valueAsList.size() ; i++){
                         Object valueFromList = valueAsList.get(i);
                         if(valueFromList instanceof String){
-                            valueAsList.set(i, parseStringValue((String)valueFromList));
+                            valueAsList.set(i, parseStringValue(key, (String)valueFromList));
                         }
                         
                     }
                     
                 }else if(value instanceof String){
-                    value = parseStringValue((String)value);
+                    value = parseStringValue(key, (String)value);
                 }
                 
                 
@@ -174,13 +176,13 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	lastAppliedProperties = properties;
     }
     
-    protected Object parseStringValue(String value){
+    protected Object parseStringValue(String key, String value) throws ConfigurationException{
         Matcher listMatcher = listPattern.matcher(value);
         if(listMatcher.find()){
             List<Object> elements = new ArrayList<>();
             Matcher listElementPatcher = listElementPattern.matcher(value);
             while(listElementPatcher.find()){
-                elements.add(parseStringValue(listElementPatcher.group()));
+                elements.add(parseStringValue(key, listElementPatcher.group()));
             }
             return elements;
         }
@@ -218,6 +220,42 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
             return charMatcher.group(VALUE).charAt(0);
         }
         
+        return parseStringToSimpleType(key, value);
+    }
+    
+    protected Object parseStringToSimpleType(String key, String object) throws ConfigurationException{
+        Class targetType = getReturnType(key);
+        logger.debug("Attempting to parse "+object+"["+object.getClass().getCanonicalName()+"] to type "+targetType);
+        
+        Object value = null;
+        if (targetType.equals(String.class)) {
+	    value = object;
+	} else if (targetType.equals(Long.class)) {
+	    value = Long.parseLong(object);
+	} else if (targetType.equals(Integer.class)) {
+	    value = Integer.parseInt(object);
+	} else if (targetType.equals(Short.class)) {
+	    value = Short.parseShort(object);
+	} else if (targetType.equals(Character.class)) {
+	    value = object.toCharArray()[0];
+	} else if (targetType.equals(Byte.class)) {
+	    value = Byte.parseByte(object);
+	} else if (targetType.equals(Double.class)) {
+	    value = Double.parseDouble(object);
+	} else if (targetType.equals(Float.class)) {
+	    value = Float.parseFloat(object);
+	} else if (targetType.equals(BigInteger.class)) {
+	    value = new BigInteger(object, 10);
+	} else if (targetType.equals(BigDecimal.class)) {
+	    value = new BigDecimal(object);
+	} else if (targetType.equals(Boolean.class)) {
+	    value = Boolean.parseBoolean(object);
+	} else if (targetType.equals(Character[].class)) {
+	    value = object.toCharArray();
+	}
+        if(value == null){
+            throw new ConfigurationException(key, "Could not parse the value "+object+"["+object.getClass().getCanonicalName()+"]. Unknown type");
+        }
         return value;
     }
     
