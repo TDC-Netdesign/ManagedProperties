@@ -7,3 +7,6 @@
 /managedproperties-test-resources/target/
 /managedproperties-wicket/target/
 /managedproperties-wicket/nbproject/
+*.iml
+managedproperties-itest/exam/
+.idea/
