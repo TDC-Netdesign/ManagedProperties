@@ -16,29 +16,30 @@
 package dk.netdesign.common.osgi.config.wicket;
 
 import javax.inject.Inject;
+
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 
 /**
- *
  * @author mnn
  */
-public class ConfiguredPage extends WebPage{
+public class ConfiguredPage extends WebPage {
     @Inject
     private ConfigurationItemFactory factory;
-    
+
     public ConfiguredPage() {
-        
-        add(new RequiredConfigBehavior(factory, SetterConfig.class){
+
+        add(new RequiredConfigBehavior(factory, SetterConfig.class) {
             @Override
             protected Class<? extends ConfigurationPage> getRedirectPage() {
                 return InjectingConfigurationPage.class;
             }
         });
-        
+
         Label testLabel = new Label("testLabel", "Only show me if SetterConfigs getString returns a propper value");
         add(testLabel);
-        
+        //TODO Fatten the page to show configured values from SetterConfig
+
     }
 
     public ConfigurationItemFactory getFactory() {
@@ -48,9 +49,6 @@ public class ConfiguredPage extends WebPage{
     public void setFactory(ConfigurationItemFactory factory) {
         this.factory = factory;
     }
-    
-    
-    
-    
-    
+
+
 }
