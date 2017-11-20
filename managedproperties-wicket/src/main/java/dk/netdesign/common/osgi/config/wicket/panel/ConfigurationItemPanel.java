@@ -27,17 +27,12 @@ import dk.netdesign.common.osgi.config.wicket.fragment.UnknownTypeFragment;
 import java.io.Serializable;
 import java.net.URL;
 import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.Component;
+import org.apache.wicket.behavior.AttributeAppender;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
-import org.apache.wicket.markup.html.form.CheckBox;
-import org.apache.wicket.markup.html.form.NumberTextField;
-import org.apache.wicket.markup.html.form.TextField;
-import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
-import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.Model;
 
 /**
@@ -48,9 +43,8 @@ public class ConfigurationItemPanel extends Panel {
     private Attribute attribute;
     private final IModel<? extends Serializable> configValue;
 
-    public ConfigurationItemPanel(final Attribute attribute, final IModel<Serializable> currentValue, final String errorMessage, String id) {
+    public ConfigurationItemPanel(final Attribute attribute, final IModel<Serializable> currentValue, String errorMessage, String id) {
         super(id);
-
         this.attribute = attribute;
         
         String panelTextFieldID = attribute.getID() + "Input";
@@ -72,7 +66,17 @@ public class ConfigurationItemPanel extends Panel {
         }
         
 
-        Label formLabel = new Label("label", Model.of(attribute.getName()+"("+attribute.getCardinalityDef().name()+")"));
+        
+        String propertyNameAndCardinality = attribute.getName()+"("+attribute.getCardinalityDef().name()+")";
+        WebMarkupContainer formLabel = new WebMarkupContainer("nameLabel");
+        
+        Label labelText = new Label("labelText", Model.of(propertyNameAndCardinality));
+        formLabel.add(labelText);
+        
+        Label labelMessage = new ErrorLabel("labelMsg", errorMessage);
+        
+        formLabel.add(labelMessage);
+        
         formLabel.add(AttributeModifier.replace("for", panelTextFieldID));
         formLabel.add(AttributeModifier.replace("title", attribute.getInputType().getSimpleName()));
         add(formLabel);
@@ -140,6 +144,26 @@ public class ConfigurationItemPanel extends Panel {
     }
 
     
+    
+    private static class ErrorLabel extends Label{
+        private String errorMessage;
+        
+        public ErrorLabel(String id, String errorMessage) {
+            super(id, "Error");
+            this.errorMessage = errorMessage;
+            add(AttributeAppender.replace("title", errorMessage));
+        }
+
+        @Override
+        public boolean isVisible() {
+            return errorMessage != null;
+        }
+        
+        
+        
+        
+        
+    }
     
 
 }
