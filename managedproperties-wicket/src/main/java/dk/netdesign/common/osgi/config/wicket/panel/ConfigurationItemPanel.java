@@ -152,6 +152,7 @@ public class ConfigurationItemPanel extends Panel {
             super(id, "Error");
             this.errorMessage = errorMessage;
             add(AttributeAppender.replace("title", errorMessage));
+            add(AttributeAppender.append("class", "label-danger"));
         }
 
         @Override
