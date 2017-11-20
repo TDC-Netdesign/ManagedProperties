@@ -211,6 +211,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
     
     public void setItem(Attribute propertyDefinition, Object item) throws ParsingException{
+        if(item == null){
+            return;
+        }
         Class methodArgumentClass = item.getClass();
                 if(propertyDefinition.getMethodReturnType().isAssignableFrom(methodArgumentClass)){
                     setFilteredItem(propertyDefinition, item);

@@ -16,6 +16,7 @@
 package dk.netdesign.common.osgi.config.wicket.panel;
 
 import dk.netdesign.common.osgi.config.Attribute;
+import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.wicket.fragment.BooleanFieldFragment;
 import dk.netdesign.common.osgi.config.wicket.fragment.InputFragment;
 import dk.netdesign.common.osgi.config.wicket.fragment.NumberFieldFragment;
@@ -34,6 +35,7 @@ import org.apache.wicket.markup.html.form.NumberTextField;
 import org.apache.wicket.markup.html.form.TextField;
 import org.apache.wicket.markup.html.panel.Fragment;
 import org.apache.wicket.markup.html.panel.Panel;
+import org.apache.wicket.model.AbstractReadOnlyModel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 import org.apache.wicket.model.Model;
@@ -54,7 +56,7 @@ public class ConfigurationItemPanel extends Panel {
         String panelTextFieldID = attribute.getID() + "Input";
         String panelSmallLabelID = attribute.getID() + "Details";
 
-        String attributeDefault = attribute.getDefaultValue() != null && attribute.getDefaultValue().length > 0 && attribute.getDefaultValue()[0] != null ? attribute.getDefaultValue()[0] : "";
+        String attributeDefault = attribute.getDefaultValue() != null && attribute.getDefaultValue().length > 0 && attribute.getDefaultValue()[0] != null ? attribute.getDefaultValue()[0] : null;
 
         String methodReturnSimpleName = attribute.getMethodReturnType().getSimpleName();
 
@@ -114,15 +116,15 @@ public class ConfigurationItemPanel extends Panel {
 //            }
 //        }));
            
-        fragment.getFormInput().add(AttributeModifier.append("class", new LoadableDetachableModel<String>() {
+        fragment.getFormInput().add(AttributeModifier.append("style", new AbstractReadOnlyModel<String>() {
             @Override
-            protected String load() {
-                if(errorMessage != null){
-                    return ".bg-danger";
-                }else if(!usingDefault){
-                    return ".bg-info";
+            public String getObject() {
+                if(attribute.getCardinalityDef().equals(Property.Cardinality.Required) && currentValue.getObject() == null){
+                    return "background-color:#d9534f;"; //#d9534f
+                }else if(usingDefault){
+                    return "background-color:#f0ad4e;";//#f0ad4e
                 }else{
-                    return ".bg-warning";
+                    return null;
                 }
             }
 

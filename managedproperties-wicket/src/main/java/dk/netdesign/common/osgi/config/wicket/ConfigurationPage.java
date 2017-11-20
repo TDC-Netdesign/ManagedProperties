@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import org.apache.wicket.markup.html.WebPage;   
+import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
@@ -75,6 +76,14 @@ public abstract class ConfigurationPage <E> extends WebPage{
     }
     
     public final void setUpPage(){
+        String name = controllerModel.getObject().getName();
+        String id = controllerModel.getObject().getID();
+        Label configName = new Label("configName", Model.of(name));
+        add(configName);
+        Label configID = new Label("configID", Model.of(id));
+        add(configID);
+        
+        
         final ListView<AttributeValue> attributePanels = new ListView<AttributeValue>("attribute-panels", attributeModel) {
             
             @Override

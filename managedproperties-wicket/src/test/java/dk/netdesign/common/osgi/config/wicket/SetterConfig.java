@@ -33,7 +33,7 @@ public interface SetterConfig {
     
     public void setString(String string);
     
-    @Property(type = String.class, typeMapper = FileFilter.class)
+    @Property(type = String.class, typeMapper = FileFilter.class, defaultValue = "C:/Program Files/")
     public File getFile() throws UnknownValueException;
     
     public void setFile(String fileAsString);
