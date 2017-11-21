@@ -19,6 +19,7 @@ import dk.netdesign.common.osgi.config.wicket.panel.ConfigurationItemPanel;
 import dk.netdesign.common.osgi.config.Attribute;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.MultiParsingException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
@@ -31,7 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
-import org.apache.wicket.markup.html.WebPage;   
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.form.AjaxFormSubmitBehavior;
+import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.list.ListItem;
@@ -49,89 +52,128 @@ import org.slf4j.LoggerFactory;
  *
  * @author mnn
  */
-public abstract class ConfigurationPage <E> extends WebPage{
+public abstract class ConfigurationPage<E> extends WebPage {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationPage.class);
-    
+
     public static final String CONFIGID = "configID";
-    
+
     private final AttributeModel attributeModel;
     private final ManagedPropertiesControllerModel controllerModel;
-    
-    
 
     public ConfigurationPage(Class configurationInterface, ConfigurationItemFactory factory) {
         controllerModel = new ManagedPropertiesControllerModel(configurationInterface);
         attributeModel = new AttributeModel(controllerModel);
         setUpPage();
     }
-    
+
     public ConfigurationPage(PageParameters parameters) {
         super(parameters);
         StringValue configurationIDValue = parameters.get(CONFIGID);
-        
-        
+
         controllerModel = new ManagedPropertiesControllerModel(configurationIDValue.toString());
         attributeModel = new AttributeModel(controllerModel);
         setUpPage();
     }
-    
-    public final void setUpPage(){
+
+    public final void setUpPage() {
         String name = controllerModel.getObject().getName();
         String id = controllerModel.getObject().getID();
         Label configName = new Label("configName", Model.of(name));
         add(configName);
         Label configID = new Label("configID", Model.of(id));
         add(configID);
-        
-        
+
         final ListView<AttributeValue> attributePanels = new ListView<AttributeValue>("attribute-panels", attributeModel) {
-            
+
             @Override
             protected void populateItem(ListItem<AttributeValue> item) {
                 AttributeValue attributeAndValue = item.getModelObject();
                 item.add(new ConfigurationItemPanel(attributeAndValue.getAttribute(), attributeAndValue.getValue(), null, "attribute-panel"));
             }
         };
-        
-        
-        Form form = new Form("configForm"){
+
+        Form configForm = new Form("configForm");
+
+        configForm.add(new AjaxFormSubmitBehavior("onsubmit") {
             @Override
-            protected void onSubmit() {
-                try {
-                    LOGGER.info("Attempting to persist new configuration");
-                    ManagedPropertiesController controller = controllerModel.getObject();
-                    
-                    for(AttributeValue value : attributeModel.getObject()){
-                        
-                        if(LOGGER.isDebugEnabled()){
-                            LOGGER.debug("Parsing "+value.getValue().getObject());
+            protected void onSubmit(AjaxRequestTarget target) {
+                super.onSubmit(target);
+                ManagedPropertiesController controller = controllerModel.getObject();
+
+                LOGGER.info("Attempting to persist new configuration");
+                for (AttributeValue value : attributeModel.getObject()) {
+                    value.errorMessage = null;
+                }
+
+                Map<String, ParsingException> exceptions = new HashMap<>();
+                for (AttributeValue value : attributeModel.getObject()) {
+                    try {
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug("Parsing " + value.getValue().getObject());
                         }
                         Object castObject = value.getValue().getCastObject();
-                        LOGGER.debug("Parsed object: "+castObject);
-                        
+                        LOGGER.debug("Parsed object: " + castObject);
                         controller.setItem(value.getAttribute(), castObject);
+                    } catch (ParsingException ex) {
+                        ParsingException previousException = exceptions.put(ex.getKey(), ex);
+                        if (previousException != null) {
+                            LOGGER.info("Exception overwritten for key " + ex.getKey() + ": " + previousException.getMessage());
+                        }
                     }
-                    LOGGER.debug("Committing configuration: "+controller);
-                    controller.commitProperties();
-                    
-                    
-                } catch (InvocationException | ParsingException ex) {
-                    LOGGER.error("Could not save the configuration. ",ex);
+
                 }
-                
+
+                if (!exceptions.isEmpty()) {
+
+                    resetCommit(controller);
+                    for (AttributeValue value : attributeModel.getObject()) {
+                        ParsingException ex = exceptions.get(value.attribute.getID());
+                        if (ex != null) {
+                            value.errorMessage = ex.getMessage();
+                        }
+                    }
+
+                } else {
+                    try {
+                        controller.commitProperties();
+                    } catch (MultiParsingException ex) {
+                        for(ParsingException pex : ex.getExceptions()){
+                            for(AttributeValue value : attributeModel.getObject()){
+                                if(value.attribute.getID().equals(pex.getKey())){
+                                    value.errorMessage = pex.getMessage();
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (InvocationException ex) {
+                        LOGGER.warn("Attempted to commit configuration, but controller was not in set-state", ex);
+                    }
+                }
+                LOGGER.debug("Committing configuration: " + controller);
+
+                target.add(ConfigurationPage.this);
             }
-            
-        };
-        
-        
-        form.add(attributePanels);
-        
-        add(form);
+        });
+
+        configForm.add(attributePanels);
+
+        add(configForm);
     }
-    
+
+    private void resetCommit(ManagedPropertiesController controller) {
+        try {
+            controller.abortCommitProperties();
+        } catch (InvocationException ex) {
+            LOGGER.warn("Could not abort setting configuration. The controller was not locked in set-state", ex);
+        }
+
+    }
+
     protected abstract ConfigurationItemFactory getFactory();
-    
-    private class AttributeModel extends ListModel<AttributeValue>{
+
+    private class AttributeModel extends ListModel<AttributeValue> {
+
         private final ManagedPropertiesControllerModel controllerModel;
 
         public AttributeModel(ManagedPropertiesControllerModel controllerModel) {
@@ -141,47 +183,42 @@ public abstract class ConfigurationPage <E> extends WebPage{
         @Override
         public List<AttributeValue> getObject() {
             List<AttributeValue> values = super.getObject();
-            if(values == null){
+            if (values == null) {
                 values = retrieve();
                 super.setObject(values);
             }
             return values;
         }
 
-        
-
         protected List<AttributeValue> retrieve() {
             ManagedPropertiesController controller = controllerModel.getObject();
             List<AttributeValue> values = new ArrayList<>();
-            
-            
-            for(Attribute attribute : controller.getAttributes()){
+
+            for (Attribute attribute : controller.getAttributes()) {
                 Object value = controller.getConfigItem(attribute.getID());
-                
+
                 AttributeCastingModel<Serializable> valueModel = new AttributeCastingModel<>(attribute);
-                if(value != null && value instanceof Serializable){
-                    valueModel.setObject((Serializable)value);
-                }else{
-                    LOGGER.warn("Could not retrieve value for "+attribute.getName()+"["+attribute.getID()+"]. Value was not serializable: "+ value);
+                if (value != null && value instanceof Serializable) {
+                    valueModel.setObject((Serializable) value);
+                } else {
+                    LOGGER.warn("Could not retrieve value for " + attribute.getName() + "[" + attribute.getID() + "]. Value was not serializable: " + value);
                 }
-                
+
                 values.add(new AttributeValue(attribute, valueModel));
             }
-            
+
             Collections.sort(values);
-            
+
             return values;
         }
-        
-        
-        
-        
+
     }
-    
-    private class ManagedPropertiesControllerModel extends LoadableDetachableModel<ManagedPropertiesController>{
+
+    private class ManagedPropertiesControllerModel extends LoadableDetachableModel<ManagedPropertiesController> {
+
         private final Class configurationType;
         private final String configurationID;
-        
+
         public ManagedPropertiesControllerModel(Class<E> configurationType) {
             this.configurationType = configurationType;
             configurationID = null;
@@ -195,32 +232,29 @@ public abstract class ConfigurationPage <E> extends WebPage{
         @Override
         protected ManagedPropertiesController load() {
             ConfigurationItemFactory factory = getFactory();
-            LOGGER.debug("Loading ManagedPropertiesController for "+
-                    (configurationType != null ? configurationType : "")+" "+(configurationID != null ? configurationID : "")+
-                    " using "+factory);
+            LOGGER.debug("Loading ManagedPropertiesController for "
+                    + (configurationType != null ? configurationType : "") + " " + (configurationID != null ? configurationID : "")
+                    + " using " + factory);
             Object configInstance;
-            
-            if(configurationType != null){
+
+            if (configurationType != null) {
                 configInstance = factory.getConfigurationItem(configurationType);
-            }else{
+            } else {
                 configInstance = factory.getConfigurationItem(configurationID);
             }
-            
-            ManagedPropertiesController controller = (ManagedPropertiesController)Proxy.getInvocationHandler(configInstance);
-            
+
+            ManagedPropertiesController controller = (ManagedPropertiesController) Proxy.getInvocationHandler(configInstance);
+
             return controller;
         }
 
-       
-        
-        
-        
-        
     }
-    
-    protected class AttributeValue implements Serializable, Comparable<AttributeValue>{
+
+    protected class AttributeValue implements Serializable, Comparable<AttributeValue> {
+
         private final Attribute attribute;
         private final AttributeCastingModel<Serializable> value;
+        private String errorMessage = null;
 
         public AttributeValue(Attribute attribute, AttributeCastingModel<Serializable> value) {
             this.attribute = attribute;
@@ -239,13 +273,11 @@ public abstract class ConfigurationPage <E> extends WebPage{
         public int compareTo(AttributeValue o) {
             return attribute.getName().toUpperCase().compareTo(o.getAttribute().getName().toUpperCase());
         }
-        
-        
-        
 
     }
-    
-    protected class AttributeCastingModel<E extends Serializable> extends Model<E>{
+
+    protected class AttributeCastingModel<E extends Serializable> extends Model<E> {
+
         private final Attribute attribute;
         private String ID = UUID.randomUUID().toString();
 
@@ -260,67 +292,64 @@ public abstract class ConfigurationPage <E> extends WebPage{
 
         @Override
         public void setObject(E object) {
-            LOGGER.debug("Setting configuration for "+attribute.getID()+": "+object);
-            if(LOGGER.isDebugEnabled()){
-                LOGGER.debug("Before: "+getObject());
+            LOGGER.debug("Setting configuration for " + attribute.getID() + ": " + object);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Before: " + getObject());
             }
-            
+
             super.setObject(object);
-            
-            if(LOGGER.isDebugEnabled()){
-                LOGGER.debug("After: "+getObject());
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("After: " + getObject());
             }
         }
-        
-        
-        
-        public Object getCastObject() throws ParsingException{
+
+        public Object getCastObject() throws ParsingException {
             E currentObject = getObject();
-            if(currentObject == null){
+            if (currentObject == null) {
                 return null;
             }
             Class inputType = attribute.getInputType();
-            if(currentObject instanceof String){
+            if (currentObject instanceof String) {
 
-                String stringObject = (String)currentObject;
-                if(inputType == Integer.class){
+                String stringObject = (String) currentObject;
+                if (inputType == Integer.class) {
                     return Integer.parseInt(stringObject);
-                }else if(inputType == Long.class){
+                } else if (inputType == Long.class) {
                     return Long.parseLong(stringObject);
-                }else if(inputType == Short.class){
+                } else if (inputType == Short.class) {
                     return Short.parseShort(stringObject);
-                }else if(inputType == Double.class){
+                } else if (inputType == Double.class) {
                     return Double.parseDouble(stringObject);
-                }else if(inputType == Float.class){
+                } else if (inputType == Float.class) {
                     return Float.parseFloat(stringObject);
-                }else if(inputType == Character.class){
+                } else if (inputType == Character.class) {
                     return new Character(stringObject.charAt(0));
-                }else if(inputType == Byte.class){
+                } else if (inputType == Byte.class) {
                     return Byte.parseByte(stringObject);
-                }else if(inputType == Boolean.class){
+                } else if (inputType == Boolean.class) {
                     return Boolean.parseBoolean(stringObject);
-                }else if(inputType == Character[].class){
+                } else if (inputType == Character[].class) {
                     return stringObject.toCharArray();
-                }else if(inputType == BigInteger.class){
+                } else if (inputType == BigInteger.class) {
                     return new BigInteger(stringObject, 10);
-                }else if(inputType == BigDecimal.class){
+                } else if (inputType == BigDecimal.class) {
                     return new BigDecimal(stringObject);
-                }else if(inputType == String.class){
+                } else if (inputType == String.class) {
                     return stringObject;
-                }else{
-                    throw new ParsingException(attribute.getID(), "Could not parse value "+attribute.getName()+" unknown type not supported: "+attribute.getInputType());
+                } else {
+                    throw new ParsingException(attribute.getID(), "Could not parse value " + attribute.getName() + " unknown type not supported: " + attribute.getInputType());
                 }
-            }else if(attribute.getInputType() == Boolean.class && attribute.getInputType().isAssignableFrom(currentObject.getClass())){
+            } else if (attribute.getInputType() == Boolean.class && attribute.getInputType().isAssignableFrom(currentObject.getClass())) {
                 return getObject();
-            }else if(attribute.getInputType() == Character[].class && attribute.getInputType().isAssignableFrom(currentObject.getClass())){
+            } else if (attribute.getInputType() == Character[].class && attribute.getInputType().isAssignableFrom(currentObject.getClass())) {
                 return getObject();
-            }else{
-                throw new ParsingException(attribute.getID(), "Could not parse configuration. Unsupported type: "+currentObject.getClass());
+            } else {
+                throw new ParsingException(attribute.getID(), "Could not parse configuration. Unsupported type: " + currentObject.getClass());
             }
-            
+
         }
-        
+
     }
-    
-    
+
 }

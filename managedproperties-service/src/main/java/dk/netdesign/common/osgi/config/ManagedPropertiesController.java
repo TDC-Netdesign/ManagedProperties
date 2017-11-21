@@ -12,6 +12,7 @@ import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.MultiParsingException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
@@ -122,7 +123,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 }
                 logger.debug("Adding method to mapping: " + methodDefinition);
                 attributeToGetterMapping.put(classMethod.getName(), methodDefinition);
-                
+
                 if (methodDefinition.getSetterName() != null) {
                     Method setterMethod = null;
                     try {
@@ -130,14 +131,14 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                     } catch (NoSuchMethodException | SecurityException ex) {
                         //No setter method. Don't do anything.
                     }
-                    if(setterMethod == null){
+                    if (setterMethod == null) {
                         try {
-                        setterMethod = type.getDeclaredMethod(methodDefinition.getSetterName(), methodDefinition.getInputType());
-                    } catch (NoSuchMethodException | SecurityException ex) {
-                        //No setter method. Don't do anything.
+                            setterMethod = type.getDeclaredMethod(methodDefinition.getSetterName(), methodDefinition.getInputType());
+                        } catch (NoSuchMethodException | SecurityException ex) {
+                            //No setter method. Don't do anything.
+                        }
                     }
-                    }
-                    
+
                     if (setterMethod != null) {
                         logger.debug("Adding setter method to mapping: " + methodDefinition.getSetterName());
                         attributeToSetterMapping.put(methodDefinition.getSetterName(), methodDefinition);
@@ -192,14 +193,14 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         String methodName = method.getName();
         Attribute getterPropertyDefinition = attributeToGetterMapping.get(methodName);
         Attribute setterPropertyDefinition = attributeToSetterMapping.get(methodName);
-        if (method.isAnnotationPresent(Property.class)) {             
+        if (method.isAnnotationPresent(Property.class)) {
             if (methodName.equals(getterPropertyDefinition.getGetterName())) {
                 return getConfigItem(method, getterPropertyDefinition);
             }
-        }else if (setterPropertyDefinition != null && setterPropertyDefinition.getSetterName().equals(methodName) && args.length == 1){
+        } else if (setterPropertyDefinition != null && setterPropertyDefinition.getSetterName().equals(methodName) && args.length == 1) {
             setItem(setterPropertyDefinition, args[0]);
             return null;
-        }else if (allowedMethods.contains(method)) {
+        } else if (allowedMethods.contains(method)) {
             try {
                 return method.invoke(this, args);
             } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
@@ -209,48 +210,47 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
         throw new UnsupportedOperationException("The method " + method + " was not recognized and was not annotated with the annotation " + Property.class.getName() + " allowed methods: " + allowedMethods);
     }
-    
-    public void setItem(Attribute propertyDefinition, Object item) throws ParsingException{
-        if(item == null){
+
+    public void setItem(Attribute propertyDefinition, Object item) throws ParsingException {
+        if (item == null) {
             return;
         }
         Class methodArgumentClass = item.getClass();
-                if(propertyDefinition.getMethodReturnType().isAssignableFrom(methodArgumentClass)){
-                    setFilteredItem(propertyDefinition, item);
-                }else if(propertyDefinition.getInputType().isAssignableFrom(methodArgumentClass)){
-                    setUnfilteredItem(propertyDefinition, item);
-                }else if(List.class.isAssignableFrom(methodArgumentClass)){
-                    setListOfItems(propertyDefinition, (List)item);
-                }else{
-                    throw new ParsingException("Could ot assign "+propertyDefinition.getName()+"["+propertyDefinition.getID()+"] with "+item+". Item was an unknown type. Expected "
-                            + propertyDefinition.getInputType()+" or "+propertyDefinition.getMethodReturnType());
-                }
+        if (propertyDefinition.getMethodReturnType().isAssignableFrom(methodArgumentClass)) {
+            setFilteredItem(propertyDefinition, item);
+        } else if (propertyDefinition.getInputType().isAssignableFrom(methodArgumentClass)) {
+            setUnfilteredItem(propertyDefinition, item);
+        } else if (List.class.isAssignableFrom(methodArgumentClass)) {
+            setListOfItems(propertyDefinition, (List) item);
+        } else {
+            throw new ParsingException("Could ot assign " + propertyDefinition.getName() + "[" + propertyDefinition.getID() + "] with " + item + ". Item was an unknown type. Expected "
+                    + propertyDefinition.getInputType() + " or " + propertyDefinition.getMethodReturnType());
+        }
     }
-    
-    private void setListOfItems(Attribute attribute, List<Object> items) throws ParsingException{
+
+    private void setListOfItems(Attribute attribute, List<Object> items) throws ParsingException {
         List<Object> toSet = new ArrayList<>();
-        for(Object item : items){
-            if(attribute.getMethodReturnType().isAssignableFrom(item.getClass())){
+        for (Object item : items) {
+            if (attribute.getMethodReturnType().isAssignableFrom(item.getClass())) {
                 toSet.add(parseToConfig(attribute, item));
-            }else{
+            } else {
                 toSet.add(item);
             }
         }
         setItem(attribute.getID(), toSet);
     }
-    
-    private void setFilteredItem(Attribute attribute, Object item) throws ParsingException{
+
+    private void setFilteredItem(Attribute attribute, Object item) throws ParsingException {
         parseToConfig(attribute, item);/*Test that we can actually parse the object before saving it, but save the unparsed item.*/
 
         setItem(attribute.getID(), item);
     }
-    
-    private void setUnfilteredItem(Attribute attribute, Object item) throws ParsingException{
+
+    private void setUnfilteredItem(Attribute attribute, Object item) throws ParsingException {
         Object toSave = item;
-        if(attribute.getFilter() != null){
+        if (attribute.getFilter() != null) {
             toSave = parseObject(item, attribute);
         }
-
 
         setItem(attribute.getID(), toSave);
     }
@@ -270,40 +270,64 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
 
     @Override
-    public void commitProperties() throws InvocationException {
+    public void commitProperties() throws MultiParsingException, InvocationException {
         w.lock();
-        try{
+        try {
             if (!settingConfiguration) {
                 throw new InvocationException("Could not commit properties, not currently setting configuration");
             }
-        }finally{
+        } finally {
             w.unlock();
         }
-        
+
         try {
-            
-            
+            List<ParsingException> exceptions = new ArrayList<>();
+
             HashMap<String, Object> parsedConfig = new HashMap<>();
-            for(Attribute attribute : getAttributes()){
+            for (Attribute attribute : getAttributes()) {
                 Object value = getConfigItem(attribute.getID());
-                if(value != null){
-                    if(attribute.getFilter() != null){
-                        value = parseToConfig(attribute, value);
+                if (value != null) {
+                    try {
+                        if (attribute.getFilter() != null) {
+                            value = parseToConfig(attribute, value);
+                        }
+                        parsedConfig.put(attribute.getID(), value);
+                    } catch (ParsingException ex) {
+                        exceptions.add(ex);
                     }
-                    
-                    parsedConfig.put(attribute.getID(), value);
+
                 }
+            }
+            if(!exceptions.isEmpty()){
+                throw new MultiParsingException(exceptions, "Errors encountered while parsing configuration");
             }
 
             provider.persistConfiguration(parsedConfig);
-            
-        } catch (ParsingException ex) {
-            logger.error("Could not parse configuration", ex);
-        }finally{
+
+        } finally {
             settingConfiguration = false;
             w.unlock();/*<- This is not a hanging lock. It locks in setItem*/
         }
 
+    }
+    
+    @Override
+    public void abortCommitProperties() throws InvocationException {
+        w.lock();
+        try {
+            if (!settingConfiguration) {
+                throw new InvocationException("Could not commit properties, not currently setting configuration");
+            }
+        } finally {
+            w.unlock();
+        }
+        
+        try{
+            settingConfiguration = false;
+        }finally{
+            w.unlock();/*<- This is not a hanging lock. It locks in setItem*/
+        }
+        
     }
 
     private Object getConfigItem(Method method, Attribute propertyDefinition) throws InvocationException, InvalidTypeException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException {
@@ -414,10 +438,10 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
         w.lock();
         try {
-        TreeSet<String> required = new TreeSet<String>();
-        required.addAll(requiredIds);
-        Map<String, Object> newprops = new HashMap<>();
-        
+            TreeSet<String> required = new TreeSet<String>();
+            required.addAll(requiredIds);
+            Map<String, Object> newprops = new HashMap<>();
+
             Set<String> keys = properties.keySet();
             for (String key : keys) {
 
@@ -476,18 +500,14 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         logger.info("updated configuration\n" + this);
         return unknownConfigs;
     }
-    
-    
 
     public Object parseObject(Object configurationValue, Attribute definition) throws ParsingException {
         if (!definition.getInputType().isAssignableFrom(configurationValue.getClass())) {
-            throw new ParsingException(definition.getID(), "Could not assign " + configurationValue.getClass() + " to " + definition.getInputType() + ". Value of key "+definition.getID()+" must be of type "+definition.getInputType());
+            throw new ParsingException(definition.getID(), "Could not assign " + configurationValue.getClass() + " to " + definition.getInputType() + ". Value of key " + definition.getID() + " must be of type " + definition.getInputType());
         }
-        
-        
+
         Object toReturn = configurationValue;
-        
-        
+
         if (definition.getFilter() != null) {
             toReturn = filterObject(definition.getID(), toReturn, definition.getFilter(), definition);
         }
@@ -495,8 +515,6 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         return toReturn;
 
     }
-
-    
 
     public Object parseToConfig(Attribute definition, Object typedObject) throws ParsingException {
         if (definition == null) {
@@ -510,8 +528,6 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
 
         return toReturn;
     }
-
-    
 
     private void ensureUniqueIDs(Collection<Attribute> attributeDefinitions) throws DoubleIDException {
         TreeSet<Attribute> adSet = new TreeSet<>(new Comparator<Attribute>() {
@@ -530,7 +546,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         }
 
     }
-    
+
     private Object retrieveObjectFromCollection(String key, Object configItemObject) throws ParsingException {
         if (Collection.class.isAssignableFrom(configItemObject.getClass())) {
             List configItemList = new ArrayList<>((Collection) configItemObject);
@@ -570,8 +586,8 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
             throw new ParsingException(key, "Could not load properties. Could not filter value.", ex);
         }
     }
-    
-        private Object filterReversedObject(String key, Object input, Class<? extends TypeFilter> filterType, Attribute attribute) throws ParsingException {
+
+    private Object filterReversedObject(String key, Object input, Class<? extends TypeFilter> filterType, Attribute attribute) throws ParsingException {
         if (!attribute.getMethodReturnType().isAssignableFrom(input.getClass())) {
             throw new ParsingException(key, "Could not filter this object. The input type was incorrect. Expected " + attribute.getMethodReturnType() + " found " + input.getClass());
         }
