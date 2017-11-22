@@ -99,7 +99,6 @@ public abstract class ConfigurationPage<E> extends WebPage {
             @Override
             protected void onSubmit(AjaxRequestTarget target) {
                 super.onSubmit(target);
-                ManagedPropertiesController controller = controllerModel.getObject();
 
                 LOGGER.info("Attempting to persist new configuration");
                 for (AttributeValue value : attributeModel.getObject()) {
@@ -114,7 +113,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
                         }
                         Object castObject = value.getValue().getCastObject();
                         LOGGER.debug("Parsed object: " + castObject);
-                        controller.setItem(value.getAttribute(), castObject);
+                        controllerModel.getObject().setItem(value.getAttribute(), castObject);
                     } catch (ParsingException ex) {
                         ParsingException previousException = exceptions.put(ex.getKey(), ex);
                         if (previousException != null) {
@@ -126,7 +125,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
 
                 if (!exceptions.isEmpty()) {
 
-                    resetCommit(controller);
+                    resetCommit(controllerModel.getObject());
                     for (AttributeValue value : attributeModel.getObject()) {
                         ParsingException ex = exceptions.get(value.attribute.getID());
                         if (ex != null) {
@@ -136,7 +135,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
 
                 } else {
                     try {
-                        controller.commitProperties();
+                        controllerModel.getObject().commitProperties();
                     } catch (MultiParsingException ex) {
                         for(ParsingException pex : ex.getExceptions()){
                             for(AttributeValue value : attributeModel.getObject()){
@@ -150,7 +149,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
                         LOGGER.warn("Attempted to commit configuration, but controller was not in set-state", ex);
                     }
                 }
-                LOGGER.debug("Committing configuration: " + controller);
+                LOGGER.debug("Committing configuration: " + controllerModel.getObject());
 
                 target.add(ConfigurationPage.this);
             }
@@ -191,11 +190,10 @@ public abstract class ConfigurationPage<E> extends WebPage {
         }
 
         protected List<AttributeValue> retrieve() {
-            ManagedPropertiesController controller = controllerModel.getObject();
             List<AttributeValue> values = new ArrayList<>();
 
-            for (Attribute attribute : controller.getAttributes()) {
-                Object value = controller.getConfigItem(attribute.getID());
+            for (Attribute attribute : controllerModel.getObject().getAttributes()) {
+                Object value = controllerModel.getObject().getConfigItem(attribute.getID());
 
                 AttributeCastingModel<Serializable> valueModel = new AttributeCastingModel<>(attribute);
                 if (value != null && value instanceof Serializable) {

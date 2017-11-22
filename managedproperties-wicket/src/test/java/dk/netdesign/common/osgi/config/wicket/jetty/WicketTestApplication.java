@@ -59,28 +59,12 @@ public class WicketTestApplication extends WebApplication {
     protected void init() {
         super.init();
 
-        getComponentInstantiationListeners().add(new IComponentInstantiationListener() {
-            @Override
-            public void onInstantiation(Component component) {
-                if (component instanceof WebPage) {
-                    component.add(new Behavior() {
-                        @Override
-                        public void renderHead(Component component, IHeaderResponse response) {
-                            response.render(CssHeaderItem.forUrl("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"));
-                            response.render(CssHeaderItem.forUrl("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"));
-                            response.render(JavaScriptHeaderItem.forUrl("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"));
-                        }
-
-                    });
-                }
-
-            }
-        });
+        getComponentInstantiationListeners().add(new CSSBehaviorListener());
 
         HandlerFactory handlerfactory = new HandlerFactory() {
 
             @Override
-            public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, final ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException {
+            public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException {
                 System.out.println("Adding " + configurationType + "->" + controller);
                 testConfigurationItemFactory.addConfigItem(configurationType, ManagedPropertiesFactory.castToProxy(configurationType, controller));
                 return provider;
@@ -111,4 +95,28 @@ public class WicketTestApplication extends WebApplication {
         });
 
     }
+    
+    private static class CSSBehaviorListener implements IComponentInstantiationListener{
+        
+        @Override
+            public void onInstantiation(Component component) {
+                if (component instanceof WebPage) {
+                    component.add(new CSSBehavior());
+                }
+
+            }
+        
+    }
+
+    private static class CSSBehavior extends Behavior {
+
+        @Override
+        public void renderHead(Component component, IHeaderResponse response) {
+            response.render(CssHeaderItem.forUrl("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"));
+            response.render(CssHeaderItem.forUrl("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"));
+            response.render(JavaScriptHeaderItem.forUrl("https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"));
+        }
+
+    }
+
 }
