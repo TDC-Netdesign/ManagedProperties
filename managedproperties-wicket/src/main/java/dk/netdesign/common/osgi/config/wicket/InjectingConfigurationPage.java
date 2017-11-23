@@ -24,7 +24,7 @@ import org.apache.wicket.request.mapper.parameter.PageParameters;
  */
 public class InjectingConfigurationPage<E extends Object> extends ConfigurationPage<E>{
     @Inject
-    private ConfigurationItemFactory factory;
+    private transient ConfigurationItemFactory factory;
 
     public InjectingConfigurationPage(Class configurationInterface, ConfigurationItemFactory factory) {
         super(configurationInterface, factory);
