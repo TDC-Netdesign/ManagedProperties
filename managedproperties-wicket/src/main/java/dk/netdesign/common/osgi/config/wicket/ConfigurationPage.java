@@ -242,7 +242,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
             }
 
             ManagedPropertiesController controller = (ManagedPropertiesController) Proxy.getInvocationHandler(configInstance);
-
+            
             return controller;
         }
 

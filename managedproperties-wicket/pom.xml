@@ -54,6 +54,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.wicket</groupId>
+            <artifactId>wicket-ioc</artifactId>
+            <version>${wicket.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>dk.netdesign</groupId>
             <artifactId>managedproperties-service</artifactId>
             <scope>provided</scope>
