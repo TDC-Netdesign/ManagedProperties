@@ -27,6 +27,7 @@ import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.easymock.EasyMockRunner;
@@ -113,6 +114,7 @@ public class ManagedPropertiesServiceMockTest {
         assertEquals(setString, config.getString());
         assertEquals(testFile2, config.getFile());
         
+        PropertyAccess.actions(config).unregisterProperties();
         
     }
     
@@ -153,6 +155,106 @@ public class ManagedPropertiesServiceMockTest {
         assertEquals(setString, config.getString());
         assertEquals(testFile2.getCanonicalFile(), config.getFile());
         
+        PropertyAccess.actions(config).unregisterProperties();
+        
+        
+    }
+    
+    @Test
+    public void testInvalidFileAndRecovery() throws Exception{
+        File nonExistingFile = new File(UUID.randomUUID().toString());
+        File existingFile = File.createTempFile("Test", "file");
+        if(nonExistingFile.exists()){
+            fail("By some act of god, this file existed prior to starting the test. File must not exist in beginning of test.\n"+nonExistingFile.getCanonicalPath());
+        }
+        if(!existingFile.exists()){
+            fail("Could not create test file. Failing test.\n"+existingFile.getCanonicalPath());
+        }
+        
+        
+        
+        Map<String, Object> expectedSetConfig = new HashMap<>();
+        expectedSetConfig.put("ExistingFile", existingFile.getCanonicalPath());
+        
+        expect(provider.getReturnType("String")).andReturn(String.class);
+        expect(provider.getReturnType("File")).andReturn(String.class);
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.persistConfiguration(expectedSetConfig);
+        /*Expect*/provider.stop();
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+  
+        
+        
+        try{
+            config.setExistingFile(nonExistingFile.getCanonicalPath());
+            fail("Expected exception when attempting to add a nonexisting file");
+        }catch(Exception ex){
+            System.out.println("Recieved expected exception: "+ex.getClass().getCanonicalName()+": "+ex.getMessage());
+            //Expected exception all is well
+        }
+        
+        try{
+            config.setExistingFile(nonExistingFile);
+            fail("Expected exception when attempting to add a nonexisting file");
+        }catch(Exception ex){
+            //Expected exception all is well
+        }
+        
+        config.setExistingFile(existingFile);
+        config.setExistingFile(existingFile.getCanonicalPath());
+        PropertyAccess.actions(config).commitProperties();
+        
+        PropertyAccess.actions(config).unregisterProperties();
+        
+    }
+    
+    @Test
+    public void testInvalidFile() throws Exception{
+        File nonExistingFile = new File(UUID.randomUUID().toString());
+        File existingFile = File.createTempFile("Test", "file");
+        if(nonExistingFile.exists()){
+            fail("By some act of god, this file existed prior to starting the test. File must not exist in beginning of test.\n"+nonExistingFile.getCanonicalPath());
+        }
+        if(!existingFile.exists()){
+            fail("Could not create test file. Failing test.\n"+existingFile.getCanonicalPath());
+        }
+        
+        
+        
+        Map<String, Object> expectedSetConfig = new HashMap<>();
+        expectedSetConfig.put("ExistingFile", existingFile.getCanonicalPath());
+        
+        expect(provider.getReturnType("String")).andReturn(String.class);
+        expect(provider.getReturnType("File")).andReturn(String.class);
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.stop();
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+        
+        Map<String, Object> newConfig = new HashMap<>();
+        newConfig.put("ExistingFile", existingFile.getCanonicalPath());
+        
+        PropertyAccess.configuration(config).updateConfig(newConfig);
+  
+
+        try{
+            config.setExistingFile(nonExistingFile.getCanonicalPath());
+            fail("Expected exception when attempting to add a nonexisting file");
+        }catch(Exception ex){
+            System.out.println("Recieved expected exception: "+ex.getClass().getCanonicalName()+": "+ex.getMessage());
+            //Expected exception all is well
+        }
+        
+        assertEquals(existingFile.getCanonicalFile(), config.getExistingFile());
+        
+        PropertyAccess.actions(config).unregisterProperties();
         
     }
     

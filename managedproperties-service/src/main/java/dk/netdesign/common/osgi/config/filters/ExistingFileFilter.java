@@ -28,16 +28,14 @@ public class ExistingFileFilter extends TypeFilter<String, File> {
 
     @Override
     public File parse(String input) throws TypeFilterException {
-	File f = new File(input);
-	try {
-	    f.getCanonicalPath();
-            if(!f.exists()){
-                throw new TypeFilterException("Could not parse file. The file "+f.getCanonicalPath()+" did not exist");
-            }
-	} catch (IOException ex) {
-	    throw new TypeFilterException("Could not read the file '" + input + "'. Could not resolve path: " + ex.getMessage(), ex);
-	}
-	return f;
+        File f = new File(input);
+        try {
+            f.getCanonicalPath();
+
+        } catch (IOException ex) {
+            throw new TypeFilterException("Could not read the file '" + input + "'. Could not resolve path: " + ex.getMessage(), ex);
+        }
+        return f;
     }
 
     @Override
@@ -48,5 +46,17 @@ public class ExistingFileFilter extends TypeFilter<String, File> {
             throw new TypeFilterException("Could not parse file", ex);
         }
     }
-    
+
+    @Override
+    public void validate(File toValidate) throws TypeFilterException {
+        try {
+            String path = toValidate.getCanonicalPath();
+            if (!toValidate.exists()) {
+                throw new TypeFilterException("Could not parse file. The file " + path + " did not exist");
+            }
+        } catch (IOException ex) {
+            throw new TypeFilterException("Could not read the file '" + toValidate + "'. Could not resolve path: " + ex.getMessage(), ex);
+        }
+    }
+
 }

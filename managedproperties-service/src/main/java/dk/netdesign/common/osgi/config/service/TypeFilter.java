@@ -25,5 +25,7 @@ public abstract class TypeFilter<I extends Object, O extends Object> {
     public abstract O parse(I input) throws TypeFilterException;
     
     public abstract I revert(O input) throws TypeFilterException;
+    
+    public void validate(O toValidate) throws TypeFilterException{}
 
 }

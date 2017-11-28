@@ -55,6 +55,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     private static final Logger logger = LoggerFactory.getLogger(ManagedPropertiesController.class);
 
     private Map<String, Object> config = new HashMap<>();
+    private Map<String, Object> previousConfig = null;
     private long nanosToWait = TimeUnit.SECONDS.toNanos(1);
     private final String id;
     private final String name;
@@ -258,6 +259,9 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     private void setItem(String key, Object item) {
         w.lock();/*<- This is not a hanging lock. It unlocks in commitProperties*/
         try {
+            if(!settingConfiguration){
+                previousConfig = new HashMap<>(config);
+            }
 
             config.put(key, item);
 
@@ -299,12 +303,20 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 }
             }
             if(!exceptions.isEmpty()){
+                config = previousConfig;
                 throw new MultiParsingException(exceptions, "Errors encountered while parsing configuration");
             }
-
-            provider.persistConfiguration(parsedConfig);
+            
+            try{
+                provider.persistConfiguration(parsedConfig);
+            }catch(InvocationException ex){
+                config = previousConfig;
+                throw ex;
+            }
+            
 
         } finally {
+            previousConfig = null;
             settingConfiguration = false;
             w.unlock();/*<- This is not a hanging lock. It locks in setItem*/
         }
@@ -323,6 +335,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         }
         
         try{
+            previousConfig = null;
             settingConfiguration = false;
         }finally{
             w.unlock();/*<- This is not a hanging lock. It locks in setItem*/
@@ -579,6 +592,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         try {
             TypeFilter filterinstance = filterType.newInstance();
             Object filterValue = filterinstance.parse(input);
+            filterinstance.validate(filterValue);
             return filterValue;
         } catch (InstantiationException | IllegalAccessException ex) {
             throw new ParsingException(key, "Could not load properties. Could not instantiate filter.", ex);
@@ -593,6 +607,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         }
         try {
             TypeFilter filterinstance = filterType.newInstance();
+            filterinstance.validate(input);
             Object filterValue = filterinstance.revert(input);
             return filterValue;
         } catch (InstantiationException | IllegalAccessException ex) {
