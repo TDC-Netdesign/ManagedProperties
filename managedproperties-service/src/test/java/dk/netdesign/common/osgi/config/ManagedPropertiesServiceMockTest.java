@@ -19,6 +19,8 @@ import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.ParsingException;
+import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.service.HandlerFactory;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
@@ -87,11 +89,14 @@ public class ManagedPropertiesServiceMockTest {
         expectedSetConfig.put("String", setString);
         expectedSetConfig.put("File", testFile2.getCanonicalPath());
         
+        /*Expect*/provider.start();
         expect(provider.getReturnType("String")).andReturn(String.class);
         expect(provider.getReturnType("File")).andReturn(String.class);
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class);
         
-        /*Expect*/provider.start();
+        
         /*Expect*/provider.persistConfiguration(expectedSetConfig);
+        /*Expect*/provider.stop();
         replay(provider);
         
         SetterConfig config = factory.register(SetterConfig.class);
@@ -130,9 +135,11 @@ public class ManagedPropertiesServiceMockTest {
         
         expect(provider.getReturnType("String")).andReturn(String.class);
         expect(provider.getReturnType("File")).andReturn(String.class);
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class);
         
         /*Expect*/provider.start();
         /*Expect*/provider.persistConfiguration(expectedSetConfig);
+        /*Expect*/provider.stop();
         replay(provider);
         
         SetterConfig config = factory.register(SetterConfig.class);
@@ -192,15 +199,16 @@ public class ManagedPropertiesServiceMockTest {
         try{
             config.setExistingFile(nonExistingFile.getCanonicalPath());
             fail("Expected exception when attempting to add a nonexisting file");
-        }catch(Exception ex){
-            System.out.println("Recieved expected exception: "+ex.getClass().getCanonicalName()+": "+ex.getMessage());
+        }catch(ParsingException ex){
+            assertTrue(ex.getCause() instanceof TypeFilterException);
             //Expected exception all is well
         }
         
         try{
             config.setExistingFile(nonExistingFile);
             fail("Expected exception when attempting to add a nonexisting file");
-        }catch(Exception ex){
+        }catch(ParsingException ex){
+            assertTrue(ex.getCause() instanceof TypeFilterException);
             //Expected exception all is well
         }
         
@@ -247,12 +255,79 @@ public class ManagedPropertiesServiceMockTest {
         try{
             config.setExistingFile(nonExistingFile.getCanonicalPath());
             fail("Expected exception when attempting to add a nonexisting file");
-        }catch(Exception ex){
-            System.out.println("Recieved expected exception: "+ex.getClass().getCanonicalName()+": "+ex.getMessage());
+        }catch(ParsingException ex){
+            assertTrue(ex.getCause() instanceof TypeFilterException);
             //Expected exception all is well
         }
         
         assertEquals(existingFile.getCanonicalFile(), config.getExistingFile());
+        
+        PropertyAccess.actions(config).unregisterProperties();
+        
+    }
+    
+        @Test
+        public void testRevertOnError() throws Exception { 
+        Map<String, Object> expectedSetConfig = new HashMap<>();
+        expectedSetConfig.put("ExistingFile", testFile1.getCanonicalPath());
+        
+        expect(provider.getReturnType("String")).andReturn(String.class);
+        expect(provider.getReturnType("File")).andReturn(String.class);
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.persistConfiguration(expectedSetConfig);
+        expectLastCall().andThrow(new InvocationException("I decided to fail this time."));
+        /*Expect*/provider.stop();
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+        
+        Map<String, Object> newConfig = new HashMap<>();
+        newConfig.put("ExistingFile", testFile2.getCanonicalPath());
+        PropertyAccess.configuration(config).updateConfig(newConfig);
+  
+        config.setExistingFile(testFile1.getCanonicalPath());
+        
+        
+        try{
+            PropertyAccess.actions(config).commitProperties();
+            fail("Expected exception when committing");
+        }catch(InvocationException ex){
+            //Expected exception all is well
+        }
+        
+           
+        
+        assertEquals(testFile2.getCanonicalFile(), config.getExistingFile());
+        
+        PropertyAccess.actions(config).unregisterProperties();
+        
+    }
+        
+        
+        @Test
+        public void testRevert() throws Exception { 
+        
+        expect(provider.getReturnType("String")).andReturn(String.class);
+        expect(provider.getReturnType("File")).andReturn(String.class);
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.stop();
+        replay(provider);
+        
+        SetterConfig config = factory.register(SetterConfig.class);
+        
+        Map<String, Object> newConfig = new HashMap<>();
+        newConfig.put("ExistingFile", testFile2.getCanonicalPath());
+        PropertyAccess.configuration(config).updateConfig(newConfig);
+  
+        config.setExistingFile(testFile1.getCanonicalPath());
+        
+        PropertyAccess.actions(config).abortCommitProperties();
+
+        assertEquals(testFile2.getCanonicalFile(), config.getExistingFile());
         
         PropertyAccess.actions(config).unregisterProperties();
         
