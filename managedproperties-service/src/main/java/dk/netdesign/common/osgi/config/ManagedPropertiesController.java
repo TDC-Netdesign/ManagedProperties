@@ -12,6 +12,7 @@ import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.ManagedPropertiesException;
 import dk.netdesign.common.osgi.config.exception.MultiParsingException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
@@ -190,7 +191,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws InvalidTypeException, TypeFilterException, InvocationException, UnknownValueException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException, ParsingException {
+    public Object invoke(Object proxy, Method method, Object[] args) throws ManagedPropertiesException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InterruptedException {
         String methodName = method.getName();
         Attribute getterPropertyDefinition = attributeToGetterMapping.get(methodName);
         Attribute setterPropertyDefinition = attributeToSetterMapping.get(methodName);
@@ -204,7 +205,12 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
         } else if (allowedMethods.contains(method)) {
             try {
                 return method.invoke(this, args);
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+            }catch(InvocationTargetException ex){
+                Throwable cause = ex.getCause();
+                if(cause instanceof ManagedPropertiesException){
+                    throw (ManagedPropertiesException)cause;
+                }
+            } catch (IllegalAccessException | IllegalArgumentException ex) {
                 throw new InvocationException("Could not execute method. Execution of method " + method + " failed", ex);
             }
         }
@@ -468,6 +474,7 @@ public class ManagedPropertiesController implements InvocationHandler, Configura
                 if (definition == null) {
                     logger.debug(key, "Could not load property. The property " + key + " is not known to this configuration. Supported methods: " + attributeToGetterMapping.keySet());
                     unknownConfigs.put(key, properties.get(key));
+                    continue;
                 }
                 Object configValue = null;
                 switch (definition.cardinalityDef) {

@@ -19,9 +19,9 @@ import dk.netdesign.common.osgi.config.exception.DoubleIDException;
 import dk.netdesign.common.osgi.config.exception.InvalidMethodException;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.MultiParsingException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.TypeFilterException;
-import dk.netdesign.common.osgi.config.exception.UnknownValueException;
 import dk.netdesign.common.osgi.config.service.HandlerFactory;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import dk.netdesign.common.osgi.config.service.ManagedPropertiesProvider;
@@ -30,7 +30,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
@@ -332,8 +331,79 @@ public class ManagedPropertiesServiceMockTest {
         PropertyAccess.actions(config).unregisterProperties();
         
     }
-    
-    
-    
-    
+        
+        @Test(expected = InvalidTypeException.class)
+        public void testBadReturnType() throws Exception { //Finish this
+        
+        expect(provider.getReturnType("String")).andReturn(Number.class);
+        expect(provider.getReturnType("File")).andReturn(Number.class);
+        expect(provider.getReturnType("ExistingFile")).andReturn(Number.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.stop();
+        replay(provider);
+        
+        factory.register(SetterConfig.class);
+        
+    }
+        
+        @Test
+        public void testFailingFilter() throws Exception {        
+        expect(provider.getReturnType("File1")).andReturn(String.class);
+        expect(provider.getReturnType("File2")).andReturn(String.class);
+        expect(provider.getReturnType("File3")).andReturn(String.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.stop();
+        replay(provider);
+        
+        TrippleFileConfig config = factory.register(TrippleFileConfig.class);
+  
+        config.setFile1(testFile1);
+        config.setFile2(testFile1);
+        config.setFile3(testFile1);
+        
+        testFile1.delete();
+        
+        try{
+            PropertyAccess.actions(config).commitProperties();
+            fail("Exception should have been caught");
+        }catch(MultiParsingException ex){
+            assertTrue("Exceptionlist should be of size 2", ex.getExceptions().size() == 2);
+            for(ParsingException exception : ex.getExceptions()){
+                if(!(exception.getKey().equals("File1") || exception.getKey().equals("File2"))){
+                    fail("Expected File1 and File2 to fail");
+                }
+            }
+        }
+        
+
+        PropertyAccess.actions(config).unregisterProperties();
+        
+    }
+        
+        @Test
+        public void testUnknownConfigValue() throws Exception { 
+        
+        expect(provider.getReturnType("File1")).andReturn(String.class);
+        expect(provider.getReturnType("File2")).andReturn(String.class);
+        expect(provider.getReturnType("File3")).andReturn(String.class);
+        
+        /*Expect*/provider.start();
+        /*Expect*/provider.stop();
+        replay(provider);
+        
+        TrippleFileConfig config = factory.register(TrippleFileConfig.class);
+        
+        Map<String, Object> newConfig = new HashMap<>();
+        newConfig.put("NonExistantConfig", testFile2.getCanonicalPath());
+        Map<String, Object> unknownFields = PropertyAccess.configuration(config).updateConfig(newConfig);
+
+        assertTrue(unknownFields.size() == 1);
+        assertEquals(testFile2.getCanonicalPath(), unknownFields.get("NonExistantConfig"));
+        
+        PropertyAccess.actions(config).unregisterProperties();
+        
+    }
+  
 }
