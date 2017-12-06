@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.ajax.form.AjaxFormSubmitBehavior;
 import org.apache.wicket.markup.html.WebPage;
@@ -89,7 +88,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
             @Override
             protected void populateItem(ListItem<AttributeValue> item) {
                 AttributeValue attributeAndValue = item.getModelObject();
-                item.add(new ConfigurationItemPanel(attributeAndValue.getAttribute(), attributeAndValue.getValue(), null, "attribute-panel"));
+                item.add(new ConfigurationItemPanel(attributeAndValue.getAttribute(), attributeAndValue.getValue(), attributeAndValue.errorMessageModel, "attribute-panel"));
             }
         };
 
@@ -102,7 +101,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
 
                 LOGGER.info("Attempting to persist new configuration");
                 for (AttributeValue value : attributeModel.getObject()) {
-                    value.errorMessage = null;
+                    value.setErrorMessage(null);
                 }
 
                 Map<String, ParsingException> exceptions = new HashMap<>();
@@ -129,7 +128,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
                     for (AttributeValue value : attributeModel.getObject()) {
                         ParsingException ex = exceptions.get(value.attribute.getID());
                         if (ex != null) {
-                            value.errorMessage = ex.getMessage();
+                            value.setErrorMessage(ex.getMessage());
                         }
                     }
 
@@ -140,7 +139,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
                         for(ParsingException pex : ex.getExceptions()){
                             for(AttributeValue value : attributeModel.getObject()){
                                 if(value.attribute.getID().equals(pex.getKey())){
-                                    value.errorMessage = pex.getMessage();
+                                    value.setErrorMessage(pex.getMessage());
                                     break;
                                 }
                             }
@@ -151,7 +150,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
                 }
                 LOGGER.debug("Committing configuration: " + controllerModel.getObject());
 
-                target.add(ConfigurationPage.this);
+                target.add(ConfigurationPage.this);                
             }
         });
 
@@ -252,7 +251,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
 
         private final Attribute attribute;
         private final AttributeCastingModel<Serializable> value;
-        private String errorMessage = null;
+        private final IModel<String> errorMessageModel = new Model<>();
 
         public AttributeValue(Attribute attribute, AttributeCastingModel<Serializable> value) {
             this.attribute = attribute;
@@ -266,6 +265,20 @@ public abstract class ConfigurationPage<E> extends WebPage {
         public AttributeCastingModel<Serializable> getValue() {
             return value;
         }
+        
+        public void setErrorMessage(String errorMessage){
+            errorMessageModel.setObject(errorMessage);
+        }
+        
+        public String getErrorMessage(){
+            return errorMessageModel.getObject();
+        }
+        
+        public IModel<String> getErrorMessageModel(){
+            return errorMessageModel;
+        }
+        
+        
 
         @Override
         public int compareTo(AttributeValue o) {

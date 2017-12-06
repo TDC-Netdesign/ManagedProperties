@@ -333,7 +333,7 @@ public class ManagedPropertiesServiceMockTest {
     }
         
         @Test(expected = InvalidTypeException.class)
-        public void testBadReturnType() throws Exception { //Finish this
+        public void testBadReturnType() throws Exception {
         
         expect(provider.getReturnType("String")).andReturn(Number.class);
         expect(provider.getReturnType("File")).andReturn(Number.class);

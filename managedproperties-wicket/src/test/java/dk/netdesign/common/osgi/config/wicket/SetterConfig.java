@@ -18,8 +18,11 @@ package dk.netdesign.common.osgi.config.wicket;
 import dk.netdesign.common.osgi.config.annotation.Property;
 import dk.netdesign.common.osgi.config.annotation.PropertyDefinition;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import dk.netdesign.common.osgi.config.filters.ExistingFileFilter;
 import dk.netdesign.common.osgi.config.filters.FileFilter;
+import dk.netdesign.common.osgi.config.filters.URLFilter;
 import java.io.File;
+import java.net.URL;
 
 /**
  *
@@ -38,5 +41,17 @@ public interface SetterConfig {
     
     public void setFile(String fileAsString);
     public void setFile(File file);
+    
+    @Property(type = String.class, typeMapper = ExistingFileFilter.class, description = "This file must exist")
+    public File getExistingFile() throws UnknownValueException;
+    
+    public void setExistingFile(String fileAsString);
+    public void setExistingFile(File file);
+    
+    @Property(type = String.class, typeMapper = URLFilter.class, description = "This must be an actual url")
+    public URL getURL() throws UnknownValueException;
+    
+    public void setURL(String fileAsString);
+    public void setURL(File file);
     
 }

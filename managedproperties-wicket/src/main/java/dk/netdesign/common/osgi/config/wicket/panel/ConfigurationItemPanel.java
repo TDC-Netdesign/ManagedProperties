@@ -43,7 +43,7 @@ public class ConfigurationItemPanel extends Panel {
     private Attribute attribute;
     private final IModel<? extends Serializable> configValue;
 
-    public ConfigurationItemPanel(final Attribute attribute, final IModel<Serializable> currentValue, String errorMessage, String id) {
+    public ConfigurationItemPanel(final Attribute attribute, final IModel<Serializable> currentValue, IModel<String> errorMessage, String id) {
         super(id);
         this.attribute = attribute;
         
@@ -73,7 +73,7 @@ public class ConfigurationItemPanel extends Panel {
         Label labelText = new Label("labelText", Model.of(propertyNameAndCardinality));
         formLabel.add(labelText);
         
-        Label labelMessage = new ErrorLabel("labelMsg", errorMessage);
+        final Label labelMessage = new ErrorLabel("labelMsg", errorMessage);
         
         formLabel.add(labelMessage);
         
@@ -123,10 +123,12 @@ public class ConfigurationItemPanel extends Panel {
         fragment.getFormInput().add(AttributeModifier.append("style", new AbstractReadOnlyModel<String>() {
             @Override
             public String getObject() {
-                if(attribute.getCardinalityDef().equals(Property.Cardinality.Required) && currentValue.getObject() == null){
-                    return "background-color:#d9534f;"; //#d9534f
+                if(labelMessage.isVisible()){
+                    return "background-color:#d9534f;";
+                }else if(attribute.getCardinalityDef().equals(Property.Cardinality.Required) && currentValue.getObject() == null){
+                    return "background-color:#d9534f;";
                 }else if(usingDefault){
-                    return "background-color:#f0ad4e;";//#f0ad4e
+                    return "background-color:#f0ad4e;";
                 }else{
                     return null;
                 }
@@ -146,9 +148,9 @@ public class ConfigurationItemPanel extends Panel {
     
     
     private static class ErrorLabel extends Label{
-        private String errorMessage;
+        private IModel<String> errorMessage;
         
-        public ErrorLabel(String id, String errorMessage) {
+        public ErrorLabel(String id, IModel<String> errorMessage) {
             super(id, "Error");
             this.errorMessage = errorMessage;
             add(AttributeAppender.replace("title", errorMessage));
@@ -157,7 +159,7 @@ public class ConfigurationItemPanel extends Panel {
 
         @Override
         public boolean isVisible() {
-            return errorMessage != null;
+            return errorMessage.getObject() != null;
         }
         
         
