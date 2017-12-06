@@ -21,6 +21,7 @@ import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.MultiParsingException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
+import dk.netdesign.common.osgi.config.exception.TypeFilterException;
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
@@ -128,7 +129,12 @@ public abstract class ConfigurationPage<E> extends WebPage {
                     for (AttributeValue value : attributeModel.getObject()) {
                         ParsingException ex = exceptions.get(value.attribute.getID());
                         if (ex != null) {
-                            value.setErrorMessage(ex.getMessage());
+                            if (ex.getCause() != null && ex.getCause() instanceof TypeFilterException) {
+                                value.setErrorMessage(ex.getCause().getMessage());
+                            } else {
+                                value.setErrorMessage(ex.getMessage());
+                            }
+
                         }
                     }
 
@@ -136,10 +142,14 @@ public abstract class ConfigurationPage<E> extends WebPage {
                     try {
                         controllerModel.getObject().commitProperties();
                     } catch (MultiParsingException ex) {
-                        for(ParsingException pex : ex.getExceptions()){
-                            for(AttributeValue value : attributeModel.getObject()){
-                                if(value.attribute.getID().equals(pex.getKey())){
-                                    value.setErrorMessage(pex.getMessage());
+                        for (ParsingException pex : ex.getExceptions()) {
+                            for (AttributeValue value : attributeModel.getObject()) {
+                                if (value.attribute.getID().equals(pex.getKey())) {
+                                    if (pex.getCause() != null && pex.getCause() instanceof TypeFilterException) {
+                                        value.setErrorMessage(pex.getCause().getMessage());
+                                    } else {
+                                        value.setErrorMessage(pex.getMessage());
+                                    }
                                     break;
                                 }
                             }
@@ -150,7 +160,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
                 }
                 LOGGER.debug("Committing configuration: " + controllerModel.getObject());
 
-                target.add(ConfigurationPage.this);                
+                target.add(ConfigurationPage.this);
             }
         });
 
@@ -265,20 +275,18 @@ public abstract class ConfigurationPage<E> extends WebPage {
         public AttributeCastingModel<Serializable> getValue() {
             return value;
         }
-        
-        public void setErrorMessage(String errorMessage){
+
+        public void setErrorMessage(String errorMessage) {
             errorMessageModel.setObject(errorMessage);
         }
-        
-        public String getErrorMessage(){
+
+        public String getErrorMessage() {
             return errorMessageModel.getObject();
         }
-        
-        public IModel<String> getErrorMessageModel(){
+
+        public IModel<String> getErrorMessageModel() {
             return errorMessageModel;
         }
-        
-        
 
         @Override
         public int compareTo(AttributeValue o) {
