@@ -36,6 +36,11 @@ public class StringToLongFilter extends TypeFilter<String, Long> {
 	    throw new TypeFilterException("Could not parse Long from string: "+input,ex);
 	}
     }
+
+    @Override
+    public String revert(Long input) throws TypeFilterException {
+        return input.toString();
+    }
     
     
     

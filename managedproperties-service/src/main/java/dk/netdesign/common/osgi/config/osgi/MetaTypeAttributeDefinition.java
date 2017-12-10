@@ -29,8 +29,8 @@ import org.osgi.service.metatype.AttributeDefinition;
  */
 public class MetaTypeAttributeDefinition implements AttributeDefinition{
     private final Attribute attribute; 
-    private int inputTypeAsInt;
-     private int cardinality;
+    private final int inputTypeAsInt;
+    private final int cardinality;
 
     public MetaTypeAttributeDefinition(Attribute attribute) throws InvalidTypeException {
 	this.attribute = attribute;
@@ -83,7 +83,7 @@ public class MetaTypeAttributeDefinition implements AttributeDefinition{
 		adCardinality = 0;
 		break;
 	    case Optional:
-		adCardinality = -1;
+		adCardinality = 0;
 		break;
 	    case List:
 		adCardinality = Integer.MIN_VALUE;

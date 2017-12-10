@@ -34,6 +34,13 @@ public class StringToBase10BigIntegerFilter extends TypeFilter<String, BigIntege
 	    throw new TypeFilterException("Could not parse a biginteger from String", ex);
 	}
     }
+
+    @Override
+    public String revert(BigInteger input) throws TypeFilterException {
+        return input.toString();
+    }
+    
+    
     
     
 }

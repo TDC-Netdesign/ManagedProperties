@@ -29,6 +29,7 @@ import dk.netdesign.common.osgi.config.service.PropertyAccess;
 import dk.netdesign.common.osgi.config.service.TypeFilter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleReference;
@@ -96,14 +97,13 @@ public class ManagedPropertiesServiceFactory implements ManagedPropertiesService
 
     public static <I, T extends I> I registerProperties(Class<I> type, T defaults, BundleContext context) throws InvalidTypeException, TypeFilterException, DoubleIDException, InvalidMethodException, InvocationException, ControllerPersistenceException {
 	LOGGER.info("Registering new configuration: "+type.getName()+" with defaults "+defaults);
-	ServiceTracker registerTracker = new ServiceTracker<>(context, DefaultFilterProvider.class, null);
+	ServiceTracker<DefaultFilterProvider, DefaultFilterProvider> registerTracker = new ServiceTracker<>(context, DefaultFilterProvider.class, null);
 	registerTracker.open();
 	ManagedPropertiesServiceFactory osgiPropertiesFactory = new ManagedPropertiesServiceFactory();
 	osgiPropertiesFactory.setTracker(registerTracker);
 	osgiPropertiesFactory.setConfig(new ManagedPropertiesConfigDefaults());
 	try{
-	return osgiPropertiesFactory.register(type, defaults, context);
-
+	    return osgiPropertiesFactory.register(type, defaults, context);
 	}finally{
 	    registerTracker.close();
 	}
@@ -156,5 +156,7 @@ public class ManagedPropertiesServiceFactory implements ManagedPropertiesService
 	}
 	return filters;
     }
+
+
      
 }

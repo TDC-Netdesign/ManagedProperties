@@ -36,6 +36,11 @@ public class StringToShortFilter extends TypeFilter<String, Short> {
 	    throw new TypeFilterException("Could not parse Short from string: "+input,ex);
 	}
     }
+
+    @Override
+    public String revert(Short input) throws TypeFilterException {
+        return input.toString();
+    }
     
     
     

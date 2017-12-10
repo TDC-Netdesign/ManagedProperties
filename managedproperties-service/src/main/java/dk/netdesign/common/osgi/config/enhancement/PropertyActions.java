@@ -5,6 +5,8 @@
  */
 package dk.netdesign.common.osgi.config.enhancement;
 
+import dk.netdesign.common.osgi.config.exception.InvocationException;
+import dk.netdesign.common.osgi.config.exception.MultiParsingException;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -24,9 +26,12 @@ public interface PropertyActions {
      * @return The lock to release when the properties can update again.
      */
     public Lock lockPropertiesUpdate();
+    
+    public void commitProperties() throws MultiParsingException, InvocationException;
+    public void abortCommitProperties() throws InvocationException;
 
     /**
-     * Calling this method will unregister the properties object so it will no longer recieve new updated configurations. Only call this method as cleanup,
+     * Calling this method will unregister the properties object so it will no longer receive new updated configurations. Only call this method as cleanup,
      * as it will effectively kill the object. It cannot recover.
      * @throws java.lang.Exception Throw an exception if unregistering the backing handler fails
      */

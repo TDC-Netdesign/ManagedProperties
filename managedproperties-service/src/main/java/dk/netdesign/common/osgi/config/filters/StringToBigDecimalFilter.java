@@ -34,6 +34,13 @@ public class StringToBigDecimalFilter extends TypeFilter<String, BigDecimal> {
 	    throw new TypeFilterException("Could parse the string "+input+" to a BigDecimal", ex);
 	}
     }
+
+    @Override
+    public String revert(BigDecimal input) throws TypeFilterException {
+        return input.toString();
+    }
+    
+    
     
     
     

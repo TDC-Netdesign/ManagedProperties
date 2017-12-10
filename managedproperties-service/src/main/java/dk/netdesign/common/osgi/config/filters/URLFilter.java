@@ -25,5 +25,12 @@ public class URLFilter extends TypeFilter<String, URL>{
 	    throw new TypeFilterException("Could not create an URL from the input", ex);
 	}
     }
+
+    @Override
+    public String revert(URL input) throws TypeFilterException {
+        return input.toString();
+    }
+    
+    
     
 }

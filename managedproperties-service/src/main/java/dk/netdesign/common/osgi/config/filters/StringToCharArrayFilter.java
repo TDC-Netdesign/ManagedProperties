@@ -30,5 +30,12 @@ public class StringToCharArrayFilter extends TypeFilter<String, char[]> {
     public char[] parse(String input) throws TypeFilterException {
 	return input.toCharArray();
     }
+
+    @Override
+    public String revert(char[] input) throws TypeFilterException {
+        return new String(input);
+    }
+    
+    
     
 }

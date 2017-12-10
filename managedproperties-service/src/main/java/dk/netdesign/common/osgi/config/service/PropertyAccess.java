@@ -24,7 +24,7 @@ import dk.netdesign.common.osgi.config.enhancement.PropertyConfig;
  *
  * @author mnn
  */
-public class PropertyAccess {
+public abstract class PropertyAccess {
     public static PropertyActions actions(Object proxy){
 	if(proxy instanceof PropertyActions){
 	    return (PropertyActions)proxy;

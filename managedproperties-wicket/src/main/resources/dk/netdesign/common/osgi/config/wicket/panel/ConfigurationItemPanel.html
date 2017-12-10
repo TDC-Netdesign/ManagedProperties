@@ -1,0 +1,25 @@
+<wicket:panel>
+    <label wicket:id="nameLabel" for="exampleInputEmail1"><wicket:container wicket:id="labelText"></wicket:container><span wicket:id="labelMsg" class="label">7</span></label>
+    <wicket:container wicket:id="inputArea"></wicket:container>
+    <small wicket:id="smallLabel" id="confighelp" class="form-text text-muted">Totally awesome description</small>
+    
+    
+    
+    <wicket:fragment wicket:id="textBox">
+        <input wicket:id="input" type="text" class="form-control" />
+    </wicket:fragment>
+    <wicket:fragment wicket:id="numberBox">
+        <input wicket:id="input" type="number" class="form-control"/>
+    </wicket:fragment>
+    <wicket:fragment wicket:id="urlBox">
+        <input wicket:id="input" type="url" class="form-control"/>
+    </wicket:fragment>
+    <wicket:fragment wicket:id="checkBox">
+        <input wicket:id="input" type="checkbox" class="form-control"/>
+    </wicket:fragment>
+    <wicket:fragment wicket:id="passwordBox">
+        <input wicket:id="input" type="password" class="form-control"/>
+    </wicket:fragment>
+</wicket:panel>
+
+

@@ -125,7 +125,11 @@ public class ManagedPropertiesFactory {
 		logger.info("Registered "+controller);
 	  }
 	  
-	return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, PropertyActions.class, PropertyConfig.class, ConfigurationCallbackHandler.class}, controller));
+	return castToProxy(type, controller);
+    }
+    
+    public static <I, T extends I> I castToProxy(Class<I> type, ManagedPropertiesController controller){
+        return type.cast(Proxy.newProxyInstance(ManagedPropertiesFactory.class.getClassLoader(), new Class[]{type, PropertyActions.class, PropertyConfig.class, ConfigurationCallbackHandler.class}, controller));
     }
     
     /**
@@ -179,7 +183,7 @@ public class ManagedPropertiesFactory {
     public static Method getParseMethod(Class<? extends TypeFilter> filterType) throws TypeFilterException{
 	    try {
 		for(Method method : filterType.getDeclaredMethods()){
-		    if(method.getName().equals("parse") && method.getParameterTypes().length == 1){
+		    if(method.getName().equals("parse") && method.getParameterTypes().length == 1 && !method.isBridge()){
 			return method;
 		    }
 		}

@@ -38,19 +38,12 @@ public class OSGiHandlerFactory implements HandlerFactory{
     public OSGiHandlerFactory(BundleContext context) {
 	this.context = context;
     }
-    
-    
-    
-    
+
     @Override
     public <E> ManagedPropertiesProvider getProvider(Class<? super E> configurationType, ManagedPropertiesController controller, E defaults) throws InvocationException, InvalidTypeException, InvalidMethodException, DoubleIDException {
 	ManagedPropertiesProvider provider = new ConfigurationAdminProvider(context, controller, controller);
 	
 	return provider;
     }
-    
-    
-    
-    
-    
+
 }

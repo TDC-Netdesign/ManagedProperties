@@ -21,10 +21,14 @@ import dk.netdesign.common.osgi.config.Attribute;
 import dk.netdesign.common.osgi.config.ManagedPropertiesController;
 import dk.netdesign.common.osgi.config.enhancement.ConfigurationTarget;
 import dk.netdesign.common.osgi.config.exception.InvalidTypeException;
+import dk.netdesign.common.osgi.config.exception.InvocationException;
 import dk.netdesign.common.osgi.config.exception.ParsingException;
 import dk.netdesign.common.osgi.config.exception.UnknownValueException;
+import dk.netdesign.common.osgi.config.service.ManagedPropertiesFactory;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -33,16 +37,21 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.osgi.service.metatype.AttributeDefinition;
 import org.osgi.service.metatype.MetaTypeProvider;
 import org.osgi.service.metatype.ObjectClassDefinition;
+import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,15 +61,34 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigurationAdminProvider extends ManagedPropertiesProvider implements MetaTypeProvider, ManagedService{
     public static final String BindingID = "ManagedPropertiesBinding";
+    public static final String ConfigID = "ManagedPropertiesID";
+    public static final String ConfigName = "ManagedPropertiesName";
+    
+    private static final String VALUE= "value";
+
+    
     private static final Logger logger = LoggerFactory.getLogger(ConfigurationAdminProvider.class);
     private final BundleContext bundleContext;
     private final OCD ocd;
     private final ManagedPropertiesController controller;
     private Dictionary<String, ?> lastAppliedProperties;
     
+    private ServiceTracker<ConfigurationAdmin, ConfigurationAdmin> configurationAdminTracker;
     private ServiceRegistration<ManagedService> managedServiceReg;
     private ServiceRegistration<MetaTypeProvider> metatypeServiceReg;
     private ServiceRegistration<ManagedPropertiesController> selfReg;
+    private ServiceRegistration proxyRegistration;
+    
+    private final Pattern listPattern = Pattern.compile("\\(\\ ((\\w\\\".+?\\\"),\\s*)*\\)");  
+    private final Pattern listElementPattern = Pattern.compile("(\\w\\\".+?\\\")");
+    private final Pattern doublePattern = Pattern.compile("D\"(?<"+VALUE+">.+)\"");
+    private final Pattern floatPattern = Pattern.compile("F\"(?<"+VALUE+">.+)\"");
+    private final Pattern integerPattern = Pattern.compile("I\"(?<"+VALUE+">.+)\"");
+    private final Pattern longPattern = Pattern.compile("L\"(?<"+VALUE+">.+)\"");
+    private final Pattern booleanPattern = Pattern.compile("B\"(?<"+VALUE+">.+)\"");
+    private final Pattern bytePattern = Pattern.compile("X\"(?<"+VALUE+">.+)\"");
+    private final Pattern charPattern = Pattern.compile("C\"(?<"+VALUE+">.+)\"");
+    private final Pattern shortPattern = Pattern.compile("S\"(?<"+VALUE+">.+)\"");
 
     public ConfigurationAdminProvider(BundleContext bundleContext, ManagedPropertiesController controller, ConfigurationTarget target) throws InvalidTypeException {
 	super(target);
@@ -72,10 +100,27 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	    attributes.add(new MetaTypeAttributeDefinition(attribute));
 	}
 	ocd = buildOCD(target.getID(), target.getName(), target.getDescription(), target.getIconFile(), attributes);
+        
+        
     }
-    
-    
 
+    @Override
+    public void persistConfiguration(Map<String, Object> newConfiguration) throws InvocationException {
+        Dictionary<String, Object> newConfigDictionary = new Hashtable<>();
+        for(String key : newConfiguration.keySet()){
+            newConfigDictionary.put(key, newConfiguration.get(key));
+        }
+        
+        ConfigurationAdmin admin = configurationAdminTracker.getService();
+        
+        
+        try {
+            Configuration config = admin.getConfiguration(ocd.getID());
+            config.update(newConfigDictionary);
+        } catch (IOException | IllegalArgumentException | IllegalStateException ex) {
+            throw new InvocationException("Failed to update configuration", ex);
+        }
+    }
 
     @Override
     public synchronized void updated(Dictionary<String, ?> properties) throws ConfigurationException {
@@ -91,14 +136,35 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 		if (key.equals("service.pid") || key.equals("felix.fileinstall.filename")) {
 		    continue;
 		}
-		configurationToReturn.put(key, properties.get(key));
+                //D"(?<value>.+)"
+                
+                Object value = properties.get(key);
+                if(value instanceof List){
+                    List valueAsList = (List)value;
+                    for(int i = 0 ; i<valueAsList.size() ; i++){
+                        Object valueFromList = valueAsList.get(i);
+                        if(valueFromList instanceof String){
+                            valueAsList.set(i, parseStringValue(key, (String)valueFromList));
+                        }
+                        
+                    }
+                    
+                }else if(value instanceof String){
+                    value = parseStringValue(key, (String)value);
+                }
+                
+                
+                
+		configurationToReturn.put(key, value);
 
 	    }
 	try {
 	    //Do actual update
 	    Map<String, Object> remainingConfig = getTarget().updateConfig(configurationToReturn);
 	    
-	    //Add remaining config to context properties as managedservice requests
+            if(!remainingConfig.isEmpty()){
+                logger.info("Couldn't add the following configurations: "+remainingConfig);
+            }	    
 	} catch (ParsingException ex) {
 	    try {
 		resetConfiguration();
@@ -108,6 +174,89 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	    throw new ConfigurationException(ex.getKey(), "Could not update configuration for "+getTarget().getName()+"["+getTarget().getID()+"]", ex);
 	}
 	lastAppliedProperties = properties;
+    }
+    
+    protected Object parseStringValue(String key, String value) throws ConfigurationException{
+        Matcher listMatcher = listPattern.matcher(value);
+        if(listMatcher.find()){
+            List<Object> elements = new ArrayList<>();
+            Matcher listElementPatcher = listElementPattern.matcher(value);
+            while(listElementPatcher.find()){
+                elements.add(parseStringValue(key, listElementPatcher.group()));
+            }
+            return elements;
+        }
+        
+        Matcher doubleMatcher = doublePattern.matcher(value);
+        if(doubleMatcher.find()){
+            return Double.parseDouble(doubleMatcher.group(VALUE));
+        }
+        Matcher floatMatcher = floatPattern.matcher(value);
+        if(floatMatcher.find()){
+            return Float.parseFloat(floatMatcher.group(VALUE));
+        }
+        Matcher integerMatcher = integerPattern.matcher(value);
+        if(integerMatcher.find()){
+            return Integer.parseInt(integerMatcher.group(VALUE));
+        }
+        Matcher longMatcher = longPattern.matcher(value);
+        if(longMatcher.find()){
+            return Long.parseLong(longMatcher.group(VALUE));
+        }
+        Matcher shortMatcher = shortPattern.matcher(value);
+        if(shortMatcher.find()){
+            return Short.parseShort(shortMatcher.group(VALUE));
+        }
+        Matcher byteMatcher = bytePattern.matcher(value);
+        if(byteMatcher.find()){
+            return Byte.parseByte(byteMatcher.group(VALUE));
+        }
+        Matcher booleanMatcher = booleanPattern.matcher(value);
+        if(booleanMatcher.find()){
+            return Boolean.parseBoolean(booleanMatcher.group(VALUE));
+        }
+        Matcher charMatcher = charPattern.matcher(value);
+        if(charMatcher.find()){
+            return charMatcher.group(VALUE).charAt(0);
+        }
+        
+        return parseStringToSimpleType(key, value);
+    }
+    
+    protected Object parseStringToSimpleType(String key, String object) throws ConfigurationException{
+        Class targetType = getReturnType(key);
+        logger.debug("Attempting to parse "+object+"["+object.getClass().getCanonicalName()+"] to type "+targetType);
+        
+        Object value = null;
+        if (targetType.equals(String.class)) {
+	    value = object;
+	} else if (targetType.equals(Long.class)) {
+	    value = Long.parseLong(object);
+	} else if (targetType.equals(Integer.class)) {
+	    value = Integer.parseInt(object);
+	} else if (targetType.equals(Short.class)) {
+	    value = Short.parseShort(object);
+	} else if (targetType.equals(Character.class)) {
+	    value = object.toCharArray()[0];
+	} else if (targetType.equals(Byte.class)) {
+	    value = Byte.parseByte(object);
+	} else if (targetType.equals(Double.class)) {
+	    value = Double.parseDouble(object);
+	} else if (targetType.equals(Float.class)) {
+	    value = Float.parseFloat(object);
+	} else if (targetType.equals(BigInteger.class)) {
+	    value = new BigInteger(object, 10);
+	} else if (targetType.equals(BigDecimal.class)) {
+	    value = new BigDecimal(object);
+	} else if (targetType.equals(Boolean.class)) {
+	    value = Boolean.parseBoolean(object);
+	} else if (targetType.equals(Character[].class)) {
+	    value = object.toCharArray();
+	}
+        if(value == null){
+            throw new ConfigurationException(key, "Could not parse the value "+object+"["+object.getClass().getCanonicalName()+"]. Unknown type");
+        }
+        return value;
     }
     
     protected synchronized void resetConfiguration() throws IOException{
@@ -144,6 +293,14 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	selfRegProps.put(Constants.SERVICE_PID, ocd.getID());
 	selfRegProps.put(BindingID, configBindingClass.getCanonicalName());
 	selfReg = bundleContext.registerService(ManagedPropertiesController.class, controller, selfRegProps);
+        
+        Hashtable<String, Object> proxyRegistrationProps = new Hashtable<>();
+        proxyRegistrationProps.put(ConfigID, controller.getID());
+        proxyRegistrationProps.put(ConfigName, controller.getName());
+        proxyRegistration = bundleContext.registerService(controller.getConfigurationType(), ManagedPropertiesFactory.castToProxy(controller.getConfigurationType(), controller), proxyRegistrationProps);
+        
+        configurationAdminTracker = new ServiceTracker<>(bundleContext, ConfigurationAdmin.class, null);
+        configurationAdminTracker.open();
 	
     }
 
@@ -152,6 +309,8 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
 	selfReg.unregister();
 	metatypeServiceReg.unregister();
 	managedServiceReg.unregister();
+        proxyRegistration.unregister();
+        configurationAdminTracker.close();
     }
     
     
@@ -177,7 +336,10 @@ public class ConfigurationAdminProvider extends ManagedPropertiesProvider implem
     public Class getReturnType(String configID) throws UnknownValueException {
 	for(MetaTypeAttributeDefinition definition : ocd.getRequiredADs()){
 	    if(definition.getID().equals(configID)){
-		return String.class; //The configadmin/felix file install only supports String
+                if(logger.isDebugEnabled()){
+                    logger.debug(definition.getID()+" type:"+definition.getAttribute().getInputType());
+                }              
+		return definition.getAttribute().getInputType();
 	    }
 	}
 	throw new UnknownValueException("No type found in OCD for configID: "+configID);

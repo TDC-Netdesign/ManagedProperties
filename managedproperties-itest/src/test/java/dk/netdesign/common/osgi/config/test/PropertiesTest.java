@@ -90,8 +90,8 @@ public class PropertiesTest {
         .classifier("features")
         .type("xml")
         .versionAsInProject();
-    
-    
+
+
     return new Option[] {
         // KarafDistributionOption.debugConfiguration("5005", true),
           karafDistributionConfiguration()
@@ -99,9 +99,8 @@ public class PropertiesTest {
             .unpackDirectory(new File("exam"))
             .useDeployFolder(false),
           keepRuntimeFolder(),
-          features(karafStandardRepo, "scr"),
-        features(karafStandardRepo, "scr", "webconsole"),
-	features(managedPropertiesRepo, "ManagedProperties", "ManagedPropertiesTestResources"),
+          features(karafStandardRepo, "scr", "webconsole"),
+	  features(managedPropertiesRepo, "ManagedProperties", "ManagedPropertiesTestResources"),
 	  replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.logging.cfg").toURI())),
 	  replaceConfigurationFile("etc/org.ops4j.pax.url.mvn.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/org.ops4j.pax.url.mvn.cfg").toURI())),
 	  replaceConfigurationFile("etc/WrapperTypes.cfg", new File(this.getClass().getClassLoader().getResource("dk/netdesign/common/osgi/config/test/WrapperTypes.cfg").toURI())),

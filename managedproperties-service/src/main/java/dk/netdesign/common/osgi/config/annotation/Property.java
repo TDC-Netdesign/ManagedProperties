@@ -19,6 +19,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.METHOD})
 public @interface Property {
+    public static final String SetterName = "AAAgetterNameAAA"; 
 
     /**
      * The name which will represent to configuration property. If not defined, the name of the method will be used (removing the "get").
@@ -88,11 +89,20 @@ public @interface Property {
     public String[] defaultValue() default {};
 
     /**
+     * Should the value of this configuration be hidden in the interface?. (Optional value)
+     *
+     * @return If the current value should be hidden or not.
+     */
+    public boolean hidden() default false;
+    
+    /**
      * The default value for the property. (Optional value)
      *
      * @return The default value to use in the Configuration Provider
      */
-    public boolean hidden() default false;
+    public String setMethodName() default SetterName;
+    
+    
 
     public enum Cardinality {
 
