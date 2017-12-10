@@ -20,7 +20,7 @@ import java.util.EnumSet;
  * parameter -Dcom.sun.management.jmxremote to startup JMX (and e.g. connect
  * with jconsole).
  */
-public class EmbeddableJettyWebTest {
+public class EmbeddableJetty {
 
     /**
      * Main function, starts the jetty server.
@@ -31,7 +31,7 @@ public class EmbeddableJettyWebTest {
 
     private Server server = new Server();
 
-    public EmbeddableJettyWebTest() {
+    public EmbeddableJetty() {
         System.setProperty("wicket.configuration", "development");
 
         ServerConnector http = new ServerConnector(server, new HttpConnectionFactory(new HttpConfiguration()));
@@ -56,7 +56,7 @@ public class EmbeddableJettyWebTest {
     }
 
     public static void main(String[] args) throws Exception {
-        EmbeddableJettyWebTest embeddableJettyWebTest = new EmbeddableJettyWebTest();
+        EmbeddableJetty embeddableJettyWebTest = new EmbeddableJetty();
 
         embeddableJettyWebTest.start();
 
