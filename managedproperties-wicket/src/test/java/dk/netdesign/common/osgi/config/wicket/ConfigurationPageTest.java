@@ -145,6 +145,8 @@ public class ConfigurationPageTest {
         
         expect(provider.getReturnType("String")).andReturn(String.class).atLeastOnce();
         expect(provider.getReturnType("File")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("URL")).andReturn(String.class).atLeastOnce();
 
         /*Expect*/provider.start();
         expectLastCall().once();
@@ -174,6 +176,8 @@ public class ConfigurationPageTest {
         
         expect(provider.getReturnType("String")).andReturn(String.class).atLeastOnce();
         expect(provider.getReturnType("File")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("URL")).andReturn(String.class).atLeastOnce();
 
         /*Expect*/provider.start();
         expectLastCall().once();
@@ -220,6 +224,8 @@ public class ConfigurationPageTest {
         
         expect(provider.getReturnType("String")).andReturn(String.class).atLeastOnce();
         expect(provider.getReturnType("File")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("ExistingFile")).andReturn(String.class).atLeastOnce();
+        expect(provider.getReturnType("URL")).andReturn(String.class).atLeastOnce();
 
         replay(provider);
         
@@ -243,15 +249,15 @@ public class ConfigurationPageTest {
         FormTester formTester = tester.newFormTester("configForm", false);
         
         
-        formTester.setValue("attribute-panels:0:attribute-panel:inputArea:input", testFile.getCanonicalPath());
-        formTester.setValue("attribute-panels:1:attribute-panel:inputArea:input", setString);
+        formTester.setValue("attribute-panels:1:attribute-panel:inputArea:input", testFile.getCanonicalPath());
+        formTester.setValue("attribute-panels:2:attribute-panel:inputArea:input", setString);
         
-        formTester.submit();
-        PropertyAccess.actions(config).unregisterProperties();
+        tester.executeAjaxEvent("configForm", "submit");
+        
         
         assertEquals(setString, config.getString());
         assertEquals(testFile.getCanonicalFile(), config.getFile());
-        
+        PropertyAccess.actions(config).unregisterProperties();
     }
 
 
