@@ -14,7 +14,9 @@
 	
     <properties>
         <jetty9.version>9.4.7.v20170914</jetty9.version>
-        <wicket.version>6.22.0</wicket.version>
+        
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <build>
@@ -25,6 +27,15 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>ManagedPropertiesWicket</Bundle-SymbolicName>
+                        <Import-Package>
+                                org.apache.wicket;version="${wicket.version}",org.apache.wicket.ajax;version="${wicket.version}",
+                                org.apache.wicket.ajax.form;version="${wicket.version}",org.apache.wicket.behavior;version="${wicket.version}",
+                                org.apache.wicket.markup.html;version="${wicket.version}",org.apache.wicket.markup.html.basic;version="${wicket.version}",
+                                org.apache.wicket.markup.html.form;version="${wicket.version}",org.apache.wicket.markup.html.list;version="${wicket.version}",
+                                org.apache.wicket.markup.html.panel;version="${wicket.version}",org.apache.wicket.model;version="${wicket.version}",
+                                org.apache.wicket.model.util;version="${wicket.version}",org.apache.wicket.request.mapper.parameter;version="${wicket.version}",
+                                org.apache.wicket.util.string;version="${wicket.version}",*
+                        </Import-Package>
                     </instructions>
                 </configuration>
             </plugin>

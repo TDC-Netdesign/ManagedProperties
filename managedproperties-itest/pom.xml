@@ -10,31 +10,32 @@
     <artifactId>managedproperties-itest</artifactId>
     <version>2.0.2-SNAPSHOT</version>
     <name>ManagedProperties Integration Test</name>
+    
 	
     <profiles>
-	<profile>
-	    <id>build-server-skip-itest</id>
-	    <activation>
-		<property>
-		    <name>env.BUILD_NUMBER</name>
-		</property>
-	    </activation>
-	    <build>
-		<plugins>
-		    <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.15</version>
-		<configuration>
-		    <trimStackTrace>false</trimStackTrace>
-		    <workingDirectory>${project.build.directory}</workingDirectory>
-		    <argLine>${env.MAVEN_OPTS}</argLine>
-		    <skipTests>true</skipTests>
-		</configuration>
-            </plugin>
-		</plugins>
-	    </build>
-	</profile>
+        <profile>
+            <id>build-server-skip-itest</id>
+            <activation>
+                <property>
+                    <name>env.BUILD_NUMBER</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.15</version>
+                        <configuration>
+                            <trimStackTrace>false</trimStackTrace>
+                            <workingDirectory>${project.build.directory}</workingDirectory>
+                            <argLine>${env.MAVEN_OPTS}</argLine>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 	
     <build>
@@ -42,99 +43,118 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-		<extensions>true</extensions>
-		<configuration>
-		    <instructions>
-			<Bundle-SymbolicName>ManagedPropertiesITest</Bundle-SymbolicName>
-		    </instructions>
-		</configuration>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>ManagedPropertiesITest</Bundle-SymbolicName>
+                    </instructions>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.15</version>
-		<configuration>
-		    <trimStackTrace>false</trimStackTrace>
-		    <workingDirectory>${project.build.directory}</workingDirectory>
-		    <argLine>${env.MAVEN_OPTS}</argLine>
-		</configuration>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
+                    <workingDirectory>${project.build.directory}</workingDirectory>
+                    <argLine>${env.MAVEN_OPTS}</argLine>
+                </configuration>
             </plugin>
-	    <plugin>
-		<groupId>org.apache.servicemix.tooling</groupId>
-		<artifactId>depends-maven-plugin</artifactId>		
-	    </plugin>
+            <plugin>
+                <groupId>org.apache.servicemix.tooling</groupId>
+                <artifactId>depends-maven-plugin</artifactId>		
+            </plugin>
         </plugins>
         
     </build>
     <dependencies>
-	  <dependency>
-		<groupId>dk.netdesign</groupId>
-		<artifactId>managedproperties-service</artifactId>
-	  </dependency>
-	  <dependency>
-		<groupId>dk.netdesign</groupId>
-		<artifactId>managedproperties-feature</artifactId>
-		<classifier>features</classifier>
-		<type>xml</type>
-	  </dependency>
-	  <dependency>
-		<groupId>dk.netdesign</groupId>
-		<artifactId>managedproperties-consumer</artifactId>
-	  </dependency>
-	  <dependency>
-		<groupId>dk.netdesign</groupId>
-		<artifactId>managedproperties-test-resources</artifactId>
-	  </dependency>
-<!--        <dependency>
+        <dependency>
+            <groupId>dk.netdesign</groupId>
+            <artifactId>managedproperties-service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dk.netdesign</groupId>
+            <artifactId>managedproperties-feature</artifactId>
+            <classifier>features</classifier>
+            <type>xml</type>
+        </dependency>
+        <dependency>
+            <groupId>dk.netdesign</groupId>
+            <artifactId>managedproperties-consumer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dk.netdesign</groupId>
+            <artifactId>managedproperties-test-resources</artifactId>
+        </dependency>
+        <!--        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-	    <scope>provided</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>-->
-<!--       <dependency>
-		<groupId>org.apache.logging.log4j</groupId>
-		<artifactId>log4j-core</artifactId>                  
-	    </dependency>-->
+        <!--       <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>                  
+        </dependency>-->
         
-
+        <dependency>
+            <groupId>org.ops4j.pax.wicket</groupId>
+            <artifactId>features</artifactId>
+            <classifier>features</classifier>
+            <type>xml</type>
+            <version>${pax.wicket.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.wicket</groupId>
+            <artifactId>paxwicket</artifactId>
+            <classifier>features</classifier>
+            <type>xml</type>
+            <version>${pax.wicket.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.12</version>
+        </dependency>
 
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
-	    <scope>provided</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.compendium</artifactId>
-	    <scope>provided</scope>
+            <scope>provided</scope>
         </dependency>
-<!--        <dependency>
+        <!--        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-	    <scope>provided</scope>
+            <scope>provided</scope>
         </dependency>-->
-	<dependency>
-	    <groupId>org.apache.karaf.features</groupId>
-	    <artifactId>standard</artifactId>
-	    <classifier>features</classifier>
+        <dependency>
+            <groupId>org.apache.karaf.features</groupId>
+            <artifactId>standard</artifactId>
+            <classifier>features</classifier>
             <scope>provided</scope>
-	    <type>xml</type>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.karaf.features</groupId>
-	    <artifactId>enterprise</artifactId>
-	    <classifier>features</classifier>
+            <type>xml</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.features</groupId>
+            <artifactId>enterprise</artifactId>
+            <classifier>features</classifier>
             <scope>provided</scope>
-	    <type>xml</type>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.karaf</groupId>
-	    <artifactId>apache-karaf</artifactId>
+            <type>xml</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.karaf</groupId>
+            <artifactId>apache-karaf</artifactId>
             <scope>provided</scope>
-	    <type>tar.gz</type>
+            <type>tar.gz</type>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.karaf</groupId>
@@ -142,38 +162,38 @@
                 </exclusion>
                 
             </exclusions>
-	</dependency>
+        </dependency>
 
 	
-	<!--Test dependency start-->
-	<dependency>
-	    <groupId>org.ops4j.pax.exam</groupId>
-	    <artifactId>pax-exam-container-karaf</artifactId>
+        <!--Test dependency start-->
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-container-karaf</artifactId>
             <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>org.ops4j.pax.exam</groupId>
-	    <artifactId>pax-exam-junit4</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
             <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>org.ops4j.pax.exam</groupId>
-	    <artifactId>pax-exam</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam</artifactId>
             <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>org.ops4j.pax.url</groupId>
-	    <artifactId>pax-url-aether</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-aether</artifactId>
             <scope>test</scope>
-	</dependency>
-	<dependency>
-	    <groupId>javax.inject</groupId>
-	    <artifactId>javax.inject</artifactId>
-	</dependency>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-	    <scope>test</scope>
+            <scope>test</scope>
         </dependency>
 	
     </dependencies>

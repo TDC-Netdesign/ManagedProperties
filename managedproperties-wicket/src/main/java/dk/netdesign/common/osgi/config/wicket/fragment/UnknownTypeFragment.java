@@ -34,16 +34,16 @@ public class UnknownTypeFragment<E extends Object> extends InputFragment<E>{
 
     @Override
     protected Component getFormInput(String wicketID, IModel<E> model) {
-        TextField field = new TextField(wicketID, new toStringModel(model));
+        TextField field = new TextField(wicketID, new ToStringModel(model));
         field.setEnabled(false);
         return field;
     }
     
     
-    private class toStringModel extends AbstractReadOnlyModel<String>{
+    private class ToStringModel extends AbstractReadOnlyModel<String>{
         private final IModel<E> inputModel;
 
-        public toStringModel(IModel<E> inputModel) {
+        public ToStringModel(IModel<E> inputModel) {
             this.inputModel = inputModel;
         }
 
