@@ -95,7 +95,7 @@ public abstract class ConfigurationPage<E> extends WebPage {
 
         Form configForm = new Form("configForm");
 
-        configForm.add(new AjaxFormSubmitBehavior("onsubmit") {
+        configForm.add(new AjaxFormSubmitBehavior("submit") {
             @Override
             protected void onSubmit(AjaxRequestTarget target) {
                 super.onSubmit(target);

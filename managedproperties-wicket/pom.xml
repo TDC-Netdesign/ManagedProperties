@@ -18,6 +18,30 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
+    
+    <profiles>
+        <profile>
+            <id>test_wicket_6</id>
+            <properties>
+                <pax.wicket.version>3.0.4</pax.wicket.version>
+                <wicket.version>6.22.0</wicket.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>test_wicket_7</id>
+            <properties>
+                <pax.wicket.version>4.0.0</pax.wicket.version>
+                <wicket.version>7.7.0</wicket.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>test_wicket_8</id>
+            <properties>
+                <pax.wicket.version>5.0.0-RC1</pax.wicket.version>
+                <wicket.version>8.0.0-M7</wicket.version>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
