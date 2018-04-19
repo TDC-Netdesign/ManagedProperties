@@ -92,7 +92,7 @@ public class ConfigurationItemPanel extends Panel {
         }else if(attributeInputType.equals(String.class) && attributeMethodType.equals(URL.class)){
             fragment = new URLFieldFragment("inputArea", "urlBox", this, attribute, panelTextFieldID, panelSmallLabelID, (IModel<String>)configValue);
         }else if(attributeInputType.equals(Boolean.class)){
-            fragment = new BooleanFieldFragment("inputArea", "booleanBox", this, attribute, panelTextFieldID, panelSmallLabelID, (IModel<Boolean>)configValue);
+            fragment = new BooleanFieldFragment("inputArea", "checkBox", this, attribute, panelTextFieldID, panelSmallLabelID, (IModel<Boolean>)configValue);
         }else if(attributeInputType.equals(String.class)){
             fragment = new TextFieldFragment("inputArea", "textBox", this, attribute, panelTextFieldID, panelSmallLabelID, (IModel<String>)configValue);
         }else if(attributeInputType.equals(Character[].class)){
